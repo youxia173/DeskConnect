@@ -1,0 +1,36 @@
+# translation of kdeconnect-interfaces.pot to esperanto
+# Copyright (C) 2023 Free Software Foundation, Inc.
+# This file is distributed under the same license as the kdeconnect-kde package.
+# Oliver Kellogg <olivermkellogg@gmail.com, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-22 00:45+0000\n"
+"PO-Revision-Date: 2023-07-05 07:30+0100\n"
+"Last-Translator: Oliver Kellogg <olivermkellogg@gmail.com>\n"
+"Language-Team: Esperanto <kde-i18n-eo@kde.org>\n"
+"Language: eo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: devicesmodel.cpp:236
+#, kde-format
+msgid "Device trusted and connected"
+msgstr "Aparato fidinda kaj konektita"
+
+#: devicesmodel.cpp:236
+#, kde-format
+msgid "Device not trusted"
+msgstr "Aparato ne fidinda"
+
+#: devicesmodel.cpp:236
+#, kde-format
+msgid "Device disconnected"
+msgstr "Aparato malkonektita"
+
+#~ msgid "error: "
+#~ msgstr "eraro:"

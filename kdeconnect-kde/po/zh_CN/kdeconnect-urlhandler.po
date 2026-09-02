@@ -1,0 +1,118 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeorg\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-03-02 00:44+0000\n"
+"PO-Revision-Date: 2024-04-22 15:59\n"
+"Last-Translator: \n"
+"Language-Team: Chinese Simplified\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Crowdin-Project: kdeorg\n"
+"X-Crowdin-Project-ID: 269464\n"
+"X-Crowdin-Language: zh-CN\n"
+"X-Crowdin-File: /kf6-trunk/messages/kdeconnect-kde/kdeconnect-urlhandler."
+"pot\n"
+"X-Crowdin-File-ID: 49014\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "KDE 中国, Tyson Tan"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "kde-china@kde.org, tds00@qq.com"
+
+#. i18n: ectx: property (text), widget (QLabel, devicePickerLabel)
+#: dialog.ui:25
+#, kde-format
+msgid "Select device:"
+msgstr "选择设备："
+
+#. i18n: ectx: property (text), widget (QLabel, urlPickerLabel)
+#: dialog.ui:39
+#, kde-format
+msgid "Enter a file location or URL:"
+msgstr "输入文件位置或 URL："
+
+#: kdeconnect-handler.cpp:52
+#, kde-format
+msgid "KDE Connect URL handler"
+msgstr "KDE Connect URL 处理程序"
+
+#: kdeconnect-handler.cpp:58
+#, kde-format
+msgid "© 2015–2025 KDE Connect Team"
+msgstr "© 2015–2025 KDE Connect Team"
+
+#: kdeconnect-handler.cpp:59
+#, kde-format
+msgid "Aleix Pol Gonzalez"
+msgstr "Aleix Pol Gonzalez"
+
+#: kdeconnect-handler.cpp:60
+#, kde-format
+msgid "Albert Vaca Cintora"
+msgstr "Albert Vaca Cintora"
+
+#: kdeconnect-handler.cpp:94
+#, kde-format
+msgid "URL to share"
+msgstr "要分享的 URL"
+
+#: kdeconnect-handler.cpp:95
+#, kde-format
+msgid "Select a device"
+msgstr "选择设备"
+
+#: kdeconnect-handler.cpp:95
+#, kde-format
+msgid "id"
+msgstr "ID"
+
+#: kdeconnect-handler.cpp:96
+#, kde-format
+msgid "Automatically open the file on the remote device, when supported"
+msgstr "自动打开远程设备上的文件 (如果支持)"
+
+#: kdeconnect-handler.cpp:147
+#, kde-format
+msgctxt "Placeholder for input field that should contain a file/URL to share"
+msgid "Local file or web URL"
+msgstr "本地文件或网络 URL"
+
+#: kdeconnect-handler.cpp:155
+#, kde-format
+msgid "Device to call %1 with:"
+msgstr "用于呼叫 %1 的设备："
+
+#: kdeconnect-handler.cpp:158
+#, kde-format
+msgid "Device to open %1 on:"
+msgstr "用于打开 %1 的设备："
+
+#: kdeconnect-handler.cpp:161
+#, kde-format
+msgid "Device to send a SMS with:"
+msgstr "用于发送短信的设备："
+
+#: kdeconnect-handler.cpp:164
+#, kde-format
+msgid "Device to send %1 to:"
+msgstr "用于发送 %1 的设备："
+
+#: kdeconnect-handler.cpp:171
+#, kde-format
+msgctxt "Label, for a list of items like files or urls"
+msgid "Shared content:"
+msgstr "共享的内容："
+
+#: kdeconnect-handler.cpp:196
+#, kde-format
+msgid "Couldn't share %1"
+msgstr "无法分享 %1"

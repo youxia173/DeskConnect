@@ -1,0 +1,175 @@
+# Spanish translations for kdeconnect-indicator.po package.
+# Copyright (C) 2020-2025 This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+# Automatically generated, 2020.
+#
+# SPDX-FileCopyrightText: 2020, 2025 Eloy Cuadra <ecuadra@eloihr.net>
+# SPDX-FileCopyrightText: 2020, 2021, 2023, 2024, 2025 Víctor Rodrigo Córdoba <vrcordoba@gmail.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-indicator\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-21 00:44+0000\n"
+"PO-Revision-Date: 2025-06-28 23:41+0100\n"
+"Last-Translator: Víctor Rodrigo Córdoba <vrcordoba@gmail.com>\n"
+"Language-Team: Spanish <kde-l10n-es@kde.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 25.04.2\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Víctor Rodrigo Córdoba"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "vrcordoba@gmail.com"
+
+#: deviceindicator.cpp:53
+#, kde-format
+msgid "Browse device"
+msgstr "Navegar dispositivo"
+
+#: deviceindicator.cpp:67
+#, kde-format
+msgid "Send clipboard"
+msgstr "Enviar portapapeles"
+
+#: deviceindicator.cpp:81
+#, kde-format
+msgctxt "@action:inmenu play bell sound"
+msgid "Ring device"
+msgstr "Hacer sonar el dispositivo"
+
+#: deviceindicator.cpp:95
+#, kde-format
+msgid "Send files"
+msgstr "Enviar archivos"
+
+#: deviceindicator.cpp:117
+#, kde-format
+msgid "SMS Messages…"
+msgstr "Mensajes SMS…"
+
+#: deviceindicator.cpp:130
+#, kde-format
+msgid "Run command"
+msgstr "Ejecutar orden"
+
+#: deviceindicator.cpp:132
+#, kde-format
+msgid "Add commands"
+msgstr "Añadir órdenes"
+
+#: indicatorhelper_mac.cpp:47 indicatorhelper_mac.cpp:58
+#, kde-format
+msgid "KDE Connect"
+msgstr "KDE Connect"
+
+#: indicatorhelper_mac.cpp:48
+#, kde-format
+msgid ""
+"Cannot connect to DBus\n"
+"KDE Connect will quit"
+msgstr ""
+"No se pudo conectar a DBus\n"
+"KDE Connect se cerrará"
+
+#: indicatorhelper_mac.cpp:58
+#, kde-format
+msgid "Cannot find kdeconnectd"
+msgstr "No se pudo encontrar kdeconnectd"
+
+#: main.cpp:57
+#, kde-format
+msgid "KDE Connect Indicator"
+msgstr "Indicador de KDE Connect"
+
+#: main.cpp:59
+#, kde-format
+msgid "KDE Connect Indicator tool"
+msgstr "Herramienta del indicador de KDE Connect"
+
+#: main.cpp:61
+#, kde-format
+msgid "© 2016–2025 KDE Connect Team"
+msgstr "© 2016-2025 el equipo de KDE Connect"
+
+#: main.cpp:62
+#, kde-format
+msgid "Aleix Pol Gonzalez"
+msgstr "Aleix Pol Gonzalez"
+
+#: main.cpp:63
+#, kde-format
+msgid "Albert Vaca Cintora"
+msgstr "Albert Vaca Cintora"
+
+#: main.cpp:101
+#, kde-format
+msgid "Open app"
+msgstr "Abrir aplicación"
+
+#: main.cpp:118
+#, kde-format
+msgid "Pairing requests"
+msgstr "Peticiones de emparejamiento"
+
+#: main.cpp:123
+#, kde-format
+msgctxt "Accept a pairing request"
+msgid "Pair"
+msgstr "Emparejar"
+
+#: main.cpp:124
+#, kde-format
+msgid "Reject"
+msgstr "Rechazar"
+
+#: main.cpp:129 main.cpp:142
+#, kde-format
+msgid "Quit"
+msgstr "Quitar"
+
+#: main.cpp:159 main.cpp:181
+#, kde-format
+msgid "%1 device connected"
+msgid_plural "%1 devices connected"
+msgstr[0] "%1 dispositivo conectado"
+msgstr[1] "%1 dispositivos conectados"
+
+#: systray_actions/battery_action.cpp:35
+#, kde-format
+msgid "No Battery"
+msgstr "Sin batería"
+
+#: systray_actions/battery_action.cpp:37
+#, kde-format
+msgid "Battery: %1% (Charging)"
+msgstr "Batería: %1 % (Cargando)"
+
+#: systray_actions/battery_action.cpp:39
+#, kde-format
+msgid "Battery: %1%"
+msgstr "Batería: %1 %"
+
+#: systray_actions/connectivity_action.cpp:30
+#, kde-format
+msgctxt ""
+"The fallback text to display in case the remote device does not have a "
+"cellular connection"
+msgid "No Cellular Connectivity"
+msgstr "No hay conexión con el teléfono"
+
+#: systray_actions/connectivity_action.cpp:33
+#, kde-format
+msgctxt ""
+"Display the cellular connection type and an approximate percentage of signal "
+"strength"
+msgid "%1  | ~%2%"
+msgstr "%1  | ~%2 %"

@@ -1,0 +1,192 @@
+# translation of kdeconnect-indicator.pot to esperanto
+# Copyright (C) 2023 Free Software Foundation, Inc.
+# This file is distributed under the same license as the kdeconnect-kde package.
+# Oliver Kellogg <olivermkellogg@gmail.com, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-21 00:44+0000\n"
+"PO-Revision-Date: 2024-07-27 14:20+0200\n"
+"Last-Translator: Oliver Kellogg <olivermkellogg@gmail.com>\n"
+"Language-Team: Esperanto <kde-i18n-eo@kde.org>\n"
+"Language: eo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: translate-po (https://github.com/zcribe/translate-po)\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Oliver Kellogg"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "olivermkellogg@gmail.com"
+
+#: deviceindicator.cpp:53
+#, kde-format
+msgid "Browse device"
+msgstr "Foliumi aparaton"
+
+#: deviceindicator.cpp:67
+#, kde-format
+msgid "Send clipboard"
+msgstr "Sendi tondujon"
+
+#: deviceindicator.cpp:81
+#, kde-format
+msgctxt "@action:inmenu play bell sound"
+msgid "Ring device"
+msgstr "Sonorigi aparaton"
+
+#: deviceindicator.cpp:95
+#, kde-format
+msgid "Send files"
+msgstr "Sendi dosierojn"
+
+#: deviceindicator.cpp:117
+#, fuzzy, kde-format
+#| msgid "SMS Messages..."
+msgid "SMS Messages…"
+msgstr "SMS-Mesaĝoj..."
+
+#: deviceindicator.cpp:130
+#, kde-format
+msgid "Run command"
+msgstr "Lanĉi komandon"
+
+#: deviceindicator.cpp:132
+#, kde-format
+msgid "Add commands"
+msgstr "Aldoni komandojn"
+
+#: indicatorhelper_mac.cpp:47 indicatorhelper_mac.cpp:58
+#, kde-format
+msgid "KDE Connect"
+msgstr "KDE Connect"
+
+#: indicatorhelper_mac.cpp:48
+#, kde-format
+msgid ""
+"Cannot connect to DBus\n"
+"KDE Connect will quit"
+msgstr ""
+"Ne povas konekti al DBus\n"
+"KDE Connect ĉesos"
+
+#: indicatorhelper_mac.cpp:58
+#, kde-format
+msgid "Cannot find kdeconnectd"
+msgstr "Ne povas trovi kdeconnectd"
+
+#: main.cpp:57
+#, kde-format
+msgid "KDE Connect Indicator"
+msgstr "Indikilo de KDE Connect"
+
+#: main.cpp:59
+#, kde-format
+msgid "KDE Connect Indicator tool"
+msgstr "Indikilo de KDE Connect"
+
+#: main.cpp:61
+#, kde-format
+msgid "© 2016–2025 KDE Connect Team"
+msgstr ""
+
+#: main.cpp:62
+#, fuzzy, kde-format
+#| msgid "(C) 2016 Aleix Pol Gonzalez"
+msgid "Aleix Pol Gonzalez"
+msgstr "(C) 2016 Aleix Pol Gonzalez"
+
+#: main.cpp:63
+#, kde-format
+msgid "Albert Vaca Cintora"
+msgstr ""
+
+#: main.cpp:101
+#, kde-format
+msgid "Open app"
+msgstr ""
+
+#: main.cpp:118
+#, kde-format
+msgid "Pairing requests"
+msgstr "Parigaj petoj"
+
+#: main.cpp:123
+#, kde-format
+msgctxt "Accept a pairing request"
+msgid "Pair"
+msgstr "Parigi"
+
+#: main.cpp:124
+#, kde-format
+msgid "Reject"
+msgstr "Malakcepti"
+
+#: main.cpp:129 main.cpp:142
+#, kde-format
+msgid "Quit"
+msgstr "Forlasi"
+
+#: main.cpp:159 main.cpp:181
+#, kde-format
+msgid "%1 device connected"
+msgid_plural "%1 devices connected"
+msgstr[0] "konektis %1 aparaton"
+msgstr[1] "konektis %1 aparatojn"
+
+#: systray_actions/battery_action.cpp:35
+#, kde-format
+msgid "No Battery"
+msgstr "Neniu Baterio"
+
+#: systray_actions/battery_action.cpp:37
+#, kde-format
+msgid "Battery: %1% (Charging)"
+msgstr "Baterio: %1% (Ŝarĝante)"
+
+#: systray_actions/battery_action.cpp:39
+#, kde-format
+msgid "Battery: %1%"
+msgstr "Baterio: %1%"
+
+#: systray_actions/connectivity_action.cpp:30
+#, kde-format
+msgctxt ""
+"The fallback text to display in case the remote device does not have a "
+"cellular connection"
+msgid "No Cellular Connectivity"
+msgstr "Neniu Ĉelreta Konekteblo"
+
+#: systray_actions/connectivity_action.cpp:33
+#, kde-format
+msgctxt ""
+"Display the cellular connection type and an approximate percentage of signal "
+"strength"
+msgid "%1  | ~%2%"
+msgstr "%1  | ~%2%"
+
+#, fuzzy
+#~| msgid "Configure..."
+#~ msgid "Configure..."
+#~ msgstr "Agordi..."
+
+#~ msgid "Launching"
+#~ msgstr "Lanĉante"
+
+#~ msgid "Launching daemon"
+#~ msgstr "Lanĉa demono"
+
+#~ msgid "Waiting D-Bus"
+#~ msgstr "Atendante D-Bus"
+
+#~ msgid "Loading modules"
+#~ msgstr "Ŝargante modulojn"

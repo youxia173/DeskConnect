@@ -1,0 +1,131 @@
+# Copyright (C) 2024 This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+#
+# SPDX-FileCopyrightText: 2024 A S Alam <aalam@punlinux.org>
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-03-02 00:44+0000\n"
+"PO-Revision-Date: 2024-02-10 10:26-0600\n"
+"Last-Translator: A S Alam <aalam@punlinux.org>\n"
+"Language-Team: Punjabi <kde-i18n-doc@kde.org>\n"
+"Language: pa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 23.08.4\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "ਅਮਨਪਰੀਤ ਸਿੰਘ ਆਲਮ"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "aalam@punlinux.org"
+
+#. i18n: ectx: property (text), widget (QLabel, devicePickerLabel)
+#: dialog.ui:25
+#, kde-format
+msgid "Select device:"
+msgstr "ਡਿਵਾਈਸ ਨੂੰ ਚੁਣੋ:"
+
+#. i18n: ectx: property (text), widget (QLabel, urlPickerLabel)
+#: dialog.ui:39
+#, fuzzy, kde-format
+#| msgid "Enter file location here"
+msgid "Enter a file location or URL:"
+msgstr "ਫਾਇਲ ਦਾ ਟਿਕਾਣਾ ਇੱਥੇ ਦਿਓ"
+
+#: kdeconnect-handler.cpp:52
+#, kde-format
+msgid "KDE Connect URL handler"
+msgstr "KDE ਕਨੈਕਟ URL ਹੈਂਡਲਰ"
+
+#: kdeconnect-handler.cpp:58
+#, kde-format
+msgid "© 2015–2025 KDE Connect Team"
+msgstr ""
+
+#: kdeconnect-handler.cpp:59
+#, fuzzy, kde-format
+#| msgid "(C) 2017 Aleix Pol Gonzalez"
+msgid "Aleix Pol Gonzalez"
+msgstr "(C) 2017 Aleix Pol Gonzalez"
+
+#: kdeconnect-handler.cpp:60
+#, kde-format
+msgid "Albert Vaca Cintora"
+msgstr ""
+
+#: kdeconnect-handler.cpp:94
+#, kde-format
+msgid "URL to share"
+msgstr "ਸਾਂਝਾ ਕਰਨ ਲਈ URL"
+
+#: kdeconnect-handler.cpp:95
+#, kde-format
+msgid "Select a device"
+msgstr "ਡਿਵਾਈਸ ਨੂੰ ਚੁਣੋ"
+
+#: kdeconnect-handler.cpp:95
+#, kde-format
+msgid "id"
+msgstr "id"
+
+#: kdeconnect-handler.cpp:96
+#, kde-format
+msgid "Automatically open the file on the remote device, when supported"
+msgstr ""
+
+#: kdeconnect-handler.cpp:147
+#, kde-format
+msgctxt "Placeholder for input field that should contain a file/URL to share"
+msgid "Local file or web URL"
+msgstr ""
+
+#: kdeconnect-handler.cpp:155
+#, kde-format
+msgid "Device to call %1 with:"
+msgstr "ਇਸ ਨਾਲ %1 ਕਾਲ ਕਰਨ ਲਈ ਡਿਵਾਈਸ:"
+
+#: kdeconnect-handler.cpp:158
+#, kde-format
+msgid "Device to open %1 on:"
+msgstr "ਇਸ ਉੱਤੇ %1 ਖੋਲ੍ਹਣ ਲਈ ਡਿਵਾਈਸ:"
+
+#: kdeconnect-handler.cpp:161
+#, kde-format
+msgid "Device to send a SMS with:"
+msgstr "ਇਸ ਨਾਲ SMS ਭੇਜਣ ਲਈ ਡਿਵਾਈਸ:"
+
+#: kdeconnect-handler.cpp:164
+#, kde-format
+msgid "Device to send %1 to:"
+msgstr "ਇਸ ਉੱਤੇ %1 ਭੇਜਣ ਲਈ ਡਿਵਾਈਸ:"
+
+#: kdeconnect-handler.cpp:171
+#, kde-format
+msgctxt "Label, for a list of items like files or urls"
+msgid "Shared content:"
+msgstr ""
+
+#: kdeconnect-handler.cpp:196
+#, kde-format
+msgid "Couldn't share %1"
+msgstr "%1 ਨੂੰ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ"
+
+#~ msgid "Send URL"
+#~ msgstr "URL ਭੇਜੋ"
+
+#~ msgid "Send File"
+#~ msgstr "ਫਾਇਲ ਭੇਜੋ"
+
+#~ msgid "Open on peer device"
+#~ msgstr "ਪੀਅਰ ਡਿਵਾਈਸ ਉੱਤੇ ਖੋਲ੍ਹੋ"
+
+#~ msgid "Enter URL here"
+#~ msgstr "URL ਇੱਥੇ ਦਿਓ"

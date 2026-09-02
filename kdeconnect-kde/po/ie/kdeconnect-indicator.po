@@ -1,0 +1,198 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-21 00:44+0000\n"
+"PO-Revision-Date: 2022-11-16 16:18+0700\n"
+"Last-Translator: OIS <mistresssilvara@hotmail.com>\n"
+"Language-Team: Interlingue <kde-i18n-doc@kde.org>\n"
+"Language: ie\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.8.12\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "OIS"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "mistresssilvara@hotmail.com"
+
+#: deviceindicator.cpp:53
+#, kde-format
+msgid "Browse device"
+msgstr "Navigar ti aparate"
+
+#: deviceindicator.cpp:67
+#, kde-format
+msgid "Send clipboard"
+msgstr ""
+
+#: deviceindicator.cpp:81
+#, fuzzy, kde-format
+#| msgid "Ring device"
+msgctxt "@action:inmenu play bell sound"
+msgid "Ring device"
+msgstr "Sonar"
+
+#: deviceindicator.cpp:95
+#, fuzzy, kde-format
+#| msgid "Send a file/URL"
+msgid "Send files"
+msgstr "Inviar un file o URL"
+
+#: deviceindicator.cpp:117
+#, fuzzy, kde-format
+#| msgid "SMS Messages..."
+msgid "SMS Messages…"
+msgstr "Missages SMS..."
+
+#: deviceindicator.cpp:130
+#, kde-format
+msgid "Run command"
+msgstr "Lansar un comande"
+
+#: deviceindicator.cpp:132
+#, fuzzy, kde-format
+msgid "Add commands"
+msgstr "Comandes"
+
+#: indicatorhelper_mac.cpp:47 indicatorhelper_mac.cpp:58
+#, kde-format
+msgid "KDE Connect"
+msgstr "KDE Connect"
+
+#: indicatorhelper_mac.cpp:48
+#, kde-format
+msgid ""
+"Cannot connect to DBus\n"
+"KDE Connect will quit"
+msgstr ""
+
+#: indicatorhelper_mac.cpp:58
+#, kde-format
+msgid "Cannot find kdeconnectd"
+msgstr "Ne successat trovar kdeconnectd"
+
+#: main.cpp:57
+#, kde-format
+msgid "KDE Connect Indicator"
+msgstr "Indicator de KDE Connect"
+
+#: main.cpp:59
+#, kde-format
+msgid "KDE Connect Indicator tool"
+msgstr "Indicator de KDE Connect"
+
+#: main.cpp:61
+#, kde-format
+msgid "© 2016–2025 KDE Connect Team"
+msgstr ""
+
+#: main.cpp:62
+#, fuzzy, kde-format
+#| msgid "(C) 2016 Aleix Pol Gonzalez"
+msgid "Aleix Pol Gonzalez"
+msgstr "(C) 2016 Aleix Pol Gonzalez"
+
+#: main.cpp:63
+#, kde-format
+msgid "Albert Vaca Cintora"
+msgstr ""
+
+#: main.cpp:101
+#, kde-format
+msgid "Open app"
+msgstr ""
+
+#: main.cpp:118
+#, kde-format
+msgid "Pairing requests"
+msgstr "Demandes de acuplation"
+
+#: main.cpp:123
+#, fuzzy, kde-format
+#| msgid "Pair"
+msgctxt "Accept a pairing request"
+msgid "Pair"
+msgstr "Acuplar"
+
+#: main.cpp:124
+#, kde-format
+msgid "Reject"
+msgstr "Rejecter"
+
+#: main.cpp:129 main.cpp:142
+#, kde-format
+msgid "Quit"
+msgstr "Surtir"
+
+#: main.cpp:159 main.cpp:181
+#, kde-format
+msgid "%1 device connected"
+msgid_plural "%1 devices connected"
+msgstr[0] "%1 aparate conexet"
+msgstr[1] "%1 aparates conexet"
+
+#: systray_actions/battery_action.cpp:35
+#, kde-format
+msgid "No Battery"
+msgstr "Sin batterie"
+
+#: systray_actions/battery_action.cpp:37
+#, kde-format
+msgid "Battery: %1% (Charging)"
+msgstr "Batterie: %1% (chargeante)"
+
+#: systray_actions/battery_action.cpp:39
+#, kde-format
+msgid "Battery: %1%"
+msgstr "Batterie: %1%"
+
+#: systray_actions/connectivity_action.cpp:30
+#, kde-format
+msgctxt ""
+"The fallback text to display in case the remote device does not have a "
+"cellular connection"
+msgid "No Cellular Connectivity"
+msgstr "Sin conexion cellulari"
+
+#: systray_actions/connectivity_action.cpp:33
+#, kde-format
+msgctxt ""
+"Display the cellular connection type and an approximate percentage of signal "
+"strength"
+msgid "%1  | ~%2%"
+msgstr "%1  | ~%2%"
+
+#, fuzzy
+#~| msgid "Configure..."
+#~ msgid "Configure..."
+#~ msgstr "Configurar..."
+
+#~ msgid "Launching"
+#~ msgstr "Lansante"
+
+#, fuzzy
+#~ msgid "Launching daemon"
+#~ msgstr "Lansante"
+
+#, fuzzy
+#~ msgid "Waiting D-Bus"
+#~ msgstr "Conversion a D-Bus"
+
+#~ msgid "Loading modules"
+#~ msgstr "Cargante modules"
+
+#~ msgid "Get a photo"
+#~ msgstr "Obtener un foto"

@@ -1,0 +1,229 @@
+# Translation for plasma_applet_org.kde.kdeconnect.po to Euskara/Basque (eu).
+# Copyright (C) 2017-2026 This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+# SPDX-FileCopyrightText: 2024, 2026 KDE euskaratzeko proiektuaren arduraduna <xalba@ni.eus>
+#
+# Translators:
+# Iñigo Salvador Azurmendi <xalba@ni.eus>, 2017, 2019, 2020, 2021, 2022, 2023, 2024, 2026.
+# Thadah Denyse <gontzalpujana@protonmail.com>, 2019.
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-05-29 00:43+0000\n"
+"PO-Revision-Date: 2026-03-19 20:52+0100\n"
+"Last-Translator: Iñigo Salvador Azurmendi <xalba@ni.eus>\n"
+"Language-Team: Basque <kde-i18n-eu@kde.org>\n"
+"Language: eu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 25.12.3\n"
+
+#: package/contents/ui/Battery.qml:35
+#, kde-format
+msgid "%1% charging"
+msgstr "%%1 kargatzen"
+
+#: package/contents/ui/Battery.qml:37
+#, kde-format
+msgid "%1%"
+msgstr "%%1"
+
+#: package/contents/ui/Battery.qml:40
+#, kde-format
+msgid "No info"
+msgstr "Informaziorik ez"
+
+#: package/contents/ui/Connectivity.qml:43
+#, kde-format
+msgid "Unknown"
+msgstr "Ezezaguna"
+
+#: package/contents/ui/Connectivity.qml:55
+#, kde-format
+msgid "No signal"
+msgstr "Seinalerik ez"
+
+#: package/contents/ui/DeviceDelegate.qml:89
+#, kde-format
+msgid "Virtual Monitor is not available"
+msgstr "Alegiazko begiralea ez dago eskuragarri"
+
+#: package/contents/ui/DeviceDelegate.qml:94
+#, kde-format
+msgid "Please choose a file"
+msgstr "Mesedez aukeratu fitxategi bat"
+
+#: package/contents/ui/DeviceDelegate.qml:111
+#, kde-format
+msgid "Share file"
+msgstr "Partekatu fitxategia"
+
+#: package/contents/ui/DeviceDelegate.qml:119
+#, kde-format
+msgid "Send Clipboard"
+msgstr "Bidali arbela"
+
+#: package/contents/ui/DeviceDelegate.qml:130
+#, kde-format
+msgid "Ring my phone"
+msgstr "Jo nire telefonoaren dei-doinua"
+
+#: package/contents/ui/DeviceDelegate.qml:141
+#, kde-format
+msgid "Browse this device"
+msgstr "Arakatu gailu hau"
+
+#: package/contents/ui/DeviceDelegate.qml:152
+#, kde-format
+msgid "SMS Messages"
+msgstr "SMS mezuak"
+
+#: package/contents/ui/DeviceDelegate.qml:195
+#, kde-format
+msgid "File Transfer"
+msgstr "Fitxategi transferentzia"
+
+#: package/contents/ui/DeviceDelegate.qml:196
+#, kde-format
+msgid "Drop a file to transfer it onto your phone."
+msgstr "Jaregin fitxategi bat zure telefonora transferitzeko."
+
+#: package/contents/ui/DeviceDelegate.qml:238
+#, kde-format
+msgid "Virtual Display"
+msgstr "Alegiazko pantaila"
+
+#: package/contents/ui/DeviceDelegate.qml:297
+#, kde-format
+msgctxt "Battery charge percentage"
+msgid "%1%"
+msgstr "%%1"
+
+#: package/contents/ui/DeviceDelegate.qml:310
+#, kde-format
+msgid "More options…"
+msgstr "Aukera gehiago…"
+
+#: package/contents/ui/DeviceDelegate.qml:349
+#, kde-format
+msgid "Notifications"
+msgstr "Jakinarazpenak"
+
+#: package/contents/ui/DeviceDelegate.qml:361
+#, kde-format
+msgid "Dismiss all notifications"
+msgstr "Baztertu jakinarazpen guztiak"
+
+#: package/contents/ui/DeviceDelegate.qml:379
+#, kde-format
+msgid "Remote Keyboard"
+msgstr "Urruneko teklatua"
+
+#: package/contents/ui/DeviceDelegate.qml:608
+#, kde-format
+msgid "Reply"
+msgstr "Erantzun"
+
+#: package/contents/ui/DeviceDelegate.qml:625
+#, kde-format
+msgid "Dismiss"
+msgstr "Baztertu"
+
+#: package/contents/ui/DeviceDelegate.qml:651
+#, kde-format
+msgid "Cancel"
+msgstr "Utzi"
+
+#: package/contents/ui/DeviceDelegate.qml:666
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Reply to %1…"
+msgstr "Erantzun %1(e)ri..."
+
+#: package/contents/ui/DeviceDelegate.qml:684
+#, kde-format
+msgid "Send"
+msgstr "Bidali"
+
+#: package/contents/ui/DeviceDelegate.qml:716
+#, kde-format
+msgid "Run command"
+msgstr "Exekutatu komandoa"
+
+#: package/contents/ui/DeviceDelegate.qml:723
+#, kde-format
+msgid "Add command"
+msgstr "Gehitu komandoa"
+
+#: package/contents/ui/FullRepresentation.qml:68
+#, kde-format
+msgid "No paired devices"
+msgstr "Ez dago parekatutako gailurik"
+
+#: package/contents/ui/FullRepresentation.qml:68
+#, kde-format
+msgid "Paired device is unavailable"
+msgid_plural "All paired devices are unavailable"
+msgstr[0] "Parekatutako gailua ez dago eskuragarri"
+msgstr[1] "Parekatutako gailua guztiak ez daude eskuragarri"
+
+#: package/contents/ui/FullRepresentation.qml:70
+#, kde-format
+msgid "Install KDE Connect on your Android device to integrate it with Plasma!"
+msgstr "Instalatu KDE Connect zure Android gailuan Plasmarekin integratzeko!"
+
+#: package/contents/ui/FullRepresentation.qml:74
+#, kde-format
+msgid "Pair a Device…"
+msgstr "Gailu bat parekatu..."
+
+#: package/contents/ui/FullRepresentation.qml:86
+#, kde-format
+msgid "Install from Google Play"
+msgstr "Instalatu Google Playtik"
+
+#: package/contents/ui/FullRepresentation.qml:96
+#, kde-format
+msgid "Install from F-Droid"
+msgstr "Instalatu F-Droidetik"
+
+#: package/contents/ui/main.qml:55
+#, kde-format
+msgid "KDE Connect Settings…"
+msgstr "KDE Connect-en ezarpenak..."
+
+#~ msgid "Remote device does not have a VNC client (eg. krdc) installed."
+#~ msgstr "Hurreneko gailuak ez du VNC bezerorik (adib. krdc) instalatuta."
+
+#~ msgid "The krfb package is required on the local device."
+#~ msgstr "Gailu lokalean «krfb» paketea behar da."
+
+#~ msgid "Failed to create the virtual monitor."
+#~ msgstr "Alegiazko begiralea sortzea huts egin du."
+
+#~ msgid "Save As"
+#~ msgstr "Gorde honela"
+
+#~ msgid "Take a photo"
+#~ msgstr "Atera argazki bat"
+
+#~ msgid "Configure..."
+#~ msgstr "Konfiguratu..."
+
+#~ msgctxt ""
+#~ "Display the battery charge percentage with the label \"Battery:\" so the "
+#~ "user knows what is being displayed"
+#~ msgid "Battery: %1"
+#~ msgstr "Bateria: %1"
+
+#~ msgid "%1 (%2)"
+#~ msgstr "%1 (%2)"
+
+#~ msgid "Charging: %1%"
+#~ msgstr "Kargatzen: %1%"
+
+#~ msgid "Discharging: %1%"
+#~ msgstr "Deskargatzen: %1%"

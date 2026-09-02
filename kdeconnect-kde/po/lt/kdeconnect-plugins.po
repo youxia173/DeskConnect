@@ -1,0 +1,660 @@
+# Lithuanian translations for l package.
+# Copyright (C) 2014 This_file_is_part_of_KDE
+# This file is distributed under the same license as the l package.
+# Automatically generated, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-14 00:45+0000\n"
+"PO-Revision-Date: 2026-08-01 14:46+0300\n"
+"Last-Translator: Moo <<>>\n"
+"Language-Team: Lithuanian <kde-i18n-lt@kde.org>\n"
+"Language: lt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n%10>=2 && (n%100<10 || n"
+"%100>=20) ? 1 : n%10==0 || (n%100>10 && n%100<20) ? 2 : 3);\n"
+"X-Generator: Poedit 3.9\n"
+
+#: battery/batteryplugin.cpp:150
+#, kde-format
+msgctxt "device name: low battery"
+msgid "%1: Low Battery"
+msgstr "%1: Akumuliatorius baigia išsikrauti"
+
+#: battery/batteryplugin.cpp:151
+#, kde-format
+msgid "Battery at %1%"
+msgstr "Akumuliatorius ties %1%"
+
+#: clipboard/kdeconnect_clipboard_config.qml:34
+#, kde-format
+msgid "Automatically share the clipboard from this device"
+msgstr "Automatiškai bendrinti iškarpinę iš šio įrenginio"
+
+#: clipboard/kdeconnect_clipboard_config.qml:42
+#, kde-format
+msgid "Including passwords (as marked by password managers)"
+msgstr "Įskaitant slaptažodžius (kaip juos žymi slaptažodžių tvarkytuvės)"
+
+#: clipboard/kdeconnect_clipboard_config.qml:55
+#, kde-format
+msgid "Max Clipboard File Size (MB)"
+msgstr "Didžiausias iškarpinės failo dydis (MB)"
+
+#: digitizer/linuxdigitizerimpl.cpp:72 digitizer/linuxdigitizerimpl.cpp:168
+#, kde-format
+msgid "KDE Connect Error"
+msgstr "KDE Connect klaida"
+
+#: digitizer/linuxdigitizerimpl.cpp:73
+#, kde-format
+msgid ""
+"Unable to create a virtual drawing tablet. If this error persists, file a "
+"bug report."
+msgstr ""
+"Nepavyko sukurti virtualios piešimo planšetės. Jei ši klaida išlieka, "
+"pateikite pranešimą apie klaidą."
+
+#: digitizer/linuxdigitizerimpl.cpp:169
+#, kde-format
+msgid ""
+"Unable to process one or more input events for the virtual device. If this "
+"error persists, file a bug report."
+msgstr ""
+"Nepavyko apdoroti vieno ar daugiau įvesties įvykių, skirtų virtualiam "
+"įrenginiui. Jei ši klaida išlieka, pateikite pranešimą apie klaidą."
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:23
+#: share/kdeconnect_share_config.qml:22
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:25
+#, kde-format
+msgid "Apply"
+msgstr "Taikyti"
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:47
+#, kde-format
+msgid "Sound to play:"
+msgstr "Garsas, kurį atkurti:"
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:57
+#, kde-format
+msgctxt "@action:button"
+msgid "Choose file"
+msgstr "Pasirinkti failą"
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:66
+#, kde-format
+msgctxt "@action:button"
+msgid "Play"
+msgstr "Atkurti"
+
+#: lockdevice/lockdeviceplugin-win.cpp:58 lockdevice/lockdeviceplugin.cpp:87
+#, kde-format
+msgid "Remote lock successful"
+msgstr "Pavyko užrakinti per nuotolį"
+
+#: lockdevice/lockdeviceplugin-win.cpp:61
+#: lockdevice/lockdeviceplugin-win.cpp:62 lockdevice/lockdeviceplugin.cpp:92
+#: lockdevice/lockdeviceplugin.cpp:94
+#, kde-format
+msgid "Remote lock failed"
+msgstr "Nepavyko užrakinti per nuotolį"
+
+#: mpriscontrol/mpriscontrolplugin-win.cpp:26
+#, kde-format
+msgctxt ""
+"@title Users select this to control the current media player when we can't "
+"detect a specific player name like VLC"
+msgid "Current Player"
+msgstr "Dabartinė leistuvė"
+
+#: mpriscontrol/mpriscontrolplugin-win.cpp:93
+#: mpriscontrol/mpriscontrolplugin-win.cpp:94
+#: mpriscontrol/mpriscontrolplugin-win.cpp:95
+#, kde-format
+msgid "N/A"
+msgstr "Neprieinama"
+
+#: notifications/notification.cpp:117
+#, kde-format
+msgctxt "@action:button"
+msgid "Reply"
+msgstr "Atsakyti"
+
+#: notifications/notification.cpp:120
+#, kde-format
+msgctxt "@info:placeholder %1 is the name of a group chat"
+msgid "Reply in %1…"
+msgstr "Atsakyti į %1…"
+
+#: notifications/notification.cpp:122
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Reply to %1…"
+msgstr "Atsakyti %1…"
+
+#: notifications/sendreplydialog.cpp:29
+#, kde-format
+msgid "Send"
+msgstr "Siųsti"
+
+#. i18n: ectx: property (windowTitle), widget (QDialog, SendReplyDialog)
+#: notifications/sendreplydialog.ui:14
+#, kde-format
+msgid "Dialog"
+msgstr "Dialogas"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:32
+#, kde-format
+msgid "Pause as soon as phone rings"
+msgstr "Pristabdyti, kai tik suskamba telefonas"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:41
+#, kde-format
+msgid "Pause only while talking"
+msgstr "Pristabdyti tik kalbant telefonu"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:47
+#, kde-format
+msgid "Pause media players"
+msgstr "Pristabdyti medijos leistuves"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:54
+#, kde-format
+msgid "Mute system sound"
+msgstr "Nutildyti sistemos garsą"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:61
+#, kde-format
+msgid "Resume automatically when call ends"
+msgstr "Automatiškai pratęsti, kai skambutis užbaigiamas"
+
+#: ping/pingplugin.cpp:26
+#, kde-format
+msgid "Ping!"
+msgstr "Ryšio patikrinimas!"
+
+#: presenter/kdeconnect_presenter_config.qml:23
+#, kde-format
+msgctxt "@action:label"
+msgid "Display:"
+msgstr "Rodyti:"
+
+#: presenter/kdeconnect_presenter_config.qml:25
+#, kde-format
+msgid "Red Dot"
+msgstr "Raudonas taškas"
+
+#: presenter/kdeconnect_presenter_config.qml:26
+#, kde-format
+msgid "Electric"
+msgstr "Elektrinis"
+
+#: runcommand/kdeconnect_runcommand_config.qml:21
+#, kde-format
+msgid "Add Command…"
+msgstr "Pridėti komandą…"
+
+#: runcommand/kdeconnect_runcommand_config.qml:54
+#, kde-format
+msgid "Edit"
+msgstr "Taisyti"
+
+#: runcommand/kdeconnect_runcommand_config.qml:64
+#, kde-format
+msgid "Delete"
+msgstr "Ištrinti"
+
+#: runcommand/kdeconnect_runcommand_config.qml:76
+#, kde-format
+msgctxt "@info"
+msgid "No commands configured"
+msgstr "Nėra sukonfigūruotų komandų"
+
+#: runcommand/kdeconnect_runcommand_config.qml:77
+#, kde-format
+msgctxt "@info"
+msgid "Add commands to run them remotely from other devices"
+msgstr ""
+"Pridėkite komandas norėdami paleisti jas nuotoliniu būdu iš kitų įrenginių"
+
+#: runcommand/kdeconnect_runcommand_config.qml:83
+#, kde-format
+msgctxt "@title:window"
+msgid "Add Command"
+msgstr "Pridėti komandą"
+
+#: runcommand/kdeconnect_runcommand_config.qml:89
+#, kde-format
+msgctxt "@action:button"
+msgid "Add"
+msgstr "Pridėti"
+
+#: runcommand/kdeconnect_runcommand_config.qml:96
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Add command"
+msgstr "Pridėti komandą"
+
+#: runcommand/kdeconnect_runcommand_config.qml:105
+#: runcommand/kdeconnect_runcommand_config.qml:183
+#, kde-format
+msgid "Name:"
+msgstr "Pavadinimas:"
+
+#: runcommand/kdeconnect_runcommand_config.qml:109
+#: runcommand/kdeconnect_runcommand_config.qml:187
+#, kde-format
+msgid "Command:"
+msgstr "Komanda:"
+
+#: runcommand/kdeconnect_runcommand_config.qml:113
+#, kde-format
+msgid "Sample commands:"
+msgstr "Pavyzdinės komandos:"
+
+#: runcommand/kdeconnect_runcommand_config.qml:131
+#: runcommand/kdeconnect_runcommand_config.qml:142
+#, kde-format
+msgctxt "Sample command"
+msgid "Suspend"
+msgstr "Pristabdyti"
+
+#: runcommand/kdeconnect_runcommand_config.qml:135
+#: runcommand/kdeconnect_runcommand_config.qml:150
+#, kde-format
+msgctxt "Sample command"
+msgid "Lock Screen"
+msgstr "Užrakinti ekraną"
+
+#: runcommand/kdeconnect_runcommand_config.qml:146
+#, kde-format
+msgctxt "Sample command"
+msgid "Maximum Brightness"
+msgstr "Didžiausias ryškumas"
+
+#: runcommand/kdeconnect_runcommand_config.qml:154
+#, kde-format
+msgctxt "Sample command"
+msgid "Unlock Screen"
+msgstr "Atrakinti ekraną"
+
+#: runcommand/kdeconnect_runcommand_config.qml:158
+#, kde-format
+msgctxt "Sample command"
+msgid "Close All Vaults"
+msgstr "Uždaryti visas slėptuves"
+
+#: runcommand/kdeconnect_runcommand_config.qml:162
+#, kde-format
+msgctxt "Sample command"
+msgid "Forcefully Close All Vaults"
+msgstr "Priverstinai uždaryti visas slėptuves"
+
+#: runcommand/kdeconnect_runcommand_config.qml:175
+#, kde-format
+msgctxt "@title:window"
+msgid "Edit Command"
+msgstr "Taisyti komandą"
+
+#: runcommand/kdeconnect_runcommand_config.qml:192
+#, kde-format
+msgctxt "@action:button"
+msgid "Confirm"
+msgstr "Patvirtinti"
+
+#: runcommand/kdeconnect_runcommand_config.qml:199
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Confirm"
+msgstr "Patvirtinti"
+
+#: screensaver-inhibit/screensaverinhibitplugin.cpp:24
+#, kde-format
+msgid "Phone is connected"
+msgstr "Telefonas prijungtas"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:34
+#, kde-format
+msgid "Persistent notifications only"
+msgstr "Tik pastovūs pranešimai"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:42
+#, kde-format
+msgid "Include body"
+msgstr "Įtraukti pagrindinį tekstą"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:49
+#, kde-format
+msgid "Include icon"
+msgstr "Įtraukti piktogramą"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:56
+#, kde-format
+msgid "Minimum urgency level:"
+msgstr "Mažiausias skubumo lygis:"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:178
+#, kde-format
+msgid "Name"
+msgstr "Pavadinimas"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:182
+#, kde-format
+msgid "Excluded"
+msgstr "Išbrauktas"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:186
+#, kde-format
+msgid "Name of a notifying application."
+msgstr "Pranešančios programos pavadinimas."
+
+#: sendnotifications/notifyingapplicationmodel.cpp:188
+#, kde-format
+msgid "Synchronize notifications of an application?"
+msgstr "Sinchronizuoti programos pranešimus?"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:191
+#, kde-format
+msgid ""
+"Regular expression defining which notifications should not be sent.\n"
+"This pattern is applied to the summary and, if selected above, the body of "
+"notifications."
+msgstr ""
+"Įprastoji išraiška, apibrėžianti kurie pranešimai neturėtų būti "
+"išsiunčiami.\n"
+"Šis šablonas yra taikomas pranešimų santraukai ir, jei pažymėta aukščiau, "
+"pagrindiniam pranešimų tekstui."
+
+#: sftp/mounter.cpp:141
+#, kde-format
+msgid "Failed to start sshfs"
+msgstr "Nepavyko paleisti sshfs"
+
+#: sftp/mounter.cpp:145
+#, kde-format
+msgid "sshfs process crashed"
+msgstr "sshfs procesas lūžo"
+
+#: sftp/mounter.cpp:149
+#, kde-format
+msgid "Unknown error in sshfs"
+msgstr "Nežinoma klaida, esanti sshfs"
+
+#: sftp/mounter.cpp:160
+#, kde-format
+msgid "Error when accessing filesystem. sshfs finished with exit code %0"
+msgstr ""
+"Klaida gaunant prieigą prie failų sistemos. sshfs užbaigė su išėjimo kodu %0"
+
+#: sftp/mounter.cpp:169
+#, kde-format
+msgid "Failed to mount filesystem: device not responding"
+msgstr "Nepavyko prijungti failų sistemos: įrenginys neatsako"
+
+#: sftp/sftpplugin-win.cpp:93
+#, kde-format
+msgid "KDE Connect"
+msgstr "KDE Connect"
+
+#: sftp/sftpplugin-win.cpp:94
+#, kde-format
+msgid "Cannot handle SFTP protocol. Apologies for the inconvenience"
+msgstr "Nepavyksta apdoroti SFTP protokolo. Atsiprašome už nepatogumus"
+
+#: sftp/sftpplugin.cpp:174
+#, kde-format
+msgid "All files"
+msgstr "Visi failai"
+
+#: sftp/sftpplugin.cpp:175
+#, kde-format
+msgid "Camera pictures"
+msgstr "Nuotraukos"
+
+#: share/kdeconnect_share_config.qml:47
+#, kde-format
+msgid "Save files in:"
+msgstr "Įrašyti failus į:"
+
+#: share/kdeconnect_share_config.qml:63
+#, kde-format
+msgid "%1 in the path will be replaced with the specific device name"
+msgstr "%1 kelyje bus pakeista tam tikru įrenginio pavadinimu"
+
+#: share/shareplugin.cpp:164
+#, kde-format
+msgctxt "@info Some piece of text was received from a connected device"
+msgid "Shared text copied to clipboard"
+msgstr "Bendrintas tekstas nukopijuotas į iškarpinę"
+
+#: share/shareplugin.cpp:168
+#, kde-format
+msgctxt "@info Some piece of text was received from a connected device"
+msgid "Shared text from %1 copied to clipboard"
+msgstr "Bendrintas tekstas iš %1 nukopijuotas į iškarpinę"
+
+#: share/shareplugin.cpp:212
+#, kde-format
+msgctxt "@action:button Edit text with default text editor"
+msgid "Open in Text Editor"
+msgstr "Atverti tekstų redaktoriuje"
+
+#: share/shareplugin.cpp:216
+#, kde-format
+msgctxt "@action:button Open URL with default app"
+msgid "Open Link"
+msgstr "Atverti nuorodą"
+
+#: share/shareplugin.cpp:257 share/shareplugin.cpp:262
+#, kde-format
+msgid "Could not share file"
+msgstr "Nepavyko bendrinti failo"
+
+#: share/shareplugin.cpp:257
+#, kde-format
+msgid "%1 does not exist"
+msgstr "%1 nėra"
+
+#: share/shareplugin.cpp:262
+#, kde-format
+msgid "Permission denied: %1"
+msgstr "Leidimas atmestas: %1"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:43
+#, kde-format
+msgctxt ""
+"@label:listbox Forms a sentence: 'Leave the screen at the top/bottom/left/"
+"right edge', the pointer will switch to the connected device there"
+msgid "Leave Screen at"
+msgstr "Palikti ekraną ties"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:51
+#, kde-format
+msgctxt "@item:inlistbox top edge of screen"
+msgid "Top"
+msgstr "Viršus"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:55
+#, kde-format
+msgctxt "@item:inlistbox left edge of screen"
+msgid "Left"
+msgstr "Kairė"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:59
+#, kde-format
+msgctxt "@item:inlistbox right edge of screen"
+msgid "Right"
+msgstr "Dešinė"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:63
+#, kde-format
+msgctxt "@item:inlistbox top edge of screen"
+msgid "Bottom"
+msgstr "Apačia"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:71
+#, kde-format
+msgctxt "@info:tooltip edge: screen edge"
+msgid ""
+"Another device already reserved this edge. This may lead to unexpected "
+"results when both are connected at the same time."
+msgstr ""
+"Kitas įrenginys jau yra užsirezervavęs šį kraštą. Tai gali sukelti netikėtus "
+"rezultatus, kai abu įrenginiai bus prisijungę tuo pačiu metu."
+
+#: telephony/telephonyplugin.cpp:23
+#, kde-format
+msgid "unknown number"
+msgstr "nežinomas numeris"
+
+#: telephony/telephonyplugin.cpp:32
+#, kde-format
+msgid "Incoming call from %1"
+msgstr "Skambutis nuo %1"
+
+#: telephony/telephonyplugin.cpp:36
+#, kde-format
+msgid "Missed call from %1"
+msgstr "Praleistas skambutis nuo %1"
+
+#: telephony/telephonyplugin.cpp:65
+#, kde-format
+msgid "Mute Call"
+msgstr "Nutildyti skambutį"
+
+#: virtualmonitor/virtualmonitorplugin.cpp:184
+#, kde-format
+msgid "Remote device does not have a VNC or RDP client (eg. krdc) installed."
+msgstr ""
+"Nuotoliniame įrenginyje nėra įdiegta VNC ar RDP (pvz., krdc) kliento "
+"programa."
+
+#: virtualmonitor/virtualmonitorplugin.cpp:187
+#, kde-format
+msgid "The krdp package is required on the local device."
+msgstr "Vietiniame įrenginyje reikalingas krdp paketas."
+
+#: virtualmonitor/virtualmonitorplugin.cpp:190
+#, kde-format
+msgid "Cannot start a request without a resolution"
+msgstr "Nepavyksta pradėti užklausos be nutarimo"
+
+#~ msgid "Clipboard plugin"
+#~ msgstr "Iškarpinės įskiepis"
+
+#~ msgid "Automatic synchronization"
+#~ msgstr "Automatinis sinchronizavimas"
+
+#~ msgid "Discovery Utilities"
+#~ msgstr "Atradimo paslaugų programos"
+
+#~ msgid "Select the sound to play"
+#~ msgstr "Pasirinkite kurį garsą atkurti"
+
+#~ msgid "Pause music plugin"
+#~ msgstr "Muzikos pristabdymo įskiepis"
+
+#~ msgid "Condition"
+#~ msgstr "Sąlyga"
+
+#~ msgid "Actions"
+#~ msgstr "Veiksmai"
+
+#~ msgid "Automatically resume media when call has finished"
+#~ msgstr "Užbaigus skambutį, automatiškai pratęsti medijos atkūrimą"
+
+#~ msgid "Schedule a shutdown"
+#~ msgstr "Suplanuoti išjungimą"
+
+#~ msgid "Shutdown now"
+#~ msgstr "Išjungti dabar"
+
+#~ msgid "Cancel last shutdown"
+#~ msgstr "Atsisakyti paskutinio išjungimo"
+
+#~ msgid "Schedule a reboot"
+#~ msgstr "Suplanuoti paleidimą iš naujo"
+
+#~ msgid "Say Hello"
+#~ msgstr "Pasisveikinti"
+
+#~ msgid "Shutdown"
+#~ msgstr "Išjungti"
+
+#~ msgid "Reboot"
+#~ msgstr "Paleisti iš naujo"
+
+#~ msgid "Export"
+#~ msgstr "Eksportuoti"
+
+#~ msgid "Import"
+#~ msgstr "Importuoti"
+
+#~ msgid "Export Commands"
+#~ msgstr "Eksportuoti komandas"
+
+#~ msgid "Import Commands"
+#~ msgstr "Importuoti komandas"
+
+#~ msgid "General"
+#~ msgstr "Bendri"
+
+#~ msgid "Synchronize only notifications with a timeout value of 0?"
+#~ msgstr "Sinchronizuoti tik pranešimus, kurių laiko limito reikšmė yra 0?"
+
+#~ msgid ""
+#~ "Append the notification body to the summary when synchronizing "
+#~ "notifications?"
+#~ msgstr ""
+#~ "Sinchronizuojant pranešimus pridėti pagrindinį pranešimo tekstą prie "
+#~ "santraukos?"
+
+#~ msgid "Synchronize icons of notifying applications if possible?"
+#~ msgstr "Jei įmanoma, sinchronizuoti pranešančių programų piktogramas?"
+
+#~ msgid "Synchronize icons"
+#~ msgstr "Sinchronizuoti piktogramas"
+
+#~ msgid ""
+#~ "<html><head/><body><p>Minimum urgency level of the notifications</p></"
+#~ "body></html>"
+#~ msgstr ""
+#~ "<html><head/><body><p>Mažiausias pranešimų skubumo lygis</p></body></html>"
+
+#~ msgid "Synchronize only notifications with the given urgency level."
+#~ msgstr "Sinchronizuoti tik pranešimus su nurodytu skubumo lygiu."
+
+#~ msgid "Applications"
+#~ msgstr "Programos"
+
+#~ msgid "Share plugin settings"
+#~ msgstr "Bendrinimo įskiepio nuostatos"
+
+#~ msgid "Receiving"
+#~ msgstr "Gaunama"
+
+#~ msgid "Blacklisted"
+#~ msgstr "Įtrauktas į juodąjį sąrašą"
+
+#~ msgid "Reply"
+#~ msgstr "Atsakyti"
+
+#~ msgid "Contents shared to other devices"
+#~ msgstr "Į kitus įrenginius bendrinamas turinys"
+
+#~ msgid "Anything else"
+#~ msgstr "Bet kas kita"
+
+#~ msgid "Use your phone as a touchpad and keyboard"
+#~ msgstr "Naudoti telefoną kaip jutiklinį kilimėlį ir klaviatūrą"
+
+#~ msgid "Unknown telephony event: %1"
+#~ msgstr "Nežinomas telefonijos įvykis: %1"
+
+#~ msgid "SMS from %1<br>%2"
+#~ msgstr "SMS nuo %1<br>%2"

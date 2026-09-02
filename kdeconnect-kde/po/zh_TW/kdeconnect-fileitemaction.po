@@ -1,0 +1,32 @@
+# Chinese translations for kdeconnect-kde package
+# kdeconnect-kde 套件的正體中文翻譯.
+# Copyright (C) 2019 This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+#
+# Automatically generated, 2019.
+# pan93412 <pan93412@gmail.com>, 2019.
+# SPDX-FileCopyrightText: 2024 Kisaragi Hiu <mail@kisaragi-hiu.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-07-27 00:44+0000\n"
+"PO-Revision-Date: 2024-11-28 16:41+0900\n"
+"Last-Translator: Kisaragi Hiu <mail@kisaragi-hiu.com>\n"
+"Language-Team: Traditional Chinese <zh-l10n@lists.slat.org>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Lokalize 24.08.3\n"
+
+#: sendfileitemaction.cpp:35
+#, kde-format
+msgid "Send via KDE Connect"
+msgstr "透過 KDE Connect 傳送"
+
+#: sendfileitemaction.cpp:47
+#, kde-format
+msgid "Send to '%1' via KDE Connect"
+msgstr "透過 KDE Connect 傳到「%1」"

@@ -1,0 +1,44 @@
+# Build
+build/
+cmake-build-*/
+out/
+dist/
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.exe
+*.so
+*.dylib
+*.app
+compile_commands.json
+CMakeCache.txt
+CMakeFiles/
+install_manifest.txt
+
+# IDE / OS
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Packages
+node_modules/
+*.AppImage
+*.deb
+*.rpm
+*.msi
+*.msix

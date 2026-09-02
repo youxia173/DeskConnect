@@ -1,0 +1,280 @@
+# translation of kdeconnect-sms.po to Slovak
+# Roman Paholik <wizzardsk@gmail.com>, 2020, 2022.
+# SPDX-FileCopyrightText: 2020, 2021, 2024 Matej Mrenica <matejm98mthw@gmail.com>
+# Dusan Kazik <prescott66@gmail.com>, 2020.
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-sms\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-25 00:44+0000\n"
+"PO-Revision-Date: 2024-04-27 16:45+0200\n"
+"Last-Translator: Matej Mrenica <matejm98mthw@gmail.com>\n"
+"Language-Team: Slovak <kde-i18n-doc@kde.org>\n"
+"Language: sk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 24.02.2\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Roman Paholík,Dušan Kazik"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "wizzardsk@gmail.com,prescott66@gmail.com"
+
+#: attachmentshelper.cpp:36
+#, kde-format
+msgctxt "Caption/title for attachment download/save window"
+msgid "Download attachment"
+msgstr "Stiahnuť prílohu"
+
+#: conversationlistmodel.cpp:212
+#, kde-format
+msgctxt "Used as a text placeholder when the most-recent message is an image"
+msgid "Picture"
+msgstr "Obrázok"
+
+#: conversationlistmodel.cpp:214
+#, kde-format
+msgctxt "Used as a text placeholder when the most-recent message is a video"
+msgid "Video"
+msgstr "Video"
+
+#: conversationlistmodel.cpp:218
+#, kde-format
+msgctxt ""
+"Used as a text placeholder when the most-recent message is an arbitrary "
+"attachment, resulting in something like \"pdf file\""
+msgid "%1 file"
+msgstr "%1 súbor"
+
+#: conversationlistmodel.cpp:239
+#, kde-format
+msgid "You: %1"
+msgstr "Vy: %1"
+
+#: conversationlistmodel.cpp:245
+#, kde-format
+msgid "%1: %2"
+msgstr "%1: %2"
+
+#: conversationlistmodel.cpp:287 conversationlistmodel.cpp:308
+#, kde-format
+msgid "%1"
+msgstr "%1"
+
+#: main.cpp:84 qml/Main.qml:73
+#, kde-format
+msgid "KDE Connect SMS"
+msgstr "KDE Connect SMS"
+
+#: main.cpp:86
+#, kde-format
+msgid "SMS Instant Messaging"
+msgstr "Okamžité správy SMS"
+
+#: main.cpp:88
+#, kde-format
+msgid "© 2018–2025 KDE Connect Team"
+msgstr "(C) 2018-2022, Tím KDE Connect"
+
+#: main.cpp:89
+#, kde-format
+msgid "Simon Redman"
+msgstr "Simon Redman"
+
+#: main.cpp:90
+#, kde-format
+msgid "Aleix Pol Gonzalez"
+msgstr "Aleix Pol Gonzalez"
+
+#: main.cpp:91
+#, kde-format
+msgid "Nicolas Fella"
+msgstr "Nicolas Fella"
+
+#: main.cpp:118
+#, kde-format
+msgid "Select a device"
+msgstr "Vyberte zariadenie"
+
+#: main.cpp:118
+#, kde-format
+msgid "id"
+msgstr "id"
+
+#: main.cpp:119
+#, kde-format
+msgid "Send a message"
+msgstr "Odoslať správu"
+
+#: main.cpp:119
+#, kde-format
+msgid "message"
+msgstr "správa"
+
+#: qml/AttachmentViewer.qml:21
+#, kde-format
+msgid "Open with default"
+msgstr "Otvoriť s predvoleným"
+
+#: qml/AttachmentViewer.qml:28
+#, kde-format
+msgid "Download attachment…"
+msgstr "Stiahnuť prílohu…"
+
+#: qml/ConversationList.qml:24
+#, kde-format
+msgid "No devices available"
+msgstr "Žiadne dostupné zariadenia"
+
+#: qml/ConversationList.qml:33
+#, kde-format
+msgid ""
+"No new messages can be sent or received, but you can browse cached content"
+msgstr ""
+"Žiadne nové správy nemôžu byť odoslané alebo prijaté, ale môžte si prezerať "
+"ulož uložený obsah"
+
+#: qml/ConversationList.qml:49
+#, kde-format
+msgid ""
+"Loading conversations from device. If this takes a long time, please wake up "
+"your device and then click Refresh."
+msgstr ""
+"Načítavam konverzácie zo zariadenia. Ak to trvá dlho, prosím zabuďte vaše "
+"zariadenie a kliknite na Obnoviť."
+
+#: qml/ConversationList.qml:57
+#, kde-format
+msgid ""
+"Tip: If you plug in your device, it should not go into doze mode and should "
+"load quickly."
+msgstr ""
+"Tip: Ak pripojíte vaše zariadenie, nemalo by prejsť do režimu spánku a malo "
+"by sa rýchlo načítať."
+
+#: qml/ConversationList.qml:65 qml/Main.qml:98
+#, kde-format
+msgid "Refresh"
+msgstr "Obnoviť"
+
+#: qml/ConversationList.qml:84
+#, kde-format
+msgid "Choose recipient"
+msgstr "Vybrať príjemcu"
+
+#: qml/ConversationList.qml:89
+#, kde-format
+msgid "Cancel"
+msgstr "Zrušiť"
+
+#: qml/ConversationList.qml:108
+#, kde-format
+msgid "Search or start a conversation"
+msgstr "Vyhľadajte alebo začnite novú konverzáciu"
+
+#: qml/ConversationList.qml:144
+#, kde-format
+msgid "Start new conversation"
+msgstr "Začať novú konverzáciu"
+
+#: qml/ConversationList.qml:194
+#, kde-format
+msgctxt "Placeholder message text when no messages are found"
+msgid "No Matches"
+msgstr "Žiadne zhody"
+
+#: qml/ConversationList.qml:204
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "No Conversations"
+msgstr "Začať novú konverzáciu"
+
+#: qml/Main.qml:93
+#, kde-format
+msgid "Devices"
+msgstr "Zariadenia"
+
+#: qml/Main.qml:106
+#, kde-format
+msgid "About"
+msgstr "O"
+
+#: qml/Main.qml:115
+#, kde-format
+msgid "About KDE"
+msgstr "Informácie o KDE"
+
+#: qml/MessageAttachments.qml:114
+#, kde-format
+msgid "Audio clip"
+msgstr "Zvukový klip"
+
+#: qml/SendingArea.qml:24
+#, kde-format
+msgid "Failed to send"
+msgstr "Odosielanie zlyhalo"
+
+#: qml/SendingArea.qml:25
+#, kde-format
+msgid "Max message size limit exceeded."
+msgstr "Bol prekročený limit maximálnej veľkosti správy."
+
+#: qml/SendingArea.qml:67
+#, kde-format
+msgid "Send a message…"
+msgstr "Odoslať správu"
+
+#: qml/SendingArea.qml:123
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Attach an image or file"
+msgstr "Priložiť obrázok alebo súbor"
+
+#: qml/SendingArea.qml:148
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Clear attachments"
+msgstr "Vymazať prílohy"
+
+#: qml/SendingArea.qml:177
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Send message"
+msgstr "Súkromné adresy"
+
+#~ msgid "Copy Message"
+#~ msgstr "Kopírovať správu"
+
+#~ msgid "Copy Selection"
+#~ msgstr "Kopírovať výber"
+
+#~ msgid "Compose message"
+#~ msgstr "Napísať správu"
+
+#~ msgid "New"
+#~ msgstr "Nová"
+
+#~ msgid "Filter..."
+#~ msgstr "Filter..."
+
+#~ msgid "No matched results found : ("
+#~ msgstr "Nenašli sa žiadne zodpovedajúce výsledky : ("
+
+#~ msgid "(Unsupported Message Type)"
+#~ msgstr "(Nepodporovaný typ správy)"
+
+#~ msgid "Replying to multitarget messages is not supported"
+#~ msgstr "Odpovedanie na správy pre viacerých príjemcov nie je podporované"
+
+#~ msgid "Spoiler"
+#~ msgstr "Spoiler"
+
+#~ msgid "Download"
+#~ msgstr "Prevziať"
