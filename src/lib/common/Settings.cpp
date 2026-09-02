@@ -219,11 +219,10 @@ QVariant Settings::defaultValue(const QString &key)
   if (key == Core::Port)
     return 24800;
 
+  if (key == Core::Language)
+    return QStringLiteral("zh_CN");
+
   if (key == Core::ProcessMode) {
-#ifdef Q_OS_WIN
-    if (!Settings::isPortableMode())
-      return Settings::ProcessMode::Service;
-#endif
     return Settings::ProcessMode::Desktop;
   }
 

@@ -26,6 +26,7 @@
 #include "common/VersionInfo.h"
 #include "gui/Messages.h"
 #include "gui/TlsUtility.h"
+#include "gui/WifiInfo.h"
 #include "gui/core/CoreProcess.h"
 #include "gui/ipc/DaemonIpcClient.h"
 #include "gui/widgets/LogDock.h"
@@ -34,10 +35,13 @@
 
 #include <QCheckBox>
 #include <QCloseEvent>
+#include <QComboBox>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QLineEdit>
 #include <QLocalServer>
 #include <QLocalSocket>
+#include <QMap>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
@@ -48,6 +52,8 @@
 #include <QRegularExpressionValidator>
 #include <QScreen>
 #include <QScrollBar>
+#include <QSignalBlocker>
+#include <QToolButton>
 
 #include <memory>
 
@@ -287,8 +293,11 @@ void MainWindow::connectSlots()
 
   connect(ui->btnRestartCore, &QPushButton::clicked, this, &MainWindow::resetCore);
 
-  connect(ui->lineHostname, &QLineEdit::returnPressed, ui->btnRestartCore, &QPushButton::click);
-  connect(ui->lineHostname, &QLineEdit::textChanged, this, &MainWindow::remoteHostChanged);
+  connect(ui->comboHostname, &QComboBox::currentTextChanged, this, &MainWindow::remoteHostChanged);
+  if (auto *hostnameEdit = ui->comboHostname->lineEdit()) {
+    connect(hostnameEdit, &QLineEdit::returnPressed, ui->btnRestartCore, &QPushButton::click);
+  }
+  connect(ui->btnRemoveHostname, &QToolButton::clicked, this, &MainWindow::removeSelectedHostnameFromHistory);
 
   connect(ui->btnSaveServerConfig, &QPushButton::clicked, this, &MainWindow::saveServerConfig);
   connect(ui->btnConfigureServer, &QPushButton::clicked, this, [this] { showConfigureServer(""); });
@@ -651,7 +660,7 @@ void MainWindow::open()
   }
 
   if (Settings::value(Settings::Gui::AutoStartCore).toBool()) {
-    if (ui->rbModeClient->isChecked() && ui->lineHostname->text().isEmpty())
+    if (ui->rbModeClient->isChecked() && currentHostname().isEmpty())
       return;
     startCore();
   }
@@ -703,8 +712,7 @@ void MainWindow::applyConfig()
     setWindowTitle(kAppName);
   }
 
-  if (const auto host = Settings::value(Settings::Client::RemoteHost).toString(); !host.isEmpty())
-    ui->lineHostname->setText(host);
+  loadHostnameHistory();
 
   updateFingerprintButton();
   setTrayIcon();
@@ -724,8 +732,8 @@ void MainWindow::saveSettings() const
   } else if (ui->rbModeServer->isChecked()) {
     Settings::setValue(Settings::Core::CoreMode, Settings::CoreMode::Server);
   }
-  if (!ui->lineHostname->text().isEmpty())
-    Settings::setValue(Settings::Client::RemoteHost, ui->lineHostname->text());
+  if (!currentHostname().isEmpty())
+    Settings::setValue(Settings::Client::RemoteHost, currentHostname());
   Settings::save();
 }
 
@@ -995,8 +1003,11 @@ void MainWindow::coreConnectionStateChanged(ConnectionState state)
   // when the correct TLS version string is detected.
   if (state != ConnectionState::Connected) {
     secureSocket(false);
-  } else if (isVisible()) {
-    showFirstConnectedMessage();
+  } else {
+    rememberSuccessfulHost();
+    if (isVisible()) {
+      showFirstConnectedMessage();
+    }
   }
 }
 
@@ -1226,12 +1237,14 @@ void MainWindow::toggleCanRunCore(bool enableButtons)
 
 void MainWindow::remoteHostChanged(const QString &newRemoteHost)
 {
-  m_coreProcess.setAddress(newRemoteHost);
-  toggleCanRunCore(!newRemoteHost.isEmpty() && ui->rbModeClient->isChecked());
-  if (newRemoteHost.isEmpty()) {
+  const auto host = newRemoteHost.trimmed();
+  m_coreProcess.setAddress(host);
+  toggleCanRunCore(!host.isEmpty() && ui->rbModeClient->isChecked());
+  ui->btnRemoveHostname->setEnabled(!host.isEmpty() || ui->comboHostname->count() > 0);
+  if (host.isEmpty()) {
     Settings::setValue(Settings::Client::RemoteHost);
   } else {
-    Settings::setValue(Settings::Client::RemoteHost, newRemoteHost);
+    Settings::setValue(Settings::Client::RemoteHost, host);
   }
 }
 
@@ -1325,5 +1338,195 @@ bool MainWindow::canRunCore() const
   const auto mode = m_coreProcess.mode();
   const bool isServer = mode == Settings::CoreMode::Server;
   const bool isClient = mode == Settings::CoreMode::Client;
-  return ((isServer || isClient) && (isClient && !ui->lineHostname->text().isEmpty()) || isServer);
+  return ((isServer || isClient) && (isClient && !currentHostname().isEmpty()) || isServer);
+}
+
+QString MainWindow::currentHostname() const
+{
+  return ui->comboHostname->currentText().trimmed();
+}
+
+QMap<QString, QString> MainWindow::wifiHostMap()
+{
+  QMap<QString, QString> map;
+  const auto entries = Settings::value(Settings::Client::RemoteHostByWifi).toStringList();
+  for (const auto &entry : entries) {
+    const auto sep = entry.indexOf(QLatin1Char('\x1f'));
+    if (sep <= 0 || sep >= entry.size() - 1) {
+      continue;
+    }
+    const auto ssid = entry.left(sep).trimmed();
+    const auto host = entry.mid(sep + 1).trimmed();
+    if (!ssid.isEmpty() && !host.isEmpty()) {
+      map.insert(ssid, host);
+    }
+  }
+  return map;
+}
+
+void MainWindow::saveWifiHostMap(const QMap<QString, QString> &map)
+{
+  QStringList entries;
+  for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
+    entries.append(QStringLiteral("%1\x1f%2").arg(it.key(), it.value()));
+  }
+  Settings::setValue(Settings::Client::RemoteHostByWifi, entries);
+}
+
+void MainWindow::bindHostToCurrentWifi(const QString &host)
+{
+  const auto ssid = WifiInfo::currentSsid();
+  if (ssid.isEmpty() || host.isEmpty()) {
+    return;
+  }
+
+  auto map = wifiHostMap();
+  map.insert(ssid, host);
+  saveWifiHostMap(map);
+  qDebug() << "bound host" << host << "to wifi" << ssid;
+}
+
+void MainWindow::unbindHostFromWifiMap(const QString &host)
+{
+  if (host.isEmpty()) {
+    return;
+  }
+
+  auto map = wifiHostMap();
+  QStringList keysToRemove;
+  for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
+    if (it.value() == host) {
+      keysToRemove.append(it.key());
+    }
+  }
+  for (const auto &key : keysToRemove) {
+    map.remove(key);
+  }
+  saveWifiHostMap(map);
+}
+
+QString MainWindow::hostForCurrentWifi()
+{
+  const auto ssid = WifiInfo::currentSsid();
+  if (ssid.isEmpty()) {
+    return {};
+  }
+  return wifiHostMap().value(ssid);
+}
+
+void MainWindow::loadHostnameHistory()
+{
+  const QSignalBlocker blocker(ui->comboHostname);
+  ui->comboHostname->clear();
+
+  auto history = Settings::value(Settings::Client::RemoteHostHistory).toStringList();
+  history.removeAll(QString());
+  history.removeDuplicates();
+
+  auto currentHost = Settings::value(Settings::Client::RemoteHost).toString().trimmed();
+  const auto wifiHost = hostForCurrentWifi();
+  const auto currentSsid = WifiInfo::currentSsid();
+  if (!wifiHost.isEmpty()) {
+    currentHost = wifiHost;
+    qDebug() << "auto-selected host" << currentHost << "for wifi" << currentSsid;
+  }
+
+  if (!currentHost.isEmpty() && !history.contains(currentHost)) {
+    history.prepend(currentHost);
+  }
+
+  ui->comboHostname->addItems(history);
+
+  if (!currentHost.isEmpty()) {
+    const auto index = ui->comboHostname->findText(currentHost);
+    if (index >= 0) {
+      ui->comboHostname->setCurrentIndex(index);
+    } else {
+      ui->comboHostname->setEditText(currentHost);
+    }
+  } else if (!history.isEmpty()) {
+    ui->comboHostname->setCurrentIndex(0);
+  } else {
+    ui->comboHostname->clearEditText();
+  }
+
+  if (!currentSsid.isEmpty()) {
+    ui->comboHostname->setToolTip(
+        tr("Hostname or IP address of the server computer.\n"
+           "Successfully connected addresses are remembered.\n"
+           "Current Wi-Fi: %1")
+            .arg(currentSsid)
+    );
+  }
+
+  ui->btnRemoveHostname->setEnabled(ui->comboHostname->count() > 0 || !currentHostname().isEmpty());
+  remoteHostChanged(currentHostname());
+}
+
+void MainWindow::rememberSuccessfulHost()
+{
+  if (m_coreProcess.mode() != CoreMode::Client) {
+    return;
+  }
+
+  const auto host = currentHostname();
+  if (host.isEmpty()) {
+    return;
+  }
+
+  auto history = Settings::value(Settings::Client::RemoteHostHistory).toStringList();
+  history.removeAll(host);
+  history.prepend(host);
+  while (history.size() > m_maxHostnameHistory) {
+    history.removeLast();
+  }
+
+  Settings::setValue(Settings::Client::RemoteHostHistory, history);
+  Settings::setValue(Settings::Client::RemoteHost, host);
+  bindHostToCurrentWifi(host);
+
+  const QSignalBlocker blocker(ui->comboHostname);
+  const auto existing = ui->comboHostname->findText(host);
+  if (existing >= 0) {
+    ui->comboHostname->removeItem(existing);
+  }
+  ui->comboHostname->insertItem(0, host);
+  ui->comboHostname->setCurrentIndex(0);
+  ui->btnRemoveHostname->setEnabled(true);
+}
+
+void MainWindow::removeSelectedHostnameFromHistory()
+{
+  const auto host = currentHostname();
+  if (host.isEmpty() && ui->comboHostname->count() == 0) {
+    return;
+  }
+
+  auto history = Settings::value(Settings::Client::RemoteHostHistory).toStringList();
+  history.removeAll(host);
+  unbindHostFromWifiMap(host);
+
+  const QSignalBlocker blocker(ui->comboHostname);
+  const auto index = ui->comboHostname->findText(host);
+  if (index >= 0) {
+    ui->comboHostname->removeItem(index);
+  }
+
+  if (ui->comboHostname->count() > 0) {
+    ui->comboHostname->setCurrentIndex(0);
+  } else {
+    ui->comboHostname->setCurrentIndex(-1);
+    ui->comboHostname->clearEditText();
+  }
+
+  Settings::setValue(Settings::Client::RemoteHostHistory, history);
+  const auto nextHost = currentHostname();
+  if (nextHost.isEmpty()) {
+    Settings::setValue(Settings::Client::RemoteHost);
+  } else {
+    Settings::setValue(Settings::Client::RemoteHost, nextHost);
+  }
+
+  ui->btnRemoveHostname->setEnabled(ui->comboHostname->count() > 0 || !nextHost.isEmpty());
+  remoteHostChanged(nextHost);
 }

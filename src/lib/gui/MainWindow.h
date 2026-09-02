@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QMap>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QSystemTrayIcon>
@@ -144,6 +145,15 @@ private:
   void updateTimeoutDelay(int newDelay);
   void setHelpFilePath();
   void showHelpViewer() const;
+  void loadHostnameHistory();
+  void rememberSuccessfulHost();
+  void removeSelectedHostnameFromHistory();
+  [[nodiscard]] QString currentHostname() const;
+  [[nodiscard]] static QMap<QString, QString> wifiHostMap();
+  static void saveWifiHostMap(const QMap<QString, QString> &map);
+  static void bindHostToCurrentWifi(const QString &host);
+  static void unbindHostFromWifiMap(const QString &host);
+  [[nodiscard]] static QString hostForCurrentWifi();
 
   bool canRunCore() const;
 
@@ -211,4 +221,6 @@ private:
   QStringList m_serverStartIPs;
   QString m_serverStartSuggestedIP;
   QUrl m_helpPath;
+
+  inline static constexpr int m_maxHostnameHistory = 20;
 };

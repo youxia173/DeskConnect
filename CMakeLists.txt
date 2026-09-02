@@ -93,17 +93,17 @@ endif()
 project(
   deskflow
   VERSION "${DESKFLOW_VERSION_MAJOR}.${DESKFLOW_VERSION_MINOR}.${DESKFLOW_VERSION_PATCH}.${DESKFLOW_VERSION_TWEAK}"
-  DESCRIPTION "Keyboard and mouse sharing utility"
+  DESCRIPTION "DeskConnect keyboard and mouse sharing utility"
   HOMEPAGE_URL "https://deskflow.org"
   LANGUAGES C CXX
 )
 
 # Define Additional "PROJECT" vars for packaging and metadata
-set(CMAKE_PROJECT_PROPER_NAME "Deskflow")
-set(CMAKE_PROJECT_VENDOR "${CMAKE_PROJECT_PROPER_NAME} Devs")
+set(CMAKE_PROJECT_PROPER_NAME "DeskConnect")
+set(CMAKE_PROJECT_VENDOR "${CMAKE_PROJECT_PROPER_NAME}")
 set(CMAKE_PROJECT_COPYRIGHT "(C) 2024-2026 ${CMAKE_PROJECT_VENDOR}")
-set(CMAKE_PROJECT_CONTACT "${CMAKE_PROJECT_PROPER_NAME} <maintainers@deskflow.org>")
-set(CMAKE_PROJECT_REV_FQDN "org.deskflow.deskflow")
+set(CMAKE_PROJECT_CONTACT "${CMAKE_PROJECT_PROPER_NAME}")
+set(CMAKE_PROJECT_REV_FQDN "org.deskconnect.deskconnect")
 
 #Unset the vars used in the project call
 unset(DESKFLOW_VERSION_MAJOR)

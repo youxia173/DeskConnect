@@ -4,8 +4,8 @@
 <context>
     <name>AboutDialog</name>
     <message>
-        <source>About Deskflow</source>
-        <translation>关于 Deskflow</translation>
+        <source>About DeskConnect</source>
+        <translation>关于 DeskConnect</translation>
     </message>
     <message>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -547,11 +547,11 @@ Valid names:
     </message>
     <message>
         <source>Connect to:</source>
-        <translation type="unfinished">连接到：</translation>
+        <translation>连接到：</translation>
     </message>
     <message>
         <source>&lt;html&gt;Hostname or IP address of the server computer.&lt;br/&gt;May contain a comma seperated list.&lt;/html&gt;</source>
-        <translation type="unfinished">&lt;html&gt;服务器计算机的主机名或 IP 地址。&lt;br/&gt;可以包含以逗号分隔的列表。&lt;/html&gt;</translation>
+        <translation type="obsolete">&lt;html&gt;服务器计算机的主机名或 IP 地址。&lt;br/&gt;可以包含以逗号分隔的列表。&lt;/html&gt;</translation>
     </message>
     <message>
         <source>read</source>
@@ -584,6 +584,26 @@ Additionally, check you are able to %1 the server config file: %2</source>
     <message>
         <source>&lt;p&gt;Keyboard layout support requires matching layouts on all computers. The following layouts from the other computer are not installed on this computer:&lt;/p&gt;&lt;p&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please install them to enable support for these layouts.&lt;/p&gt;</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;Hostname or IP address of the server computer.&lt;br/&gt;May contain a comma separated list.&lt;br/&gt;Successfully connected addresses are remembered here.&lt;/html&gt;</source>
+        <translation>&lt;html&gt;服务器计算机的主机名或 IP 地址。&lt;br/&gt;可以包含以逗号分隔的列表。&lt;br/&gt;成功连接过的地址会保存在这里。&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>Remove the selected address from history</source>
+        <translation>从历史记录中删除所选地址</translation>
+    </message>
+    <message>
+        <source>×</source>
+        <translation>×</translation>
+    </message>
+    <message>
+        <source>Hostname or IP address of the server computer.
+Successfully connected addresses are remembered.
+Current Wi-Fi: %1</source>
+        <translation>服务器计算机的主机名或 IP 地址。
+成功连接过的地址会保存在这里。
+当前 Wi-Fi：%1</translation>
     </message>
 </context>
 <context>
@@ -1256,6 +1276,14 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Remove all settings</source>
         <translation type="unfinished">移除所有设置</translation>
+    </message>
+    <message>
+        <source>Start the application automatically when you log in to this computer</source>
+        <translation>登录此计算机时自动启动应用程序</translation>
+    </message>
+    <message>
+        <source>Launch at login</source>
+        <translation>开机时启动</translation>
     </message>
 </context>
 <context>

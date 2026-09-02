@@ -43,6 +43,8 @@ public:
     inline static const auto XScrollScale = QStringLiteral("client/xScrollScale");
     inline static const auto LanguageSync = QStringLiteral("client/languageSync");
     inline static const auto RemoteHost = QStringLiteral("client/remoteHost");
+    inline static const auto RemoteHostHistory = QStringLiteral("client/remoteHostHistory");
+    inline static const auto RemoteHostByWifi = QStringLiteral("client/remoteHostByWifi");
     inline static const auto XdpRestoreToken = QStringLiteral("client/xdpRestoreToken");
   };
   struct Core
@@ -76,6 +78,7 @@ public:
   {
     inline static const auto Autohide = QStringLiteral("gui/autoHide");
     inline static const auto AutoStartCore = QStringLiteral("gui/startCoreWithGui");
+    inline static const auto LaunchAtLogin = QStringLiteral("gui/launchAtLogin");
     inline static const auto AutoUpdateCheck = QStringLiteral("gui/enableUpdateCheck");
     inline static const auto UpdateCheckUrl = QStringLiteral("gui/updateCheckUrl");
     inline static const auto CloseReminder = QStringLiteral("gui/closeReminder");
@@ -259,6 +262,8 @@ private:
     , Client::InvertXScroll
     , Client::LanguageSync
     , Client::RemoteHost
+    , Client::RemoteHostHistory
+    , Client::RemoteHostByWifi
     , Client::YScrollScale
     , Client::XScrollScale
     , Core::CoreMode
@@ -286,6 +291,7 @@ private:
     , Log::GuiDebug
     , Gui::Autohide
     , Gui::AutoStartCore
+    , Gui::LaunchAtLogin
     , Gui::AutoUpdateCheck
     , Gui::UpdateCheckUrl
     , Gui::CloseReminder
@@ -323,6 +329,7 @@ private:
   inline static const QStringList m_defaultFalseValues = {
       Gui::Autohide
     , Gui::AutoStartCore
+    , Gui::LaunchAtLogin
     , Gui::ShownFirstConnectedMessage
     , Gui::ShownServerFirstStartMessage
     , Gui::ShowVersionInTitle

@@ -417,6 +417,12 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
 
   QStringList args = {coreMode};
 
+  // Keep GUI and core on the same settings file (important after rebrand / portable installs).
+  const auto settingsFile = Settings::settingsFile();
+  if (!settingsFile.isEmpty()) {
+    args << QStringLiteral("--settings") << settingsFile;
+  }
+
   if (m_mode == Settings::CoreMode::Server) {
     const auto [hasNeededPermissions, configFilename] = persistServerConfig();
     if (configFilename.isEmpty()) {

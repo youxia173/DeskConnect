@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 if(APPLE)
-  set(target Deskflow)
+  set(target DeskConnect)
 else()
   set(target deskflow)
 endif()
@@ -19,9 +19,9 @@ elseif(BUILD_OSX_BUNDLE)
   #setup our bundle plist file
   set(BUNDLE_EXECUTABLE_NAME "${target}")
   set(BUNDLE_BUNDLE_NAME "${target}")
-  set(BUNDLE_DISPLAY_NAME "${target}")
+  set(BUNDLE_DISPLAY_NAME "${CMAKE_PROJECT_PROPER_NAME}")
   set(BUNDLE_GUI_IDENTIFIER "${CMAKE_PROJECT_REV_FQDN}")
-  set(BUNDLE_ICON_FILE ${target}.icns)
+  set(BUNDLE_ICON_FILE Deskflow.icns)
   set(BUNDLE_INFO_STRING "${CMAKE_PROJECT_DESCRIPTION}")
   set(BUNDLE_COPYRIGHT "${CMAKE_PROJECT_COPYRIGHT}")
 
@@ -40,6 +40,10 @@ add_executable(${target} WIN32 MACOSX_BUNDLE
   ../res/deskflow.qrc
   deskflow-gui.cpp
 )
+
+if(WIN32)
+  set_target_properties(${target} PROPERTIES OUTPUT_NAME "${CMAKE_PROJECT_PROPER_NAME}")
+endif()
 
 target_link_libraries(
   ${target}

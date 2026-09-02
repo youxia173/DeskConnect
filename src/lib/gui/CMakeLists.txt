@@ -15,6 +15,10 @@ endif()
 
 add_library(${target} STATIC
   ${platform_sources}
+  Autostart.cpp
+  Autostart.h
+  WifiInfo.cpp
+  WifiInfo.h
   Diagnostic.cpp
   Diagnostic.h
   FileTail.cpp
@@ -125,3 +129,7 @@ target_link_libraries(${target}
     net
     Qt6::Widgets
 )
+
+if(WIN32)
+  target_link_libraries(${target} PUBLIC wlanapi)
+endif()
