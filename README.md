@@ -1,16 +1,19 @@
-# DeskConnect
+﻿# DeskConnect
 
-DeskConnect is a desktop connectivity toolkit based on [Deskflow](https://github.com/deskflow/deskflow) and [KDE Connect](https://github.com/KDE/kdeconnect-kde).
+**DeskConnect** is based on [Deskflow](https://github.com/deskflow/deskflow) source code.
+This repository is the working tree we modify and ship under the DeskConnect name.
 
-This repository holds the sources we customize and ship under the **DeskConnect** name.
+Upstream Deskflow provides cross-platform keyboard and mouse sharing (Windows / Linux / macOS).
 
-## Upstream sources
+## Layout
 
-| Directory | Upstream | Role |
-|-----------|----------|------|
-| `deskflow/` | https://github.com/deskflow/deskflow | Keyboard & mouse sharing (Windows / Linux / macOS) |
-| `kdeconnect-kde/` | https://github.com/KDE/kdeconnect-kde | Device linking for desktop (Linux / Windows) |
+| Path | Notes |
+|------|--------|
+| `src/`, `cmake/`, `deploy/`, … | Deskflow codebase (now the DeskConnect product base) |
+| `kdeconnect-kde/` | KDE Connect desktop sources kept for later integration |
+| `docs/` | Upstream developer docs |
 
 ## License
 
-Upstream projects keep their original licenses (Deskflow: GPL-2.0; KDE Connect: see its `LICENSES/`). Modifications in this tree follow those terms unless noted otherwise.
+Deskflow-derived code remains under GPL-2.0 (see `LICENSE` and `LICENSES/`).
+KDE Connect sources under `kdeconnect-kde/` keep their original licenses.
