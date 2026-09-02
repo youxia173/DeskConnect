@@ -1,0 +1,285 @@
+# Translation of kdeconnect-sms.po to Brazilian Portuguese
+# Copyright (C) 2020 This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+#
+# André Marcelo Alvarenga <alvarenga@kde.org>, 2020.
+# Luiz Fernando Ranghetti <elchevive@opensuse.org>, 2020, 2021, 2022.
+# SPDX-FileCopyrightText: 2024, 2025 Geraldo Simiao <geraldosimiao@fedoraproject.org>
+# SPDX-FileCopyrightText: 2025 Marcus Gama <marcus.gama@gmail.com>
+# SPDX-FileCopyrightText: 2025, 2026 Guilherme Marçal Silva <guimarcalsilva@gmail.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-25 00:44+0000\n"
+"PO-Revision-Date: 2026-03-06 15:57-0300\n"
+"Last-Translator: Guilherme Marçal Silva <guimarcalsilva@gmail.com>\n"
+"Language-Team: Brazilian Portuguese <kde-i18n-pt_BR@kde.org>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Lokalize 25.12.2\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "André Marcelo Alvarenga, Geraldo Simião"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "alvarenga@kde.org, geraldosimiao@fedoraproject.org"
+
+#: attachmentshelper.cpp:36
+#, kde-format
+msgctxt "Caption/title for attachment download/save window"
+msgid "Download attachment"
+msgstr "Baixar anexo"
+
+#: conversationlistmodel.cpp:212
+#, kde-format
+msgctxt "Used as a text placeholder when the most-recent message is an image"
+msgid "Picture"
+msgstr "Imagem"
+
+#: conversationlistmodel.cpp:214
+#, kde-format
+msgctxt "Used as a text placeholder when the most-recent message is a video"
+msgid "Video"
+msgstr "Vídeo"
+
+#: conversationlistmodel.cpp:218
+#, kde-format
+msgctxt ""
+"Used as a text placeholder when the most-recent message is an arbitrary "
+"attachment, resulting in something like \"pdf file\""
+msgid "%1 file"
+msgstr "arquivo %1"
+
+#: conversationlistmodel.cpp:239
+#, kde-format
+msgid "You: %1"
+msgstr "Você: %1"
+
+#: conversationlistmodel.cpp:245
+#, kde-format
+msgid "%1: %2"
+msgstr "%1: %2"
+
+#: conversationlistmodel.cpp:287 conversationlistmodel.cpp:308
+#, kde-format
+msgid "%1"
+msgstr "%1"
+
+#: main.cpp:84 qml/Main.qml:73
+#, kde-format
+msgid "KDE Connect SMS"
+msgstr "KDE Connect SMS"
+
+#: main.cpp:86
+#, kde-format
+msgid "SMS Instant Messaging"
+msgstr "Mensagens instantâneas de SMS"
+
+#: main.cpp:88
+#, kde-format
+msgid "© 2018–2025 KDE Connect Team"
+msgstr "© 2018–2025 Equipe do KDE Connect"
+
+#: main.cpp:89
+#, kde-format
+msgid "Simon Redman"
+msgstr "Simon Redman"
+
+#: main.cpp:90
+#, kde-format
+msgid "Aleix Pol Gonzalez"
+msgstr "Aleix Pol Gonzalez"
+
+#: main.cpp:91
+#, kde-format
+msgid "Nicolas Fella"
+msgstr "Nicolas Fella"
+
+#: main.cpp:118
+#, kde-format
+msgid "Select a device"
+msgstr "Selecione um dispositivo"
+
+#: main.cpp:118
+#, kde-format
+msgid "id"
+msgstr "ID"
+
+#: main.cpp:119
+#, kde-format
+msgid "Send a message"
+msgstr "Enviar uma mensagem"
+
+#: main.cpp:119
+#, kde-format
+msgid "message"
+msgstr "mensagem"
+
+#: qml/AttachmentViewer.qml:21
+#, kde-format
+msgid "Open with default"
+msgstr "Abrir com o padrão"
+
+#: qml/AttachmentViewer.qml:28
+#, kde-format
+msgid "Download attachment…"
+msgstr "Baixar anexo…"
+
+#: qml/ConversationList.qml:24
+#, kde-format
+msgid "No devices available"
+msgstr "Nenhum dispositivo disponível"
+
+#: qml/ConversationList.qml:33
+#, kde-format
+msgid ""
+"No new messages can be sent or received, but you can browse cached content"
+msgstr ""
+"Nenhuma nova mensagem poderá ser enviada ou recebida, mas você poderá "
+"navegar pelo conteúdo em cache"
+
+#: qml/ConversationList.qml:49
+#, kde-format
+msgid ""
+"Loading conversations from device. If this takes a long time, please wake up "
+"your device and then click Refresh."
+msgstr ""
+"Carregando conversas do dispositivo. Isto pode levar algum tempo, acorde seu "
+"dispositivo e clique em Atualizar."
+
+#: qml/ConversationList.qml:57
+#, kde-format
+msgid ""
+"Tip: If you plug in your device, it should not go into doze mode and should "
+"load quickly."
+msgstr ""
+"Dica: Se você conectar seu dispositivo, ele não deverá entrar no modo de "
+"descanso e deverá carregar rapidamente."
+
+#: qml/ConversationList.qml:65 qml/Main.qml:98
+#, kde-format
+msgid "Refresh"
+msgstr "Atualizar"
+
+#: qml/ConversationList.qml:84
+#, kde-format
+msgid "Choose recipient"
+msgstr "Escolher destinatário"
+
+#: qml/ConversationList.qml:89
+#, kde-format
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: qml/ConversationList.qml:108
+#, kde-format
+msgid "Search or start a conversation"
+msgstr "Pesquisar ou iniciar conversa"
+
+#: qml/ConversationList.qml:144
+#, kde-format
+msgid "Start new conversation"
+msgstr "Iniciar nova conversa"
+
+#: qml/ConversationList.qml:194
+#, kde-format
+msgctxt "Placeholder message text when no messages are found"
+msgid "No Matches"
+msgstr "Nenhuma correspondência"
+
+#: qml/ConversationList.qml:204
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "No Conversations"
+msgstr "Nenhuma conversa"
+
+#: qml/Main.qml:93
+#, kde-format
+msgid "Devices"
+msgstr "Dispositivos"
+
+#: qml/Main.qml:106
+#, kde-format
+msgid "About"
+msgstr "Sobre"
+
+#: qml/Main.qml:115
+#, kde-format
+msgid "About KDE"
+msgstr "Sobre a KDE"
+
+#: qml/MessageAttachments.qml:114
+#, kde-format
+msgid "Audio clip"
+msgstr "Clipe de áudio"
+
+#: qml/SendingArea.qml:24
+#, kde-format
+msgid "Failed to send"
+msgstr "Falha ao enviar"
+
+#: qml/SendingArea.qml:25
+#, kde-format
+msgid "Max message size limit exceeded."
+msgstr "O tamanho máximo da mensagem excedeu o limite"
+
+#: qml/SendingArea.qml:67
+#, kde-format
+msgid "Send a message…"
+msgstr "Enviar uma mensagem…"
+
+#: qml/SendingArea.qml:123
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Attach an image or file"
+msgstr "Anexar uma imagem ou arquivo"
+
+#: qml/SendingArea.qml:148
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Clear attachments"
+msgstr "Limpar anexos"
+
+#: qml/SendingArea.qml:177
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Send message"
+msgstr "Enviar mensagem"
+
+#~ msgid "Copy Message"
+#~ msgstr "Copiar mensagem"
+
+#~ msgid "Copy Selection"
+#~ msgstr "Copiar seleção"
+
+#~ msgid "Compose message"
+#~ msgstr "Escrever mensagem"
+
+#~ msgid "New"
+#~ msgstr "Novo"
+
+#~ msgid "Filter..."
+#~ msgstr "Filtro..."
+
+#~ msgid "No matched results found : ("
+#~ msgstr "Nenhum resultado correspondente encontrado : ("
+
+#~ msgid "(Unsupported Message Type)"
+#~ msgstr "(Tipo de mensagem não suportado)"
+
+#~ msgid "Replying to multitarget messages is not supported"
+#~ msgstr "Não há suporte para resposta a mensagens com vários destinatários"
+
+#~ msgid "Spoiler"
+#~ msgstr "Spoiler"
+
+#~ msgid "Download"
+#~ msgstr "Download"

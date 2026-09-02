@@ -1,0 +1,165 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-09-02 00:43+0000\n"
+"PO-Revision-Date: 2026-02-03 18:38+0000\n"
+"Last-Translator: Aindriú Mac Giolla Eoin <aindriu80@yahoo.com>\n"
+"Language-Team: Irish Gaelic <kde-i18n-doc@kde.org>\n"
+"Language: ga\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=5; plural=n==1 ? 0 : n==2 ? 1 : n<7 ? 2 : n < 11 ? "
+"3 : 4\n"
+
+#: backends/lan/compositeuploadjob.cpp:83
+#, kde-format
+msgid "Couldn't find an available port"
+msgstr "Níorbh fhéidir port atá ar fáil a aimsiú"
+
+#: backends/lan/compositeuploadjob.cpp:129
+#, kde-format
+msgid "Failed to send packet to %1"
+msgstr "Theip ar an bpacáiste a sheoladh chuig %1"
+
+#: backends/lan/compositeuploadjob.cpp:252
+#, kde-format
+msgid "Timeout waiting for receiver to connect"
+msgstr ""
+
+#: backends/lan/compositeuploadjob.cpp:303
+#, kde-format
+msgid "Sending to %1"
+msgstr "Ag seoladh chuig %1"
+
+#: backends/lan/compositeuploadjob.cpp:303
+#, kde-format
+msgid "File"
+msgstr "Comhad"
+
+#: backends/pairinghandler.cpp:61
+#, kde-format
+msgid "Device clocks are out of sync"
+msgstr "Tá cloig na ngléasanna as sioncrónú"
+
+#: backends/pairinghandler.cpp:80
+#, kde-format
+msgid "Canceled by other peer"
+msgstr "Cealaithe ag piaraí eile"
+
+#: backends/pairinghandler.cpp:96
+#, kde-format
+msgid "%1: Already paired"
+msgstr "%1: Péireáilte cheana féin"
+
+#: backends/pairinghandler.cpp:105 backends/pairinghandler.cpp:124
+#, kde-format
+msgid "%1: Device not reachable"
+msgstr "%1: Ní féidir an gléas a bhaint amach"
+
+#: backends/pairinghandler.cpp:139
+#, kde-format
+msgid "Device not reachable"
+msgstr "Ní féidir an gléas a bhaint amach"
+
+#: backends/pairinghandler.cpp:150
+#, kde-format
+msgid "Cancelled by user"
+msgstr "Cealaithe ag an úsáideoir"
+
+#: backends/pairinghandler.cpp:166
+#, kde-format
+msgid "Timed out"
+msgstr "Am caite"
+
+#: compositefiletransferjob.cpp:47
+#, kde-format
+msgctxt "@title job"
+msgid "Receiving file"
+msgid_plural "Receiving files"
+msgstr[0] "Ag fáil comhad"
+msgstr[1] "Ag fáil comhaid"
+msgstr[2] "Ag fáil comhaid"
+msgstr[3] "Ag fáil comhaid"
+msgstr[4] "Ag fáil comhaid"
+
+#: compositefiletransferjob.cpp:48
+#, kde-format
+msgctxt "The source of a file operation"
+msgid "Source"
+msgstr "Foinse"
+
+#: compositefiletransferjob.cpp:49
+#, kde-format
+msgctxt "The destination of a file operation"
+msgid "Destination"
+msgstr "Ceann Scríbe"
+
+#: device.cpp:473
+#, kde-format
+msgid "SHA256 fingerprint of your device certificate is: %1\n"
+msgstr "Is é méarloirg SHA256 theastas do ghléis: %1\n"
+
+#: device.cpp:479
+#, kde-format
+msgid "SHA256 fingerprint of remote device certificate is: %1\n"
+msgstr "Is é méarloirg SHA256 teastas gléis iargúlta: %1\n"
+
+#: device.cpp:481
+#, kde-format
+msgid "Protocol version: %1\n"
+msgstr "Leagan prótacail: %1\n"
+
+#: filetransferjob.cpp:54
+#, kde-format
+msgid "Filename already present"
+msgstr "Ainm comhaid ann cheana féin"
+
+#: filetransferjob.cpp:70
+#, fuzzy, kde-format
+#| msgid "Could not store certificate file: %1"
+msgid "Could not create destination file: %1"
+msgstr "Níorbh fhéidir comhad teastais a stóráil: %1"
+
+#: filetransferjob.cpp:129
+#, kde-format
+msgid "Received incomplete file from: %1"
+msgstr "Fuarthas comhad neamhiomlán ó: %1"
+
+#: kdeconnectconfig.cpp:352 kdeconnectconfig.cpp:386
+#, kde-format
+msgid "KDE Connect failed to start"
+msgstr "Theip ar thosú KDE Connect"
+
+#: kdeconnectconfig.cpp:352
+#, kde-format
+msgid "Could not generate the private key."
+msgstr "Níorbh fhéidir an eochair phríobháideach a ghiniúint."
+
+#: kdeconnectconfig.cpp:371
+#, kde-format
+msgid "Could not store private key file: %1"
+msgstr "Níorbh fhéidir comhad eochrach príobháideach a stóráil: %1"
+
+#: kdeconnectconfig.cpp:386
+#, kde-format
+msgid "Could not generate the device certificate."
+msgstr "Níorbh fhéidir an deimhniú gléis a ghiniúint."
+
+#: kdeconnectconfig.cpp:402
+#, kde-format
+msgid "Could not store certificate file: %1"
+msgstr "Níorbh fhéidir comhad teastais a stóráil: %1"
+
+#, fuzzy
+#~| msgctxt "@info"
+#~| msgid "Bluetooth"
+#~ msgctxt "@info"
+#~ msgid "Bluetooth (beta)"
+#~ msgstr "Bluetooth"

@@ -1,0 +1,638 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Volkan Gezer <volkangezer@gmail.com>, 2017, 2021.
+# SPDX-FileCopyrightText: 2022-2026 Emir SARI <emir_sari@icloud.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-14 00:45+0000\n"
+"PO-Revision-Date: 2026-07-27 19:34+0300\n"
+"Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
+"Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Lokalize 26.04.2\n"
+
+#: battery/batteryplugin.cpp:150
+#, kde-format
+msgctxt "device name: low battery"
+msgid "%1: Low Battery"
+msgstr "%1: Pil doluluğu düşük"
+
+#: battery/batteryplugin.cpp:151
+#, kde-format
+msgid "Battery at %1%"
+msgstr "Pil doluluğu %​%1"
+
+#: clipboard/kdeconnect_clipboard_config.qml:34
+#, kde-format
+msgid "Automatically share the clipboard from this device"
+msgstr "Bu aygıttan panoyu kendiliğinden paylaş"
+
+#: clipboard/kdeconnect_clipboard_config.qml:42
+#, kde-format
+msgid "Including passwords (as marked by password managers)"
+msgstr "Parolalar dahil (parola yöneticileri tarafından imlendiği gibi)"
+
+#: clipboard/kdeconnect_clipboard_config.qml:55
+#, kde-format
+msgid "Max Clipboard File Size (MB)"
+msgstr "En büyük pano dosya boyutu (MB)"
+
+#: digitizer/linuxdigitizerimpl.cpp:72 digitizer/linuxdigitizerimpl.cpp:168
+#, kde-format
+msgid "KDE Connect Error"
+msgstr "KDE Bağlan Hatası"
+
+#: digitizer/linuxdigitizerimpl.cpp:73
+#, kde-format
+msgid ""
+"Unable to create a virtual drawing tablet. If this error persists, file a "
+"bug report."
+msgstr ""
+"Sanal çizim tableti oluşturulamıyor. Bu hatayı sürekli alıyorsanız bir hata "
+"raporu açın."
+
+#: digitizer/linuxdigitizerimpl.cpp:169
+#, kde-format
+msgid ""
+"Unable to process one or more input events for the virtual device. If this "
+"error persists, file a bug report."
+msgstr ""
+"Sanal aygıt için bir veya birden çok giriş olayı işlenemiyor. Bu hatayı "
+"sürekli alıyorsanız bir hata raporu açın."
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:23
+#: share/kdeconnect_share_config.qml:22
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:25
+#, kde-format
+msgid "Apply"
+msgstr "Uygula"
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:47
+#, kde-format
+msgid "Sound to play:"
+msgstr "Çalınacak ses:"
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:57
+#, kde-format
+msgctxt "@action:button"
+msgid "Choose file"
+msgstr "Dosya Seç"
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:66
+#, kde-format
+msgctxt "@action:button"
+msgid "Play"
+msgstr "Oynat/Çal"
+
+#: lockdevice/lockdeviceplugin-win.cpp:58 lockdevice/lockdeviceplugin.cpp:87
+#, kde-format
+msgid "Remote lock successful"
+msgstr "Uzaktan kilitleme başarılı"
+
+#: lockdevice/lockdeviceplugin-win.cpp:61
+#: lockdevice/lockdeviceplugin-win.cpp:62 lockdevice/lockdeviceplugin.cpp:92
+#: lockdevice/lockdeviceplugin.cpp:94
+#, kde-format
+msgid "Remote lock failed"
+msgstr "Uzaktan kilitleme başarısız"
+
+#: mpriscontrol/mpriscontrolplugin-win.cpp:26
+#, kde-format
+msgctxt ""
+"@title Users select this to control the current media player when we can't "
+"detect a specific player name like VLC"
+msgid "Current Player"
+msgstr "Geçerli Oynatıcı"
+
+#: mpriscontrol/mpriscontrolplugin-win.cpp:93
+#: mpriscontrol/mpriscontrolplugin-win.cpp:94
+#: mpriscontrol/mpriscontrolplugin-win.cpp:95
+#, kde-format
+msgid "N/A"
+msgstr "Yok"
+
+#: notifications/notification.cpp:117
+#, kde-format
+msgctxt "@action:button"
+msgid "Reply"
+msgstr "Yanıtla"
+
+#: notifications/notification.cpp:120
+#, kde-format
+msgctxt "@info:placeholder %1 is the name of a group chat"
+msgid "Reply in %1…"
+msgstr "%1 içinde yanıtla…"
+
+#: notifications/notification.cpp:122
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Reply to %1…"
+msgstr "%1 kişisini yanıtla…"
+
+#: notifications/sendreplydialog.cpp:29
+#, kde-format
+msgid "Send"
+msgstr "Gönder"
+
+#. i18n: ectx: property (windowTitle), widget (QDialog, SendReplyDialog)
+#: notifications/sendreplydialog.ui:14
+#, kde-format
+msgid "Dialog"
+msgstr "İletişim Kutusu"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:32
+#, kde-format
+msgid "Pause as soon as phone rings"
+msgstr "Telefon çaldığında duraklat"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:41
+#, kde-format
+msgid "Pause only while talking"
+msgstr "Yalnızca konuşurken duraklat"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:47
+#, kde-format
+msgid "Pause media players"
+msgstr "Ortam oynatıcılarını duraklat"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:54
+#, kde-format
+msgid "Mute system sound"
+msgstr "Sistem sesini sessiz yap"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:61
+#, kde-format
+msgid "Resume automatically when call ends"
+msgstr "Çağrı sonlandığında kendiliğinden sürdür"
+
+#: ping/pingplugin.cpp:26
+#, kde-format
+msgid "Ping!"
+msgstr "Ping!"
+
+#: presenter/kdeconnect_presenter_config.qml:23
+#, kde-format
+msgctxt "@action:label"
+msgid "Display:"
+msgstr "Görüntü:"
+
+#: presenter/kdeconnect_presenter_config.qml:25
+#, kde-format
+msgid "Red Dot"
+msgstr "Kırmızı Nokta"
+
+#: presenter/kdeconnect_presenter_config.qml:26
+#, kde-format
+msgid "Electric"
+msgstr "Elektrik"
+
+#: runcommand/kdeconnect_runcommand_config.qml:21
+#, kde-format
+msgid "Add Command…"
+msgstr "Komut Ekle…"
+
+#: runcommand/kdeconnect_runcommand_config.qml:54
+#, kde-format
+msgid "Edit"
+msgstr "Düzenle"
+
+#: runcommand/kdeconnect_runcommand_config.qml:64
+#, kde-format
+msgid "Delete"
+msgstr "Sil"
+
+#: runcommand/kdeconnect_runcommand_config.qml:76
+#, kde-format
+msgctxt "@info"
+msgid "No commands configured"
+msgstr "Yapılandırılmış komut yok"
+
+#: runcommand/kdeconnect_runcommand_config.qml:77
+#, kde-format
+msgctxt "@info"
+msgid "Add commands to run them remotely from other devices"
+msgstr "Uzaktan başka aygıtlardan çalıştırılmak üzere komutlar ekleyin"
+
+#: runcommand/kdeconnect_runcommand_config.qml:83
+#, kde-format
+msgctxt "@title:window"
+msgid "Add Command"
+msgstr "Komut Ekle"
+
+#: runcommand/kdeconnect_runcommand_config.qml:89
+#, kde-format
+msgctxt "@action:button"
+msgid "Add"
+msgstr "Ekle"
+
+#: runcommand/kdeconnect_runcommand_config.qml:96
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Add command"
+msgstr "Komut Ekle"
+
+#: runcommand/kdeconnect_runcommand_config.qml:105
+#: runcommand/kdeconnect_runcommand_config.qml:183
+#, kde-format
+msgid "Name:"
+msgstr "Ad:"
+
+#: runcommand/kdeconnect_runcommand_config.qml:109
+#: runcommand/kdeconnect_runcommand_config.qml:187
+#, kde-format
+msgid "Command:"
+msgstr "Komut:"
+
+#: runcommand/kdeconnect_runcommand_config.qml:113
+#, kde-format
+msgid "Sample commands:"
+msgstr "Örnek komutlar:"
+
+#: runcommand/kdeconnect_runcommand_config.qml:131
+#: runcommand/kdeconnect_runcommand_config.qml:142
+#, kde-format
+msgctxt "Sample command"
+msgid "Suspend"
+msgstr "Askıya Al"
+
+#: runcommand/kdeconnect_runcommand_config.qml:135
+#: runcommand/kdeconnect_runcommand_config.qml:150
+#, kde-format
+msgctxt "Sample command"
+msgid "Lock Screen"
+msgstr "Ekranı Kilitle"
+
+#: runcommand/kdeconnect_runcommand_config.qml:146
+#, kde-format
+msgctxt "Sample command"
+msgid "Maximum Brightness"
+msgstr "En Yüksek Parlaklık"
+
+#: runcommand/kdeconnect_runcommand_config.qml:154
+#, kde-format
+msgctxt "Sample command"
+msgid "Unlock Screen"
+msgstr "Ekran Kilidini Aç"
+
+#: runcommand/kdeconnect_runcommand_config.qml:158
+#, kde-format
+msgctxt "Sample command"
+msgid "Close All Vaults"
+msgstr "Tüm Kasaları Kapat"
+
+#: runcommand/kdeconnect_runcommand_config.qml:162
+#, kde-format
+msgctxt "Sample command"
+msgid "Forcefully Close All Vaults"
+msgstr "Tüm Kasaları Zorla Kapat"
+
+#: runcommand/kdeconnect_runcommand_config.qml:175
+#, kde-format
+msgctxt "@title:window"
+msgid "Edit Command"
+msgstr "Komutu Düzenle"
+
+#: runcommand/kdeconnect_runcommand_config.qml:192
+#, kde-format
+msgctxt "@action:button"
+msgid "Confirm"
+msgstr "Onayla"
+
+#: runcommand/kdeconnect_runcommand_config.qml:199
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Confirm"
+msgstr "Onayla"
+
+#: screensaver-inhibit/screensaverinhibitplugin.cpp:24
+#, kde-format
+msgid "Phone is connected"
+msgstr "Telefon bağlandı"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:34
+#, kde-format
+msgid "Persistent notifications only"
+msgstr "Yalnızca kalıcı bildirimler"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:42
+#, kde-format
+msgid "Include body"
+msgstr "Gövdeyi içer"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:49
+#, kde-format
+msgid "Include icon"
+msgstr "Simgeyi içer"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:56
+#, kde-format
+msgid "Minimum urgency level:"
+msgstr "En düşük aciliyet düzeyi:"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:178
+#, kde-format
+msgid "Name"
+msgstr "Ad"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:182
+#, kde-format
+msgid "Excluded"
+msgstr "Dışlandı"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:186
+#, kde-format
+msgid "Name of a notifying application."
+msgstr "Bildiren uygulamanın bir adı."
+
+#: sendnotifications/notifyingapplicationmodel.cpp:188
+#, kde-format
+msgid "Synchronize notifications of an application?"
+msgstr "Uygulamaların bildirimleri eşzamanlansın mı?"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:191
+#, kde-format
+msgid ""
+"Regular expression defining which notifications should not be sent.\n"
+"This pattern is applied to the summary and, if selected above, the body of "
+"notifications."
+msgstr ""
+"Hangi bildirimlerin gönderilmemesi gerektiğini tanımlayan düzenli ifade.\n"
+"Bu dizgi, özeti ve yukarıda seçilmiş olması durumunda bildirimlerin "
+"gövdesine uygulanır."
+
+#: sftp/mounter.cpp:141
+#, kde-format
+msgid "Failed to start sshfs"
+msgstr "Sshfs başlatılamadı"
+
+#: sftp/mounter.cpp:145
+#, kde-format
+msgid "sshfs process crashed"
+msgstr "sshfs işlemi çöktü"
+
+#: sftp/mounter.cpp:149
+#, kde-format
+msgid "Unknown error in sshfs"
+msgstr "Sshfs’de bilinmeyen hata"
+
+#: sftp/mounter.cpp:160
+#, kde-format
+msgid "Error when accessing filesystem. sshfs finished with exit code %0"
+msgstr ""
+"Dosya sistemine erişirken hata oluştu. sshfs çıkış kodu %0 ile tamamlandı"
+
+#: sftp/mounter.cpp:169
+#, kde-format
+msgid "Failed to mount filesystem: device not responding"
+msgstr "Dosya sistemi bağlanamadı: Aygıt yanıt vermiyor"
+
+#: sftp/sftpplugin-win.cpp:93
+#, kde-format
+msgid "KDE Connect"
+msgstr "KDE Bağlan"
+
+#: sftp/sftpplugin-win.cpp:94
+#, kde-format
+msgid "Cannot handle SFTP protocol. Apologies for the inconvenience"
+msgstr "SFTP protokolü işlenemiyor. Rahatsızlıktan dolayı özür dilerim"
+
+#: sftp/sftpplugin.cpp:174
+#, kde-format
+msgid "All files"
+msgstr "Tüm dosyalar"
+
+#: sftp/sftpplugin.cpp:175
+#, kde-format
+msgid "Camera pictures"
+msgstr "Kamera resimleri"
+
+#: share/kdeconnect_share_config.qml:47
+#, kde-format
+msgid "Save files in:"
+msgstr "Dosyaları şuraya kaydet:"
+
+#: share/kdeconnect_share_config.qml:63
+#, kde-format
+msgid "%1 in the path will be replaced with the specific device name"
+msgstr "Yoldaki %1, özel aygıt adı ile değiştirilir"
+
+#: share/shareplugin.cpp:164
+#, kde-format
+msgctxt "@info Some piece of text was received from a connected device"
+msgid "Shared text copied to clipboard"
+msgstr "Paylaşılan metin panoya kopyalandı"
+
+#: share/shareplugin.cpp:168
+#, kde-format
+msgctxt "@info Some piece of text was received from a connected device"
+msgid "Shared text from %1 copied to clipboard"
+msgstr "%1 aygıtından alınan metin panoya kopyalandı"
+
+#: share/shareplugin.cpp:212
+#, kde-format
+msgctxt "@action:button Edit text with default text editor"
+msgid "Open in Text Editor"
+msgstr "Metin Düzenleyicisinde Aç"
+
+#: share/shareplugin.cpp:216
+#, kde-format
+msgctxt "@action:button Open URL with default app"
+msgid "Open Link"
+msgstr "Bağlantıyı Aç"
+
+#: share/shareplugin.cpp:257 share/shareplugin.cpp:262
+#, kde-format
+msgid "Could not share file"
+msgstr "Dosya paylaşılamadı"
+
+#: share/shareplugin.cpp:257
+#, kde-format
+msgid "%1 does not exist"
+msgstr "%1 yok"
+
+#: share/shareplugin.cpp:262
+#, kde-format
+msgid "Permission denied: %1"
+msgstr "İzin reddedildi: %1"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:43
+#, kde-format
+msgctxt ""
+"@label:listbox Forms a sentence: 'Leave the screen at the top/bottom/left/"
+"right edge', the pointer will switch to the connected device there"
+msgid "Leave Screen at"
+msgstr "Ekrandan şurada ayrıl:"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:51
+#, kde-format
+msgctxt "@item:inlistbox top edge of screen"
+msgid "Top"
+msgstr "Üst"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:55
+#, kde-format
+msgctxt "@item:inlistbox left edge of screen"
+msgid "Left"
+msgstr "Sol"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:59
+#, kde-format
+msgctxt "@item:inlistbox right edge of screen"
+msgid "Right"
+msgstr "Sağ"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:63
+#, kde-format
+msgctxt "@item:inlistbox top edge of screen"
+msgid "Bottom"
+msgstr "Alt"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:71
+#, kde-format
+msgctxt "@info:tooltip edge: screen edge"
+msgid ""
+"Another device already reserved this edge. This may lead to unexpected "
+"results when both are connected at the same time."
+msgstr ""
+"Başka bir aygıt bu kenarı hâlihazırda rezerve etti. Bu, her iki aygıt da "
+"bağlıyken beklenmedik sonuçlara neden olabilir."
+
+#: telephony/telephonyplugin.cpp:23
+#, kde-format
+msgid "unknown number"
+msgstr "bilinmeyen numara"
+
+#: telephony/telephonyplugin.cpp:32
+#, kde-format
+msgid "Incoming call from %1"
+msgstr "Gelen arama: %1"
+
+#: telephony/telephonyplugin.cpp:36
+#, kde-format
+msgid "Missed call from %1"
+msgstr "Yanıtsız arama: %1"
+
+#: telephony/telephonyplugin.cpp:65
+#, kde-format
+msgid "Mute Call"
+msgstr "Aramayı Sessize Al"
+
+#: virtualmonitor/virtualmonitorplugin.cpp:184
+#, kde-format
+msgid "Remote device does not have a VNC or RDP client (eg. krdc) installed."
+msgstr "Uzak aygıtta bir VNC veya RDP istemcisi (örneğin, krdc) kurulu değil."
+
+#: virtualmonitor/virtualmonitorplugin.cpp:187
+#, kde-format
+msgid "The krdp package is required on the local device."
+msgstr "Yerel aygıtta krdp paketine gereksinim duyuluyor."
+
+#: virtualmonitor/virtualmonitorplugin.cpp:190
+#, kde-format
+msgid "Cannot start a request without a resolution"
+msgstr "Bir çözüm olmadan istek başlatılamaz."
+
+#~ msgid "Clipboard plugin"
+#~ msgstr "Pano eklentisi"
+
+#~ msgid "Automatic synchronization"
+#~ msgstr "Otomatik eşzamanlama"
+
+#~ msgid "Discovery Utilities"
+#~ msgstr "Keşif İzlenceleri"
+
+#~ msgid "Select the sound to play"
+#~ msgstr "Çalınacak sesi seçin"
+
+#~ msgid "Pause music plugin"
+#~ msgstr "Müzik duraklatma eklentisi"
+
+#~ msgid "Condition"
+#~ msgstr "Koşul"
+
+#~ msgid "Actions"
+#~ msgstr "Eylemler"
+
+#~ msgid "Automatically resume media when call has finished"
+#~ msgstr "Arama bittiğinde ortamı otomatik olarak sürdür"
+
+#~ msgid "Schedule a shutdown"
+#~ msgstr "Bir kapatma zamanla"
+
+#~ msgid "Shutdown now"
+#~ msgstr "Şimdi kapat"
+
+#~ msgid "Cancel last shutdown"
+#~ msgstr "Son kapatmayı iptal et"
+
+#~ msgid "Schedule a reboot"
+#~ msgstr "Bir yeniden başlatma zamanla"
+
+#~ msgid "Say Hello"
+#~ msgstr "Merhaba de"
+
+#~ msgid "Shutdown"
+#~ msgstr "Kapat"
+
+#~ msgid "Reboot"
+#~ msgstr "Yeniden başlat"
+
+#~ msgid "Export"
+#~ msgstr "Dışa Aktar"
+
+#~ msgid "Import"
+#~ msgstr "İçe Aktar"
+
+#~ msgid "Export Commands"
+#~ msgstr "Komutları Dışa Aktar"
+
+#~ msgid "Import Commands"
+#~ msgstr "Komutlar İçe Aktar"
+
+#~ msgid "General"
+#~ msgstr "Genel"
+
+#~ msgid "Synchronize only notifications with a timeout value of 0?"
+#~ msgstr "Yalnızca 0 zaman aşımı değerine sahip bildirimler eşzamanlansın mı?"
+
+#~ msgid ""
+#~ "Append the notification body to the summary when synchronizing "
+#~ "notifications?"
+#~ msgstr "Bildirimler eşzamanlanırken bildirim gövdesi özete eklensin mi?"
+
+#~ msgid "Synchronize icons of notifying applications if possible?"
+#~ msgstr ""
+#~ "Olanaklıysa bildirim yapan uygulamalar simgeleriyle eşzamanlansın mı?"
+
+#~ msgid "Synchronize icons"
+#~ msgstr "Simgeleri eşzamanla"
+
+#~ msgid ""
+#~ "<html><head/><body><p>Minimum urgency level of the notifications</p></"
+#~ "body></html>"
+#~ msgstr ""
+#~ "<html><head/><body><p>Bildirimlerin en düşük aciliyet düzeyi</p></body></"
+#~ "html>"
+
+#~ msgid "Synchronize only notifications with the given urgency level."
+#~ msgstr ""
+#~ "Yalnızca belirtilen acil durum düzeyine sahip bildirimleri eşzamanlayın."
+
+#~ msgid "Applications"
+#~ msgstr "Uygulamalar"
+
+#~ msgid "Share plugin settings"
+#~ msgstr "Paylaşma eklentisi ayarları"
+
+#~ msgid "Receiving"
+#~ msgstr "Alınıyor"
+
+#~ msgid "Blacklisted"
+#~ msgstr "Kara listeye alındı"

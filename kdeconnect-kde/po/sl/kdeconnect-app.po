@@ -1,0 +1,558 @@
+# Copyright (C) YEAR This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+#
+# Matjaž Jeran <matjaz.jeran@amis.net>, 2020, 2021, 2022.
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-25 00:44+0000\n"
+"PO-Revision-Date: 2026-08-23 08:46+0200\n"
+"Last-Translator: Matjaž Jeran <matjaz.jeran@amis.net>\n"
+"Language-Team: Slovenian <lugos-slo@lugos.si>\n"
+"Language: sl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n"
+"%100==4 ? 3 : 0);\n"
+"X-Generator: Poedit 3.9\n"
+
+#: main.cpp:45 main.cpp:47
+#, kde-format
+msgid "KDE Connect"
+msgstr "KDE Connect"
+
+#: main.cpp:49
+#, kde-format
+msgid "© 2015–2025 KDE Connect Team"
+msgstr "© 2015-2025, Ekipa KDE Connect"
+
+#: main.cpp:50
+#, kde-format
+msgid "Aleix Pol Gonzalez"
+msgstr "Aleix Pol Gonzalez"
+
+#: main.cpp:51
+#, kde-format
+msgid "Albert Vaca Cintora"
+msgstr "Albert Vaca Cintora"
+
+#: main.cpp:52
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Matjaž Jeran"
+
+#: main.cpp:52
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "matjaz.jeran@amis.net"
+
+#: main.cpp:83
+#, kde-format
+msgctxt "@info:shell"
+msgid "Device id to open the app in"
+msgstr "ID naprave za odpiranje aplikacije"
+
+#: main.cpp:86
+#, kde-format
+msgctxt "@info:shell"
+msgid "Configuration module to show, requires --device to be set."
+msgstr "Za prikaz konfiguracijskega modula je potrebna nastavitev --device."
+
+#: main.cpp:90
+#, kde-format
+msgctxt "command line description"
+msgid "Replace an existing instance"
+msgstr "Zamenjaj obstoječi pojavek"
+
+#: main.cpp:93
+#, kde-format
+msgid "URL to share"
+msgstr "URL za deljenje"
+
+#: qml/BatteryInfo.qml:26
+#, kde-format
+msgid "Battery: No info"
+msgstr "Baterija: Ni podatkov"
+
+#: qml/BatteryInfo.qml:28
+#, kde-format
+msgid "Battery: %1% (Charging)"
+msgstr "Baterija: %1% (Polnjenje)"
+
+#: qml/BatteryInfo.qml:30
+#, kde-format
+msgid "Battery: %1%"
+msgstr "Baterija: %1%"
+
+#: qml/ConnectivityInfo.qml:20
+#, kde-format
+msgid "Unknown"
+msgstr "Neznano"
+
+#: qml/ConnectivityInfo.qml:26
+#, kde-format
+msgid "Mobile Network: No signal"
+msgstr "Mobilno omrežje: Ni signala"
+
+#: qml/ConnectivityInfo.qml:28
+#, kde-format
+msgid "Mobile Network: %1"
+msgstr "Mobilno omrežje: %1"
+
+#: qml/DevicePage.qml:46
+#, kde-format
+msgid "Unpair"
+msgstr "Loči par"
+
+#: qml/DevicePage.qml:51
+#, kde-format
+msgid "Send Ping"
+msgstr "Pošlji ping"
+
+#: qml/DevicePage.qml:59 qml/PluginSettings.qml:20
+#, kde-format
+msgid "Plugin Settings"
+msgstr "Nastavitve vtičnika"
+
+#: qml/DevicePage.qml:75
+#, kde-format
+msgctxt "@title:group device page section header"
+msgid "Actions"
+msgstr "Dejavnosti"
+
+#: qml/DevicePage.qml:77
+#, kde-format
+msgctxt "@title:group device page section header"
+msgid "Controls"
+msgstr "Nadzor"
+
+#: qml/DevicePage.qml:79
+#, kde-format
+msgctxt "@title:group device page section header"
+msgid "Information"
+msgstr "Informacije"
+
+#: qml/DevicePage.qml:141
+#, kde-format
+msgid "Multimedia control"
+msgstr "Nadzor večpredstavnosti"
+
+#: qml/DevicePage.qml:149
+#, kde-format
+msgid "Notifications"
+msgstr "Obvestila"
+
+#: qml/DevicePage.qml:157
+#, kde-format
+msgid "Remote input"
+msgstr "Oddaljeni input"
+
+#: qml/DevicePage.qml:165 qml/runcommand.qml:16
+#, kde-format
+msgid "Run command"
+msgstr "Zaženi ukaz"
+
+#: qml/DevicePage.qml:173 qml/presentationRemote.qml:15
+#, kde-format
+msgid "Presentation Remote"
+msgstr "Oddaljena predstavitev"
+
+#: qml/DevicePage.qml:182 qml/volume.qml:16
+#, kde-format
+msgid "Volume control"
+msgstr "Nadzor glasnosti"
+
+#: qml/DevicePage.qml:192
+#, kde-format
+msgid "SMS Messages"
+msgstr "Sporočila SMS"
+
+#: qml/DevicePage.qml:200 qml/mousepad.qml:44
+#, kde-format
+msgid "Lock"
+msgstr "Zakleni"
+
+#: qml/DevicePage.qml:200
+#, kde-format
+msgid "Unlock"
+msgstr "Odkleni"
+
+#: qml/DevicePage.qml:208
+#, kde-format
+msgid "Find Device"
+msgstr "Poišči napravo"
+
+#: qml/DevicePage.qml:216
+#, kde-format
+msgid "Send Clipboard"
+msgstr "Pošlji odložišče"
+
+#: qml/DevicePage.qml:223
+#, kde-format
+msgid "Share File"
+msgstr "Deli datoteko"
+
+#: qml/DevicePage.qml:231
+#, kde-format
+msgid "Browse this device"
+msgstr "Prebrskaj to napravo"
+
+#: qml/DevicePage.qml:239
+#, kde-format
+msgid "Stop virtual monitor session"
+msgstr "Ustavi sejo navideznega monitorja"
+
+#: qml/DevicePage.qml:239
+#, kde-format
+msgid "Use device as an external monitor"
+msgstr "Uporabi napravo kot zunanji monitor"
+
+#: qml/DevicePage.qml:270
+#, kde-format
+msgid "Address: %1 via %2"
+msgstr "Naslov: %1 prek %2"
+
+#: qml/DevicePage.qml:279
+#, kde-format
+msgid "This device is not paired."
+msgstr "Ta naprava ni uparjena."
+
+#: qml/DevicePage.qml:283
+#, kde-format
+msgctxt "Request pairing with a given device"
+msgid "Pair"
+msgstr "Upari"
+
+#: qml/DevicePage.qml:290 qml/DevicePage.qml:299
+#, kde-format
+msgid ""
+"Pair requested\n"
+"Key: "
+msgstr ""
+"Zahtevan par\n"
+"Ključ: "
+
+#: qml/DevicePage.qml:305
+#, kde-format
+msgid "Accept"
+msgstr "Sprejmi"
+
+#: qml/DevicePage.qml:311
+#, kde-format
+msgid "Reject"
+msgstr "Zavrni"
+
+#: qml/DevicePage.qml:322
+#, kde-format
+msgid "This device is not reachable"
+msgstr "Ta naprava ni dosegljiva"
+
+#: qml/DevicePage.qml:330
+#, kde-format
+msgid "Please choose a file"
+msgstr "Izberite datoteko"
+
+#: qml/Main.qml:105
+#, kde-format
+msgid "Devices"
+msgstr "Naprave"
+
+#: qml/Main.qml:113
+#, kde-format
+msgctxt "@action:button"
+msgid "Refresh"
+msgstr "Osveži"
+
+#: qml/Main.qml:116
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Refresh Devices"
+msgstr "Osveži naprave"
+
+#: qml/Main.qml:152
+#, kde-format
+msgid "Remembered"
+msgstr "Zapomnjena"
+
+#: qml/Main.qml:154
+#, kde-format
+msgid "Available"
+msgstr "Na voljo"
+
+#: qml/Main.qml:156
+#, kde-format
+msgid "Connected"
+msgstr "Povezana"
+
+#: qml/Main.qml:161
+#, kde-format
+msgid "No devices found"
+msgstr "Ni najdenih naprav"
+
+#: qml/Main.qml:240
+#, kde-format
+msgctxt "@action:button"
+msgid "Settings"
+msgstr "Nastavitve"
+
+#: qml/Main.qml:255
+#, kde-format
+msgid "Settings"
+msgstr "Nastavitve"
+
+#: qml/mousepad.qml:16
+#, kde-format
+msgid "Remote Control"
+msgstr "Oddaljen nadzor"
+
+#: qml/mousepad.qml:61
+#, kde-format
+msgid "Press %1 or the left and right mouse buttons at the same time to unlock"
+msgstr "Pritisnite %1 ali sočasno levi in desni gumb miške, da odklenete"
+
+#: qml/mousepad.qml:213
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Left Click"
+msgstr "Levi klik"
+
+#: qml/mousepad.qml:222
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Middle Click"
+msgstr "Srednji klik"
+
+#: qml/mousepad.qml:231
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Right Click"
+msgstr "Desni klik"
+
+#: qml/mpris.qml:20
+#, kde-format
+msgid "Multimedia Controls"
+msgstr "Nadzor večpredstavnosti"
+
+#: qml/mpris.qml:68
+#, kde-format
+msgid "No players available"
+msgstr "Ni na voljo predvajalnikov"
+
+#: qml/mpris.qml:128
+#, kde-format
+msgid "%1 - %2"
+msgstr "%1 - %2"
+
+#: qml/NotificationPanel.qml:21
+#, kde-format
+msgctxt "@title:window"
+msgid "Notifications"
+msgstr "Obvestila"
+
+#: qml/NotificationPanel.qml:196
+#, kde-format
+msgid "Reply"
+msgstr "Odgovori"
+
+#: qml/NotificationPanel.qml:213
+#, kde-format
+msgid "Dismiss"
+msgstr "Zavrzi"
+
+#: qml/NotificationPanel.qml:244
+#, kde-format
+msgid "Cancel"
+msgstr "Prekliči"
+
+#: qml/NotificationPanel.qml:262
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Reply to %1…"
+msgstr "Odgovori na %1…"
+
+#: qml/NotificationPanel.qml:281
+#, kde-format
+msgid "Send"
+msgstr "Pošlji"
+
+#: qml/PluginSettings.qml:140
+#, kde-format
+msgid "Configure plugin"
+msgstr "Konfiguriraj vtičnik"
+
+#: qml/presentationRemote.qml:22
+#, kde-format
+msgid "Enable Full-Screen"
+msgstr "Omogoči celoten zaslon"
+
+#: qml/presentationRemote.qml:39
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Previous Slide"
+msgstr "Prejšnja slika"
+
+#: qml/presentationRemote.qml:47
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Next Slide"
+msgstr "Naslednja slika"
+
+#: qml/runcommand.qml:23
+#, kde-format
+msgid "Edit commands"
+msgstr "Ukazi urejanja"
+
+#: qml/runcommand.qml:26
+#, kde-format
+msgid "You can edit commands on the connected device"
+msgstr "Lahko urejate ukaze na povezani napravi"
+
+#: qml/runcommand.qml:53
+#, kde-format
+msgid "No commands defined"
+msgstr "Ni določenega ukaza"
+
+#: qml/Settings.qml:15
+#, kde-format
+msgctxt "@title:window"
+msgid "Settings"
+msgstr "Nastavitve"
+
+#: qml/Settings.qml:27
+#, kde-format
+msgid "Device name"
+msgstr "Ime naprave"
+
+#: qml/Settings.qml:39
+#, kde-format
+msgctxt "@title:group"
+msgid "Backends"
+msgstr "Zaledja"
+
+#: qml/Settings.qml:72
+#, kde-format
+msgid "About KDE Connect"
+msgstr "O KDE Connectu"
+
+#: qml/Settings.qml:80
+#, kde-format
+msgid "About KDE"
+msgstr "O KDE"
+
+#: qml/Settings.qml:91
+#, kde-format
+msgid "Close"
+msgstr "Zapri"
+
+#: qml/WelcomePage.qml:27
+#, kde-format
+msgctxt "@title"
+msgid "No Device Selected"
+msgstr "Ni izbrane naprave"
+
+#: qml/WelcomePage.qml:35
+#, kde-format
+msgctxt "@info"
+msgid "Make sure to install KDE Connect on your other devices."
+msgstr "Zagotovite namestitev KDE Connect na vaše druge naprave."
+
+#: qml/WelcomePage.qml:43
+#, kde-format
+msgctxt "@title:context"
+msgid "KDE Connect Android App"
+msgstr "KDE Connect aplikacija za Android"
+
+#: qml/WelcomePage.qml:50
+#, kde-format
+msgctxt "Android Application Store"
+msgid "F-Droid"
+msgstr "F-Droid"
+
+#: qml/WelcomePage.qml:57
+#, kde-format
+msgctxt "Android Application Store"
+msgid "Play Store"
+msgstr "Play Store"
+
+#: qml/WelcomePage.qml:63
+#, kde-format
+msgctxt "@title:context"
+msgid "KDE Connect iOS App"
+msgstr "KDE Connect aplikacija za iOS"
+
+#: qml/WelcomePage.qml:68
+#, kde-format
+msgid "Apple Store"
+msgstr "Apple Store"
+
+#: qml/WelcomePage.qml:74
+#, kde-format
+msgid ""
+"If you are having problems, visit the <a href=\"https://userbase.kde.org/"
+"KDEConnect\"><span style=\" text-decoration: underline;\">KDE Connect "
+"Community wiki</span></a> for help."
+msgstr ""
+"Če imate težave, obiščite <a href=\"https://userbase.kde.org/KDEConnect"
+"\"><span style=\"text-decoration: underline;\">wiki skupnosti KDE Connect</"
+"span></a > za pomoč."
+
+#~ msgctxt "@title:window"
+#~ msgid "Active Notifications"
+#~ msgstr "Aktivna obvestila"
+
+#~ msgid "@action:button"
+#~ msgstr "@action:button"
+
+#~ msgctxt "@info KDE Connect provider name"
+#~ msgid "Bluetooth"
+#~ msgstr "Bluetooth"
+
+#~ msgctxt "@info KDE Connect provider name"
+#~ msgid "Loopback"
+#~ msgstr "Povratna zanka"
+
+#~ msgctxt "@info KDE Connect provider name"
+#~ msgid "Network"
+#~ msgstr "Omrežje"
+
+#~ msgid "(c) 2015, Aleix Pol Gonzalez"
+#~ msgstr "(c) 2015, Aleix Pol Gonzalez"
+
+#~ msgid "Maintainer"
+#~ msgstr "Vzdrževalec"
+
+#~ msgid ""
+#~ "<html><head/><body><p>No device selected<br><br>If you own an Android "
+#~ "device, make sure to install the <a href=\"https://play.google.com/store/"
+#~ "apps/details?id=org.kde.kdeconnect_tp\"><span style=\" text-decoration: "
+#~ "underline;\">KDE Connect Android app</span></a> (also available <a href="
+#~ "\"https://f-droid.org/repository/browse/?fdid=org.kde.kdeconnect_tp"
+#~ "\"><span style=\" text-decoration: underline;\">from F-Droid</span></a>) "
+#~ "and it should appear in the list. If you have an iPhone, make sure to "
+#~ "install the <a href=\"https://apps.apple.com/us/app/kde-connect/"
+#~ "id1580245991\"><span style=\" text-decoration: underline;\">KDE Connect "
+#~ "iOS app.</span></a> <br><br>If you are having problems, visit the <a href="
+#~ "\"https://userbase.kde.org/KDEConnect\"><span style=\" text-decoration: "
+#~ "underline;\">KDE Connect Community wiki</span></a> for help.</p></body></"
+#~ "html>"
+#~ msgstr ""
+#~ "<html><head/><body><p>Izbrane ni nobene naprave<br><br>Če imate napravo "
+#~ "Android, ne pozabite namestiti <a href=\"https://play.google.com/store /"
+#~ "apps/details?id=org.kde.kdeconnect_tp\"><span style=\" text-decoration: "
+#~ "underline;\">Aplikacijo KDE Connect za Android</span></a> (na voljo tudi "
+#~ "<a href=\"https://f-droid.org/repository/browse/?fdid=org.kde."
+#~ "kdeconnect_tp\"><span style=\"text-decoration: underline;\">iz F-Droid</"
+#~ "span></ a>) in se mora pojaviti na seznamu. Če imate iPhone, ne pozabite "
+#~ "namestiti <a href=\"https://apps.apple.com/us/app/kde-connect/"
+#~ "id1580245991\"><span style=\"text-decoration: underline;\"> Aplikacijo "
+#~ "KDE Connect za iOS.</span></a> <br><br>Če imate težave, obiščite <a href="
+#~ "\"https://userbase.kde.org/KDEConnect\"><span style=\" text-decoration: "
+#~ "underline;\">wiki skupnosti KDE Connect</span></a> za pomoč.</p></body></"
+#~ "html>"
+
+#~ msgid "Find devices..."
+#~ msgstr "Poišči naprave..."

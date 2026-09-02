@@ -1,0 +1,235 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# SPDX-FileCopyrightText: 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2026 Freek de Kruijf <freekdekruijf@kde.nl>
+# SPDX-FileCopyrightText: 2023 pieter <pieterkristensen@gmail.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-05-29 00:43+0000\n"
+"PO-Revision-Date: 2026-03-12 10:36+0100\n"
+"Last-Translator: Freek de Kruijf <freekdekruijf@kde.nl>\n"
+"Language-Team: \n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 25.12.3\n"
+
+#: package/contents/ui/Battery.qml:35
+#, kde-format
+msgid "%1% charging"
+msgstr "%1% bezig met opladen"
+
+#: package/contents/ui/Battery.qml:37
+#, kde-format
+msgid "%1%"
+msgstr "%1%"
+
+#: package/contents/ui/Battery.qml:40
+#, kde-format
+msgid "No info"
+msgstr "Geen informatie"
+
+#: package/contents/ui/Connectivity.qml:43
+#, kde-format
+msgid "Unknown"
+msgstr "Onbekend"
+
+#: package/contents/ui/Connectivity.qml:55
+#, kde-format
+msgid "No signal"
+msgstr "Geen signaal"
+
+#: package/contents/ui/DeviceDelegate.qml:89
+#, kde-format
+msgid "Virtual Monitor is not available"
+msgstr "Virtuele monitor is niet beschikbaar"
+
+#: package/contents/ui/DeviceDelegate.qml:94
+#, kde-format
+msgid "Please choose a file"
+msgstr "Kies een bestand a.u.b"
+
+#: package/contents/ui/DeviceDelegate.qml:111
+#, kde-format
+msgid "Share file"
+msgstr "Bestand delen"
+
+#: package/contents/ui/DeviceDelegate.qml:119
+#, kde-format
+msgid "Send Clipboard"
+msgstr "Klembord verzenden"
+
+#: package/contents/ui/DeviceDelegate.qml:130
+#, kde-format
+msgid "Ring my phone"
+msgstr "Bel mijn telefoon"
+
+#: package/contents/ui/DeviceDelegate.qml:141
+#, kde-format
+msgid "Browse this device"
+msgstr "Dit apparaat langslopen"
+
+#: package/contents/ui/DeviceDelegate.qml:152
+#, kde-format
+msgid "SMS Messages"
+msgstr "SMS-berichten"
+
+#: package/contents/ui/DeviceDelegate.qml:195
+#, kde-format
+msgid "File Transfer"
+msgstr "Bestandsoverdracht"
+
+#: package/contents/ui/DeviceDelegate.qml:196
+#, kde-format
+msgid "Drop a file to transfer it onto your phone."
+msgstr "Laat een bestand los om het over te dragen naar uw telefoon."
+
+#: package/contents/ui/DeviceDelegate.qml:238
+#, kde-format
+msgid "Virtual Display"
+msgstr "Virtueel beeldscherm"
+
+#: package/contents/ui/DeviceDelegate.qml:297
+#, kde-format
+msgctxt "Battery charge percentage"
+msgid "%1%"
+msgstr "%1%"
+
+#: package/contents/ui/DeviceDelegate.qml:310
+#, kde-format
+msgid "More options…"
+msgstr "Meer opties…"
+
+#: package/contents/ui/DeviceDelegate.qml:349
+#, kde-format
+msgid "Notifications"
+msgstr "Meldingen"
+
+#: package/contents/ui/DeviceDelegate.qml:361
+#, kde-format
+msgid "Dismiss all notifications"
+msgstr "Alle meldingen gezien"
+
+#: package/contents/ui/DeviceDelegate.qml:379
+#, kde-format
+msgid "Remote Keyboard"
+msgstr "Toetsenbord op afstand"
+
+#: package/contents/ui/DeviceDelegate.qml:608
+#, kde-format
+msgid "Reply"
+msgstr "Beantwoorden"
+
+#: package/contents/ui/DeviceDelegate.qml:625
+#, kde-format
+msgid "Dismiss"
+msgstr "Gezien"
+
+#: package/contents/ui/DeviceDelegate.qml:651
+#, kde-format
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: package/contents/ui/DeviceDelegate.qml:666
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Reply to %1…"
+msgstr "Beantwoorden aan %1..."
+
+#: package/contents/ui/DeviceDelegate.qml:684
+#, kde-format
+msgid "Send"
+msgstr "Verzenden"
+
+#: package/contents/ui/DeviceDelegate.qml:716
+#, kde-format
+msgid "Run command"
+msgstr "Commando uitvoeren"
+
+#: package/contents/ui/DeviceDelegate.qml:723
+#, kde-format
+msgid "Add command"
+msgstr "Commando toevoegen"
+
+#: package/contents/ui/FullRepresentation.qml:68
+#, kde-format
+msgid "No paired devices"
+msgstr "Geen gepaarde apparaten"
+
+#: package/contents/ui/FullRepresentation.qml:68
+#, kde-format
+msgid "Paired device is unavailable"
+msgid_plural "All paired devices are unavailable"
+msgstr[0] "Gepaarde apparaat is niet beschikbaar"
+msgstr[1] "Alle gepaarde apparaten zijn niet beschikbaar"
+
+#: package/contents/ui/FullRepresentation.qml:70
+#, kde-format
+msgid "Install KDE Connect on your Android device to integrate it with Plasma!"
+msgstr ""
+"KDE Connect op uw Android apparaat installeren om het te integreren met "
+"Plasma!"
+
+#: package/contents/ui/FullRepresentation.qml:74
+#, kde-format
+msgid "Pair a Device…"
+msgstr "Een apparaat paren…"
+
+#: package/contents/ui/FullRepresentation.qml:86
+#, kde-format
+msgid "Install from Google Play"
+msgstr "Uit Google Play installeren"
+
+#: package/contents/ui/FullRepresentation.qml:96
+#, kde-format
+msgid "Install from F-Droid"
+msgstr "Uit F-Droid installeren"
+
+#: package/contents/ui/main.qml:55
+#, kde-format
+msgid "KDE Connect Settings…"
+msgstr "Instellingen van KDE Connect…"
+
+#~ msgid "Remote device does not have a VNC client (eg. krdc) installed."
+#~ msgstr ""
+#~ "Apparaat op afstand heeft geen VNC-client (bijv. krdc) geïnstalleerd."
+
+#~ msgid "The krfb package is required on the local device."
+#~ msgstr "Het pakket krfb is vereist op het lokale apparaat."
+
+#~ msgid "Failed to create the virtual monitor."
+#~ msgstr "De virtuele monitor kon niet worden aangemaakt."
+
+#~ msgid "Save As"
+#~ msgstr "Opslaan als"
+
+#~ msgid "Take a photo"
+#~ msgstr "Een foto nemen"
+
+#~ msgid "Configure..."
+#~ msgstr "Configureren..."
+
+#~ msgctxt ""
+#~ "Display the battery charge percentage with the label \"Battery:\" so the "
+#~ "user knows what is being displayed"
+#~ msgid "Battery: %1"
+#~ msgstr "Batterij: %1"
+
+#~ msgid "%1 (%2)"
+#~ msgstr "%1 (%2)"
+
+#~ msgid "Share text"
+#~ msgstr "Tekst delen"
+
+#~ msgid "Search for devices"
+#~ msgstr "Zoeken naar apparaten"
+
+#~ msgid "Charging: %1%"
+#~ msgstr "Opladen: %1%"
+
+#~ msgid "Discharging: %1%"
+#~ msgstr "Ontladen: %1%"

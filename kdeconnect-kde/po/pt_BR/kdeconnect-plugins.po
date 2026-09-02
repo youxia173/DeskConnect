@@ -1,0 +1,659 @@
+# Translation of kdeconnect-plugins.po to Brazilian Portuguese
+# Copyright (C) 2014-2020 This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+#
+# André Marcelo Alvarenga <alvarenga@kde.org>, 2014, 2015, 2016, 2018, 2019, 2020.
+# Luiz Fernando Ranghetti <elchevive@opensuse.org>, 2017, 2019, 2020, 2021, 2022, 2023.
+# SPDX-FileCopyrightText: 2025-2026 Marcus Gama <marcus.gama@gmail.com>
+# SPDX-FileCopyrightText: 2025 Guilherme Marçal Silva <guimarcalsilva@gmail.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-14 00:45+0000\n"
+"PO-Revision-Date: 2026-07-27 06:58-0300\n"
+"Last-Translator: Marcus Gama <marcus.gama@gmail.com>\n"
+"Language-Team: Brazilian Portuguese <kde-i18n-pt_BR@kde.org>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Lokalize 26.04.3\n"
+
+#: battery/batteryplugin.cpp:150
+#, kde-format
+msgctxt "device name: low battery"
+msgid "%1: Low Battery"
+msgstr "%1: Baixo nível de bateria"
+
+#: battery/batteryplugin.cpp:151
+#, kde-format
+msgid "Battery at %1%"
+msgstr "Bateria em %1%"
+
+#: clipboard/kdeconnect_clipboard_config.qml:34
+#, kde-format
+msgid "Automatically share the clipboard from this device"
+msgstr "Compartilhar automaticamente a área de transferência deste dispositivo"
+
+#: clipboard/kdeconnect_clipboard_config.qml:42
+#, kde-format
+msgid "Including passwords (as marked by password managers)"
+msgstr "Incluindo as senhas (como marcado pelos gerenciadores de senhas)"
+
+#: clipboard/kdeconnect_clipboard_config.qml:55
+#, kde-format
+msgid "Max Clipboard File Size (MB)"
+msgstr "Tamanho máximo do arquivo da área de transferência (MB)"
+
+#: digitizer/linuxdigitizerimpl.cpp:72 digitizer/linuxdigitizerimpl.cpp:168
+#, kde-format
+msgid "KDE Connect Error"
+msgstr "Erro do KDE Connect"
+
+#: digitizer/linuxdigitizerimpl.cpp:73
+#, kde-format
+msgid ""
+"Unable to create a virtual drawing tablet. If this error persists, file a "
+"bug report."
+msgstr ""
+"Não foi possível criar um tablet de desenho virtual. Se o erro persistir, "
+"registre um relatório de bug."
+
+#: digitizer/linuxdigitizerimpl.cpp:169
+#, kde-format
+msgid ""
+"Unable to process one or more input events for the virtual device. If this "
+"error persists, file a bug report."
+msgstr ""
+"Não foi possível processar um ou mais eventos de entrada para o dispositivo "
+"virtual. Se o erro persistir, registre um relatório de bug."
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:23
+#: share/kdeconnect_share_config.qml:22
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:25
+#, kde-format
+msgid "Apply"
+msgstr "Aplicar"
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:47
+#, kde-format
+msgid "Sound to play:"
+msgstr "Som a reproduzir:"
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:57
+#, kde-format
+msgctxt "@action:button"
+msgid "Choose file"
+msgstr "Escolha arquivo"
+
+#: findthisdevice/kdeconnect_findthisdevice_config.qml:66
+#, kde-format
+msgctxt "@action:button"
+msgid "Play"
+msgstr "Reproduzir"
+
+#: lockdevice/lockdeviceplugin-win.cpp:58 lockdevice/lockdeviceplugin.cpp:87
+#, kde-format
+msgid "Remote lock successful"
+msgstr "Travado remotamente com sucesso"
+
+#: lockdevice/lockdeviceplugin-win.cpp:61
+#: lockdevice/lockdeviceplugin-win.cpp:62 lockdevice/lockdeviceplugin.cpp:92
+#: lockdevice/lockdeviceplugin.cpp:94
+#, kde-format
+msgid "Remote lock failed"
+msgstr "Falha ao travar remotamente"
+
+#: mpriscontrol/mpriscontrolplugin-win.cpp:26
+#, kde-format
+msgctxt ""
+"@title Users select this to control the current media player when we can't "
+"detect a specific player name like VLC"
+msgid "Current Player"
+msgstr "Reprodutor atual"
+
+#: mpriscontrol/mpriscontrolplugin-win.cpp:93
+#: mpriscontrol/mpriscontrolplugin-win.cpp:94
+#: mpriscontrol/mpriscontrolplugin-win.cpp:95
+#, kde-format
+msgid "N/A"
+msgstr "N/D"
+
+#: notifications/notification.cpp:117
+#, kde-format
+msgctxt "@action:button"
+msgid "Reply"
+msgstr "Responder"
+
+#: notifications/notification.cpp:120
+#, kde-format
+msgctxt "@info:placeholder %1 is the name of a group chat"
+msgid "Reply in %1…"
+msgstr "Responder em %1…"
+
+#: notifications/notification.cpp:122
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Reply to %1…"
+msgstr "Responder para %1…"
+
+#: notifications/sendreplydialog.cpp:29
+#, kde-format
+msgid "Send"
+msgstr "Enviar"
+
+#. i18n: ectx: property (windowTitle), widget (QDialog, SendReplyDialog)
+#: notifications/sendreplydialog.ui:14
+#, kde-format
+msgid "Dialog"
+msgstr "Janela"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:32
+#, kde-format
+msgid "Pause as soon as phone rings"
+msgstr "Pausar assim que o celular tocar"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:41
+#, kde-format
+msgid "Pause only while talking"
+msgstr "Pausar apenas enquanto estiver falando"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:47
+#, kde-format
+msgid "Pause media players"
+msgstr "Pausar os reprodutores multimídia"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:54
+#, kde-format
+msgid "Mute system sound"
+msgstr "Silenciar o sistema de som"
+
+#: pausemusic/kdeconnect_pausemusic_config.qml:61
+#, kde-format
+msgid "Resume automatically when call ends"
+msgstr "Retomar automaticamente quando a chamada terminar"
+
+#: ping/pingplugin.cpp:26
+#, kde-format
+msgid "Ping!"
+msgstr "Ping!"
+
+#: presenter/kdeconnect_presenter_config.qml:23
+#, kde-format
+msgctxt "@action:label"
+msgid "Display:"
+msgstr "Exibir:"
+
+#: presenter/kdeconnect_presenter_config.qml:25
+#, kde-format
+msgid "Red Dot"
+msgstr "Ponto vermelho"
+
+#: presenter/kdeconnect_presenter_config.qml:26
+#, kde-format
+msgid "Electric"
+msgstr "Elétrico"
+
+#: runcommand/kdeconnect_runcommand_config.qml:21
+#, kde-format
+msgid "Add Command…"
+msgstr "Adicionar comando…"
+
+#: runcommand/kdeconnect_runcommand_config.qml:54
+#, kde-format
+msgid "Edit"
+msgstr "Editar"
+
+#: runcommand/kdeconnect_runcommand_config.qml:64
+#, kde-format
+msgid "Delete"
+msgstr "Excluir"
+
+#: runcommand/kdeconnect_runcommand_config.qml:76
+#, kde-format
+msgctxt "@info"
+msgid "No commands configured"
+msgstr "Nenhum comando configurado"
+
+#: runcommand/kdeconnect_runcommand_config.qml:77
+#, kde-format
+msgctxt "@info"
+msgid "Add commands to run them remotely from other devices"
+msgstr "Adiciona comandos para executá-los remotamente de outros dispositivos"
+
+#: runcommand/kdeconnect_runcommand_config.qml:83
+#, kde-format
+msgctxt "@title:window"
+msgid "Add Command"
+msgstr "Adicionar comando"
+
+#: runcommand/kdeconnect_runcommand_config.qml:89
+#, kde-format
+msgctxt "@action:button"
+msgid "Add"
+msgstr "Adicionar"
+
+#: runcommand/kdeconnect_runcommand_config.qml:96
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Add command"
+msgstr "Adicionar comando"
+
+#: runcommand/kdeconnect_runcommand_config.qml:105
+#: runcommand/kdeconnect_runcommand_config.qml:183
+#, kde-format
+msgid "Name:"
+msgstr "Nome:"
+
+#: runcommand/kdeconnect_runcommand_config.qml:109
+#: runcommand/kdeconnect_runcommand_config.qml:187
+#, kde-format
+msgid "Command:"
+msgstr "Comando:"
+
+#: runcommand/kdeconnect_runcommand_config.qml:113
+#, kde-format
+msgid "Sample commands:"
+msgstr "Exemplos de comandos:"
+
+#: runcommand/kdeconnect_runcommand_config.qml:131
+#: runcommand/kdeconnect_runcommand_config.qml:142
+#, kde-format
+msgctxt "Sample command"
+msgid "Suspend"
+msgstr "Suspender"
+
+#: runcommand/kdeconnect_runcommand_config.qml:135
+#: runcommand/kdeconnect_runcommand_config.qml:150
+#, kde-format
+msgctxt "Sample command"
+msgid "Lock Screen"
+msgstr "Bloquear tela"
+
+#: runcommand/kdeconnect_runcommand_config.qml:146
+#, kde-format
+msgctxt "Sample command"
+msgid "Maximum Brightness"
+msgstr "Brilho máximo"
+
+#: runcommand/kdeconnect_runcommand_config.qml:154
+#, kde-format
+msgctxt "Sample command"
+msgid "Unlock Screen"
+msgstr "Desbloquear a tela"
+
+#: runcommand/kdeconnect_runcommand_config.qml:158
+#, kde-format
+msgctxt "Sample command"
+msgid "Close All Vaults"
+msgstr "Fechar todos os cofres"
+
+#: runcommand/kdeconnect_runcommand_config.qml:162
+#, kde-format
+msgctxt "Sample command"
+msgid "Forcefully Close All Vaults"
+msgstr "Fechar à força todos os cofres"
+
+#: runcommand/kdeconnect_runcommand_config.qml:175
+#, kde-format
+msgctxt "@title:window"
+msgid "Edit Command"
+msgstr "Editar comando"
+
+#: runcommand/kdeconnect_runcommand_config.qml:192
+#, kde-format
+msgctxt "@action:button"
+msgid "Confirm"
+msgstr "Confirmar"
+
+#: runcommand/kdeconnect_runcommand_config.qml:199
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Confirm"
+msgstr "Confirmar"
+
+#: screensaver-inhibit/screensaverinhibitplugin.cpp:24
+#, kde-format
+msgid "Phone is connected"
+msgstr "O celular está conectado"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:34
+#, kde-format
+msgid "Persistent notifications only"
+msgstr "Apenas as notificações persistentes"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:42
+#, kde-format
+msgid "Include body"
+msgstr "Incluir o conteúdo"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:49
+#, kde-format
+msgid "Include icon"
+msgstr "Incluir ícone"
+
+#: sendnotifications/kdeconnect_sendnotifications_config.qml:56
+#, kde-format
+msgid "Minimum urgency level:"
+msgstr "Nível de urgência mínimo:"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:178
+#, kde-format
+msgid "Name"
+msgstr "Nome"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:182
+#, kde-format
+msgid "Excluded"
+msgstr "Excluído"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:186
+#, kde-format
+msgid "Name of a notifying application."
+msgstr "Nome de um aplicativo com notificações."
+
+#: sendnotifications/notifyingapplicationmodel.cpp:188
+#, kde-format
+msgid "Synchronize notifications of an application?"
+msgstr "Sincronizar as notificações de um aplicativo?"
+
+#: sendnotifications/notifyingapplicationmodel.cpp:191
+#, kde-format
+msgid ""
+"Regular expression defining which notifications should not be sent.\n"
+"This pattern is applied to the summary and, if selected above, the body of "
+"notifications."
+msgstr ""
+"Uma expressão regular que define as notificações que não deverão ser "
+"enviadas.\n"
+"Este padrão é aplicado ao resumo e, se selecionado acima, ao conteúdo das "
+"notificações."
+
+#: sftp/mounter.cpp:141
+#, kde-format
+msgid "Failed to start sshfs"
+msgstr "Ocorreu uma falha ao iniciar o sshfs"
+
+#: sftp/mounter.cpp:145
+#, kde-format
+msgid "sshfs process crashed"
+msgstr "O processo do sshfs finalizou de forma inesperada"
+
+#: sftp/mounter.cpp:149
+#, kde-format
+msgid "Unknown error in sshfs"
+msgstr "Erro desconhecido no sshfs"
+
+#: sftp/mounter.cpp:160
+#, kde-format
+msgid "Error when accessing filesystem. sshfs finished with exit code %0"
+msgstr ""
+"Erro ao acessar o sistema de arquivos. O sshfs finalizou com o código de "
+"erro %0"
+
+#: sftp/mounter.cpp:169
+#, kde-format
+msgid "Failed to mount filesystem: device not responding"
+msgstr ""
+"Ocorreu uma falha ao montar o sistema de arquivos: dispositivo não responde"
+
+#: sftp/sftpplugin-win.cpp:93
+#, kde-format
+msgid "KDE Connect"
+msgstr "KDE Connect"
+
+#: sftp/sftpplugin-win.cpp:94
+#, kde-format
+msgid "Cannot handle SFTP protocol. Apologies for the inconvenience"
+msgstr "Não é possível manipular o protocolo SFTP. Desculpe a inconveniência"
+
+#: sftp/sftpplugin.cpp:174
+#, kde-format
+msgid "All files"
+msgstr "Todos os arquivos"
+
+#: sftp/sftpplugin.cpp:175
+#, kde-format
+msgid "Camera pictures"
+msgstr "Imagens da câmera"
+
+#: share/kdeconnect_share_config.qml:47
+#, kde-format
+msgid "Save files in:"
+msgstr "Salvar os arquivos em:"
+
+#: share/kdeconnect_share_config.qml:63
+#, kde-format
+msgid "%1 in the path will be replaced with the specific device name"
+msgstr ""
+"O %1 na localização será substituído pelo nome do dispositivo indicado."
+
+#: share/shareplugin.cpp:164
+#, kde-format
+msgctxt "@info Some piece of text was received from a connected device"
+msgid "Shared text copied to clipboard"
+msgstr "Texto copiado para a área de transferência"
+
+#: share/shareplugin.cpp:168
+#, kde-format
+msgctxt "@info Some piece of text was received from a connected device"
+msgid "Shared text from %1 copied to clipboard"
+msgstr "Texto copiado de %1 para a área de transferência"
+
+#: share/shareplugin.cpp:212
+#, kde-format
+msgctxt "@action:button Edit text with default text editor"
+msgid "Open in Text Editor"
+msgstr "Abrir no editor de textos"
+
+#: share/shareplugin.cpp:216
+#, kde-format
+msgctxt "@action:button Open URL with default app"
+msgid "Open Link"
+msgstr "Abrir o link"
+
+#: share/shareplugin.cpp:257 share/shareplugin.cpp:262
+#, kde-format
+msgid "Could not share file"
+msgstr "Não foi possível compartilhar o arquivo"
+
+#: share/shareplugin.cpp:257
+#, kde-format
+msgid "%1 does not exist"
+msgstr "%1 não existe"
+
+#: share/shareplugin.cpp:262
+#, kde-format
+msgid "Permission denied: %1"
+msgstr "Permissão negada: %1"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:43
+#, kde-format
+msgctxt ""
+"@label:listbox Forms a sentence: 'Leave the screen at the top/bottom/left/"
+"right edge', the pointer will switch to the connected device there"
+msgid "Leave Screen at"
+msgstr "Deixar a tela em"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:51
+#, kde-format
+msgctxt "@item:inlistbox top edge of screen"
+msgid "Top"
+msgstr "Topo"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:55
+#, kde-format
+msgctxt "@item:inlistbox left edge of screen"
+msgid "Left"
+msgstr "Esquerda"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:59
+#, kde-format
+msgctxt "@item:inlistbox right edge of screen"
+msgid "Right"
+msgstr "Direita"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:63
+#, kde-format
+msgctxt "@item:inlistbox top edge of screen"
+msgid "Bottom"
+msgstr "Fundo"
+
+#: shareinputdevices/kdeconnect_shareinputdevices_config.qml:71
+#, kde-format
+msgctxt "@info:tooltip edge: screen edge"
+msgid ""
+"Another device already reserved this edge. This may lead to unexpected "
+"results when both are connected at the same time."
+msgstr ""
+"Outro dispositivo já reservou esta borda. Isso pode levar a resultados "
+"inesperados quando ambos estiverem conectados ao mesmo tempo."
+
+#: telephony/telephonyplugin.cpp:23
+#, kde-format
+msgid "unknown number"
+msgstr "número desconhecido"
+
+#: telephony/telephonyplugin.cpp:32
+#, kde-format
+msgid "Incoming call from %1"
+msgstr "Chamada recebida de %1"
+
+#: telephony/telephonyplugin.cpp:36
+#, kde-format
+msgid "Missed call from %1"
+msgstr "Chamada não atendida de %1"
+
+#: telephony/telephonyplugin.cpp:65
+#, kde-format
+msgid "Mute Call"
+msgstr "Silenciar chamada"
+
+#: virtualmonitor/virtualmonitorplugin.cpp:184
+#, kde-format
+msgid "Remote device does not have a VNC or RDP client (eg. krdc) installed."
+msgstr ""
+"O dispositivo remoto não tem um cliente VNC ou RDP (por exemplo, krdc) "
+"instalado."
+
+#: virtualmonitor/virtualmonitorplugin.cpp:187
+#, kde-format
+msgid "The krdp package is required on the local device."
+msgstr "O pacote krdp é necessário no dispositivo local."
+
+#: virtualmonitor/virtualmonitorplugin.cpp:190
+#, kde-format
+msgid "Cannot start a request without a resolution"
+msgstr "Não foi possível iniciar uma solicitação sem uma resolução"
+
+#~ msgid "Clipboard plugin"
+#~ msgstr "Plugin de área de transferência"
+
+#~ msgid "Automatic synchronization"
+#~ msgstr "Sincronização automática"
+
+#~ msgid "Discovery Utilities"
+#~ msgstr "Utilitários de Descoberta"
+
+#~ msgid "Select the sound to play"
+#~ msgstr "Selecione o som a reproduzir"
+
+#~ msgid "Pause music plugin"
+#~ msgstr "Plugin de pausa da música"
+
+#~ msgid "Condition"
+#~ msgstr "Condição"
+
+#~ msgid "Actions"
+#~ msgstr "Ações"
+
+#~ msgid "Automatically resume media when call has finished"
+#~ msgstr "Reiniciar automaticamente a mídia quando a chamada terminar"
+
+#~ msgid "Schedule a shutdown"
+#~ msgstr "Agendar um desligamento"
+
+#~ msgid "Shutdown now"
+#~ msgstr "Desligar agora"
+
+#~ msgid "Cancel last shutdown"
+#~ msgstr "Cancelar último desligamento"
+
+#~ msgid "Schedule a reboot"
+#~ msgstr "Agendar uma reinicialização"
+
+#~ msgid "Say Hello"
+#~ msgstr "Dizer olá"
+
+#~ msgid "Shutdown"
+#~ msgstr "Desligar"
+
+#~ msgid "Reboot"
+#~ msgstr "Reiniciar"
+
+#~ msgid "Export"
+#~ msgstr "Exportar"
+
+#~ msgid "Import"
+#~ msgstr "Importar"
+
+#~ msgid "Export Commands"
+#~ msgstr "Exportar comandos"
+
+#~ msgid "Import Commands"
+#~ msgstr "Importar comandos"
+
+#~ msgid "General"
+#~ msgstr "Geral"
+
+#~ msgid "Synchronize only notifications with a timeout value of 0?"
+#~ msgstr "Sincronizar apenas as notificações com tempo-limite igual a 0?"
+
+#~ msgid ""
+#~ "Append the notification body to the summary when synchronizing "
+#~ "notifications?"
+#~ msgstr ""
+#~ "Adicionar o conteúdo da notificação ao resumo, quando sincronizar as "
+#~ "notificações?"
+
+#~ msgid "Synchronize icons of notifying applications if possible?"
+#~ msgstr "Se possível, sincronizar os ícones dos aplicativos de notificações?"
+
+#~ msgid "Synchronize icons"
+#~ msgstr "Sincronizar os ícones"
+
+#~ msgid ""
+#~ "<html><head/><body><p>Minimum urgency level of the notifications</p></"
+#~ "body></html>"
+#~ msgstr ""
+#~ "<html><head/><body><p>Nível de urgência mínimo das notificações</p></"
+#~ "body></html>"
+
+#~ msgid "Synchronize only notifications with the given urgency level."
+#~ msgstr "Sincroniza apenas as notificações com o nível de urgência indicado."
+
+#~ msgid "Applications"
+#~ msgstr "Aplicativos"
+
+#~ msgid "Share plugin settings"
+#~ msgstr "Compartilhar as configurações do plugin"
+
+#~ msgid "Receiving"
+#~ msgstr "Recebendo"
+
+#~ msgid "Blacklisted"
+#~ msgstr "Na lista de proibições"
+
+#~ msgid "Reply"
+#~ msgstr "Responder"
+
+#~ msgid "Contents shared to other devices"
+#~ msgstr "Conteúdo compartilhado com outros dispositivos"
+
+#~ msgid "Anything else"
+#~ msgstr "Qualquer coisa"
+
+#~ msgid "Use your phone as a touchpad and keyboard"
+#~ msgstr "Use seu celular como um touchpad e teclado"

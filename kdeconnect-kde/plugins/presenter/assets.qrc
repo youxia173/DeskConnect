@@ -1,0 +1,8 @@
+<!DOCTYPE RCC>
+
+<RCC version="1.0">
+<qresource prefix="/presenter">
+    <file>PresenterRedDot.qml</file>
+    <file>PresenterElectric.qml</file>
+</qresource>
+</RCC>

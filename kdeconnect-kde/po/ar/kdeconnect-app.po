@@ -1,0 +1,555 @@
+# Copyright (C) 2024 This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+# SPDX-FileCopyrightText: 2022, 2023, 2024, 2025, 2026 Zayed Al-Saidi <zayed.alsaidi@gmail.com>
+# Zayed Al-Saidi <zayed.alsaidi@gmail.com>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-25 00:44+0000\n"
+"PO-Revision-Date: 2026-08-29 11:03+0400\n"
+"Last-Translator: Zayed Al-Saidi <zayed.alsaidi@gmail.com>\n"
+"Language-Team: ar\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+"X-Generator: Lokalize 25.12.3\n"
+
+#: main.cpp:45 main.cpp:47
+#, kde-format
+msgid "KDE Connect"
+msgstr "جسر كِيدِي"
+
+#: main.cpp:49
+#, kde-format
+msgid "© 2015–2025 KDE Connect Team"
+msgstr "© 2015–2025 فريق جسر كِيدِي"
+
+#: main.cpp:50
+#, kde-format
+msgid "Aleix Pol Gonzalez"
+msgstr "أليكس بول غونزاليس"
+
+#: main.cpp:51
+#, kde-format
+msgid "Albert Vaca Cintora"
+msgstr "ألبرت فاكا سينتورا"
+
+#: main.cpp:52
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "زايد السعيدي"
+
+#: main.cpp:52
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "zayed.alsaidi@gmail.com"
+
+#: main.cpp:83
+#, kde-format
+msgctxt "@info:shell"
+msgid "Device id to open the app in"
+msgstr "معرّف الجهاز لفتح التطبيق في"
+
+#: main.cpp:86
+#, kde-format
+msgctxt "@info:shell"
+msgid "Configuration module to show, requires --device to be set."
+msgstr "وحدة التهيئة للعرض، تتطلب ضبط --device."
+
+#: main.cpp:90
+#, kde-format
+msgctxt "command line description"
+msgid "Replace an existing instance"
+msgstr "استبدل نسخة موجودة"
+
+#: main.cpp:93
+#, kde-format
+msgid "URL to share"
+msgstr "الربط للمشاركة"
+
+#: qml/BatteryInfo.qml:26
+#, kde-format
+msgid "Battery: No info"
+msgstr "البطارية: لا توجد معلومات"
+
+#: qml/BatteryInfo.qml:28
+#, kde-format
+msgid "Battery: %1% (Charging)"
+msgstr "البطارية: %1٪ (تشحن)"
+
+#: qml/BatteryInfo.qml:30
+#, kde-format
+msgid "Battery: %1%"
+msgstr "البطارية: %1٪"
+
+#: qml/ConnectivityInfo.qml:20
+#, kde-format
+msgid "Unknown"
+msgstr "مجهول"
+
+#: qml/ConnectivityInfo.qml:26
+#, kde-format
+msgid "Mobile Network: No signal"
+msgstr "شبكة الهاتف المحمول: لا توجد إشارة"
+
+#: qml/ConnectivityInfo.qml:28
+#, kde-format
+msgid "Mobile Network: %1"
+msgstr "شبكة الهاتف المحمول: %1"
+
+#: qml/DevicePage.qml:46
+#, kde-format
+msgid "Unpair"
+msgstr "أزل الاقتران"
+
+#: qml/DevicePage.qml:51
+#, kde-format
+msgid "Send Ping"
+msgstr "أرسل وخزة"
+
+#: qml/DevicePage.qml:59 qml/PluginSettings.qml:20
+#, kde-format
+msgid "Plugin Settings"
+msgstr "إعدادات الملحقات"
+
+#: qml/DevicePage.qml:75
+#, kde-format
+msgctxt "@title:group device page section header"
+msgid "Actions"
+msgstr "الإجراءات"
+
+#: qml/DevicePage.qml:77
+#, kde-format
+msgctxt "@title:group device page section header"
+msgid "Controls"
+msgstr "المتحكمات"
+
+#: qml/DevicePage.qml:79
+#, kde-format
+msgctxt "@title:group device page section header"
+msgid "Information"
+msgstr "معلومات"
+
+#: qml/DevicePage.qml:141
+#, kde-format
+msgid "Multimedia control"
+msgstr "تحكّمات الوسائط المتعدّدة"
+
+#: qml/DevicePage.qml:149
+#, kde-format
+msgid "Notifications"
+msgstr "الإشعارات"
+
+#: qml/DevicePage.qml:157
+#, kde-format
+msgid "Remote input"
+msgstr "الدّخل البعيد"
+
+#: qml/DevicePage.qml:165 qml/runcommand.qml:16
+#, kde-format
+msgid "Run command"
+msgstr "نفّذ أمرًا"
+
+#: qml/DevicePage.qml:173 qml/presentationRemote.qml:15
+#, kde-format
+msgid "Presentation Remote"
+msgstr "متحكم العرض التقديمي"
+
+#: qml/DevicePage.qml:182 qml/volume.qml:16
+#, kde-format
+msgid "Volume control"
+msgstr "تحكم بالصوت"
+
+#: qml/DevicePage.qml:192
+#, kde-format
+msgid "SMS Messages"
+msgstr "الرسائل النصية القصيرة"
+
+#: qml/DevicePage.qml:200 qml/mousepad.qml:44
+#, kde-format
+msgid "Lock"
+msgstr "اقفل"
+
+#: qml/DevicePage.qml:200
+#, kde-format
+msgid "Unlock"
+msgstr "فكّ القفل"
+
+#: qml/DevicePage.qml:208
+#, kde-format
+msgid "Find Device"
+msgstr "اعثر على جهاز"
+
+#: qml/DevicePage.qml:216
+#, kde-format
+msgid "Send Clipboard"
+msgstr "أرسل الحافظة"
+
+#: qml/DevicePage.qml:223
+#, kde-format
+msgid "Share File"
+msgstr "شارك ملف"
+
+#: qml/DevicePage.qml:231
+#, kde-format
+msgid "Browse this device"
+msgstr "تصفّح هذا الجهاز"
+
+#: qml/DevicePage.qml:239
+#, kde-format
+msgid "Stop virtual monitor session"
+msgstr "أوقف جلسة المراقبة الافتراضية"
+
+#: qml/DevicePage.qml:239
+#, kde-format
+msgid "Use device as an external monitor"
+msgstr "استخدام الجهاز كشاشة خارجية"
+
+#: qml/DevicePage.qml:270
+#, kde-format
+msgid "Address: %1 via %2"
+msgstr "العنوان: %1 بواسطة %2"
+
+#: qml/DevicePage.qml:279
+#, kde-format
+msgid "This device is not paired."
+msgstr "هذا الجهاز غير مقترن"
+
+#: qml/DevicePage.qml:283
+#, kde-format
+msgctxt "Request pairing with a given device"
+msgid "Pair"
+msgstr "اقرن"
+
+#: qml/DevicePage.qml:290 qml/DevicePage.qml:299
+#, kde-format
+msgid ""
+"Pair requested\n"
+"Key: "
+msgstr ""
+"طُلب الاقتران\n"
+"المفتاح: "
+
+#: qml/DevicePage.qml:305
+#, kde-format
+msgid "Accept"
+msgstr "اقبل"
+
+#: qml/DevicePage.qml:311
+#, kde-format
+msgid "Reject"
+msgstr "ارفض"
+
+#: qml/DevicePage.qml:322
+#, kde-format
+msgid "This device is not reachable"
+msgstr "الجهاز غير قابل الوصول"
+
+#: qml/DevicePage.qml:330
+#, kde-format
+msgid "Please choose a file"
+msgstr "رجاءً اختر ملفا"
+
+#: qml/Main.qml:105
+#, kde-format
+msgid "Devices"
+msgstr "الأجهزة"
+
+#: qml/Main.qml:113
+#, kde-format
+msgctxt "@action:button"
+msgid "Refresh"
+msgstr "حدّث"
+
+#: qml/Main.qml:116
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Refresh Devices"
+msgstr "حدّث الأجهزة"
+
+#: qml/Main.qml:152
+#, kde-format
+msgid "Remembered"
+msgstr "متذكَّرة"
+
+#: qml/Main.qml:154
+#, kde-format
+msgid "Available"
+msgstr "متوفّرة"
+
+#: qml/Main.qml:156
+#, kde-format
+msgid "Connected"
+msgstr "متّصل"
+
+#: qml/Main.qml:161
+#, kde-format
+msgid "No devices found"
+msgstr "لم يُعثر على أجهزة"
+
+#: qml/Main.qml:240
+#, kde-format
+msgctxt "@action:button"
+msgid "Settings"
+msgstr "إعدادات"
+
+#: qml/Main.qml:255
+#, kde-format
+msgid "Settings"
+msgstr "إعدادات"
+
+#: qml/mousepad.qml:16
+#, kde-format
+msgid "Remote Control"
+msgstr "جهاز التحكم عن بعد"
+
+#: qml/mousepad.qml:61
+#, kde-format
+msgid "Press %1 or the left and right mouse buttons at the same time to unlock"
+msgstr "اضغط %1 أو زري الأيمن والأيسر للفأرة في نفس الوقت لفك القفل"
+
+#: qml/mousepad.qml:213
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Left Click"
+msgstr "النّقر باليسار"
+
+#: qml/mousepad.qml:222
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Middle Click"
+msgstr "النقرة الوسطى"
+
+#: qml/mousepad.qml:231
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Right Click"
+msgstr "النّقر باليمين"
+
+#: qml/mpris.qml:20
+#, kde-format
+msgid "Multimedia Controls"
+msgstr "تحكّمات الوسائط المتعدّدة"
+
+#: qml/mpris.qml:68
+#, kde-format
+msgid "No players available"
+msgstr "لا تتوفر أي مشغلات"
+
+#: qml/mpris.qml:128
+#, kde-format
+msgid "%1 - %2"
+msgstr "%1 - %2"
+
+#: qml/NotificationPanel.qml:21
+#, kde-format
+msgctxt "@title:window"
+msgid "Notifications"
+msgstr "الإشعارات"
+
+#: qml/NotificationPanel.qml:196
+#, kde-format
+msgid "Reply"
+msgstr "ردّ"
+
+#: qml/NotificationPanel.qml:213
+#, kde-format
+msgid "Dismiss"
+msgstr "تجاهل"
+
+#: qml/NotificationPanel.qml:244
+#, kde-format
+msgid "Cancel"
+msgstr "ألغِ"
+
+#: qml/NotificationPanel.qml:262
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Reply to %1…"
+msgstr "ردّ على %1…"
+
+#: qml/NotificationPanel.qml:281
+#, kde-format
+msgid "Send"
+msgstr "أرسل"
+
+#: qml/PluginSettings.qml:140
+#, kde-format
+msgid "Configure plugin"
+msgstr "اضبط الملحقة"
+
+#: qml/presentationRemote.qml:22
+#, kde-format
+msgid "Enable Full-Screen"
+msgstr "مكن ملء الشاشة"
+
+#: qml/presentationRemote.qml:39
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Previous Slide"
+msgstr "الشريحة السابقة"
+
+#: qml/presentationRemote.qml:47
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Next Slide"
+msgstr "الشريحة التالية"
+
+#: qml/runcommand.qml:23
+#, kde-format
+msgid "Edit commands"
+msgstr "تحرير الأوامر"
+
+#: qml/runcommand.qml:26
+#, kde-format
+msgid "You can edit commands on the connected device"
+msgstr "يمكنك تحرير الأوامر على الجهاز المتصل"
+
+#: qml/runcommand.qml:53
+#, kde-format
+msgid "No commands defined"
+msgstr "لم يُحدّد إجراء"
+
+#: qml/Settings.qml:15
+#, kde-format
+msgctxt "@title:window"
+msgid "Settings"
+msgstr "إعدادات"
+
+#: qml/Settings.qml:27
+#, kde-format
+msgid "Device name"
+msgstr "اسم الجهاز"
+
+#: qml/Settings.qml:39
+#, kde-format
+msgctxt "@title:group"
+msgid "Backends"
+msgstr "الخلفيات"
+
+#: qml/Settings.qml:72
+#, kde-format
+msgid "About KDE Connect"
+msgstr "عن جسر كِيدِي"
+
+#: qml/Settings.qml:80
+#, kde-format
+msgid "About KDE"
+msgstr "عن كِيدِي"
+
+#: qml/Settings.qml:91
+#, kde-format
+msgid "Close"
+msgstr "أغلق"
+
+#: qml/WelcomePage.qml:27
+#, kde-format
+msgctxt "@title"
+msgid "No Device Selected"
+msgstr "لم يحدد جهاز"
+
+#: qml/WelcomePage.qml:35
+#, kde-format
+msgctxt "@info"
+msgid "Make sure to install KDE Connect on your other devices."
+msgstr "تأكد من تثبيت برنامج جسر كِيدِي على أجهزتك الأخرى."
+
+#: qml/WelcomePage.qml:43
+#, kde-format
+msgctxt "@title:context"
+msgid "KDE Connect Android App"
+msgstr "تطبيق جسر كِيدِي لأندرويد"
+
+#: qml/WelcomePage.qml:50
+#, kde-format
+msgctxt "Android Application Store"
+msgid "F-Droid"
+msgstr "إف-درويد"
+
+#: qml/WelcomePage.qml:57
+#, kde-format
+msgctxt "Android Application Store"
+msgid "Play Store"
+msgstr "متجر غوغل"
+
+#: qml/WelcomePage.qml:63
+#, kde-format
+msgctxt "@title:context"
+msgid "KDE Connect iOS App"
+msgstr "تطبيق جسر كِيدِي لاي أو أس"
+
+#: qml/WelcomePage.qml:68
+#, kde-format
+msgid "Apple Store"
+msgstr "متجر أبل"
+
+#: qml/WelcomePage.qml:74
+#, kde-format
+msgid ""
+"If you are having problems, visit the <a href=\"https://userbase.kde.org/"
+"KDEConnect\"><span style=\" text-decoration: underline;\">KDE Connect "
+"Community wiki</span></a> for help."
+msgstr ""
+"إذا كنت تواجه مشكلات، زر <a href=\"https://userbase.kde.org/KDEConnect"
+"\"><span style=\" text-decoration: underline;\">KDE Connect Community wiki</"
+"span></a> للحصول على المساعدة."
+
+#~ msgctxt "@title:window"
+#~ msgid "Active Notifications"
+#~ msgstr "الإشعارات النشطة"
+
+#~ msgctxt "@info KDE Connect provider name"
+#~ msgid "Bluetooth"
+#~ msgstr "بلوتوث"
+
+#~ msgctxt "@info KDE Connect provider name"
+#~ msgid "Loopback"
+#~ msgstr "حلقة راجعة"
+
+#~ msgctxt "@info KDE Connect provider name"
+#~ msgid "Network"
+#~ msgstr "شبكة"
+
+#~ msgid "(c) 2015, Aleix Pol Gonzalez"
+#~ msgstr "© 2015 أليكس بول غونزاليس"
+
+#~ msgid "Maintainer"
+#~ msgstr "المصين"
+
+#~ msgid ""
+#~ "<html><head/><body><p>No device selected<br><br>If you own an Android "
+#~ "device, make sure to install the <a href=\"https://play.google.com/store/"
+#~ "apps/details?id=org.kde.kdeconnect_tp\"><span style=\" text-decoration: "
+#~ "underline;\">KDE Connect Android app</span></a> (also available <a href="
+#~ "\"https://f-droid.org/repository/browse/?fdid=org.kde.kdeconnect_tp"
+#~ "\"><span style=\" text-decoration: underline;\">from F-Droid</span></a>) "
+#~ "and it should appear in the list. If you have an iPhone, make sure to "
+#~ "install the <a href=\"https://apps.apple.com/us/app/kde-connect/"
+#~ "id1580245991\"><span style=\" text-decoration: underline;\">KDE Connect "
+#~ "iOS app.</span></a> <br><br>If you are having problems, visit the <a href="
+#~ "\"https://userbase.kde.org/KDEConnect\"><span style=\" text-decoration: "
+#~ "underline;\">KDE Connect Community wiki</span></a> for help.</p></body></"
+#~ "html>"
+#~ msgstr ""
+#~ "<html><head/><body><p>لم يحدد أي جهاز<br><br>إن كنت تملك جهاز أندرويد، "
+#~ "تأكّد من تثبيت <a href=\"https://play.google.com/store/apps/details?id=org."
+#~ "kde.kdeconnect_tp\"><span style=\" text-decoration: underline;\">تطبيق "
+#~ "«كِيدِي المتّصل» لأندويد</span></a> (متوفّر أيضًا <a href=\"https://f-droid."
+#~ "org/repository/browse/?fdid=org.kde.kdeconnect_tp\"><span style=\" text-"
+#~ "decoration: underline; color:#cba;\">في F-Droid</span></a>) وسيظهر الجهاز "
+#~ "في القائمة. إذا كنت تملك هاتف أيفون، تأكد من تثبيت  <a href=\"https://"
+#~ "apps.apple.com/us/app/kde-connect/id1580245991\"><span style=\" text-"
+#~ "decoration: underline;\">KDE Connect iOS app</span></a>  <br><br>إذا "
+#~ "واجهتك مشكلة فزر <a href=\"https://userbase.kde.org/KDEConnect\"><span "
+#~ "style=\" text-decoration: underline; color:#cba;\">ويكي كِيدِي المتصل</"
+#~ "span></a> للمساعدة.</p></body></html>"
+
+#~ msgid "Find devices..."
+#~ msgstr "اعثر على أجهزة…"

@@ -1,0 +1,109 @@
+/**
+ * SPDX-FileCopyrightText: 2013 Albert Vaca <albertvaka@gmail.com>
+ *
+ * SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+ */
+
+#ifndef LANLINKPROVIDER_H
+#define LANLINKPROVIDER_H
+
+#include <memory>
+
+#include <QNetworkInformation>
+#include <QObject>
+#include <QSslSocket>
+#include <QTcpServer>
+#include <QTimer>
+#include <QUdpSocket>
+
+#include "backends/linkprovider.h"
+#include "kdeconnectcore_export.h"
+#include "landevicelink.h"
+#include "mdnsdiscovery.h"
+#include "server.h"
+
+class KDECONNECTCORE_EXPORT LanLinkProvider : public LinkProvider
+{
+    Q_OBJECT
+
+public:
+    /**
+     * @param testMode Some special overrides needed while testing
+     */
+    LanLinkProvider(bool testMode = false, bool disabled = false);
+    ~LanLinkProvider() override;
+
+    QString id() const override
+    {
+        return QStringLiteral("lan");
+    }
+
+    QString displayName() const override
+    {
+        return i18nc("@info", "LAN");
+    }
+
+    int priority() override
+    {
+        return 20;
+    }
+
+    void enable() override;
+    void disable() override;
+
+    void sendUdpIdentityPacket(const QList<QHostAddress> &addresses);
+
+    static void configureSslSocket(QSslSocket *socket, const QString &deviceId, bool isDeviceTrusted);
+    static void configureSocket(QSslSocket *socket);
+
+    uint16_t tcpPort() const
+    {
+        return m_tcpPort;
+    }
+
+    /**
+     * This is the default UDP port both for broadcasting and receiving identity packets
+     */
+    const static quint16 UDP_PORT = 1716;
+    const static quint16 MIN_TCP_PORT = 1716;
+    const static quint16 MAX_TCP_PORT = 1764;
+
+public Q_SLOTS:
+    void onNetworkChange() override;
+    void onLinkDestroyed(const QString &deviceId, DeviceLink *oldPtr) override;
+    void onStart() override;
+    void onStop() override;
+    void tcpSocketConnected(QSslSocket *socket, std::shared_ptr<NetworkPacket> receivedPacket, QHostAddress sender);
+    void encrypted(QSslSocket *socket, std::shared_ptr<NetworkPacket> identityPacket);
+    void connectError(QSslSocket *socket, QHostAddress sender, QAbstractSocket::SocketError socketError);
+
+private Q_SLOTS:
+    void udpBroadcastReceived();
+    void newTcpConnection();
+    void tcpPacketReceived();
+    void sslErrors(const QList<QSslError> &errors);
+    void debouncedOnNetworkChange();
+
+private:
+    void addLink(QSslSocket *socket, const DeviceInfo &deviceInfo);
+    QList<QHostAddress> getBroadcastAddresses();
+    void sendUdpIdentityPacket(QUdpSocket &socket, const QList<QHostAddress> &addresses);
+    void broadcastUdpIdentityPacket();
+    bool isProtocolDowngrade(const QString &deviceId, int protocolVersion) const;
+
+    Server *m_server;
+    QUdpSocket m_udpSocket;
+    quint16 m_tcpPort;
+
+    QMap<QString, LanDeviceLink *> m_links;
+
+    QMap<QString, qint64> m_lastConnectionTime;
+    const bool m_testMode;
+    QTimer m_combineNetworkChangeTimer;
+
+    bool m_disabled;
+
+    MdnsDiscovery *m_mdnsDiscovery = nullptr;
+};
+
+#endif

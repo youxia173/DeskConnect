@@ -1,0 +1,204 @@
+# translation of plasma_applet_org.kde.kdeconnect.pot to esperanto
+# Copyright (C) 2023 Free Software Foundation, Inc.
+# This file is distributed under the same license as the kdeconnect-kde package.
+# Oliver Kellogg <olivermkellogg@gmail.com, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-05-29 00:43+0000\n"
+"PO-Revision-Date: 2024-07-13 10:51+0200\n"
+"Last-Translator: Oliver Kellogg <olivermkellogg@gmail.com>\n"
+"Language-Team: Esperanto <kde-i18n-eo@kde.org>\n"
+"Language: eo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: translate-po (https://github.com/zcribe/translate-po)\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: package/contents/ui/Battery.qml:35
+#, kde-format
+msgid "%1% charging"
+msgstr "%1% ŝarĝante"
+
+#: package/contents/ui/Battery.qml:37
+#, kde-format
+msgid "%1%"
+msgstr "%1%"
+
+#: package/contents/ui/Battery.qml:40
+#, kde-format
+msgid "No info"
+msgstr "Neniu informo"
+
+#: package/contents/ui/Connectivity.qml:43
+#, kde-format
+msgid "Unknown"
+msgstr "Nekonata"
+
+#: package/contents/ui/Connectivity.qml:55
+#, kde-format
+msgid "No signal"
+msgstr "Neniu signalo"
+
+#: package/contents/ui/DeviceDelegate.qml:89
+#, kde-format
+msgid "Virtual Monitor is not available"
+msgstr "Virtuala Monitoro ne estas disponebla"
+
+#: package/contents/ui/DeviceDelegate.qml:94
+#, kde-format
+msgid "Please choose a file"
+msgstr "Bonvolu elekti dosieron"
+
+#: package/contents/ui/DeviceDelegate.qml:111
+#, kde-format
+msgid "Share file"
+msgstr "Kunhavigi dosieron"
+
+#: package/contents/ui/DeviceDelegate.qml:119
+#, kde-format
+msgid "Send Clipboard"
+msgstr "Sendi Tondujon"
+
+#: package/contents/ui/DeviceDelegate.qml:130
+#, kde-format
+msgid "Ring my phone"
+msgstr "Sonorigi mian telefonon"
+
+#: package/contents/ui/DeviceDelegate.qml:141
+#, kde-format
+msgid "Browse this device"
+msgstr "Foliumi ĉi tiun aparaton"
+
+#: package/contents/ui/DeviceDelegate.qml:152
+#, kde-format
+msgid "SMS Messages"
+msgstr "SMS Mesaĝoj"
+
+#: package/contents/ui/DeviceDelegate.qml:195
+#, kde-format
+msgid "File Transfer"
+msgstr "Dosiera Transdono"
+
+#: package/contents/ui/DeviceDelegate.qml:196
+#, kde-format
+msgid "Drop a file to transfer it onto your phone."
+msgstr "Faligi dosieron por transdoni ĝin al via telefono."
+
+#: package/contents/ui/DeviceDelegate.qml:238
+#, kde-format
+msgid "Virtual Display"
+msgstr "Virtuala Ekrano"
+
+#: package/contents/ui/DeviceDelegate.qml:297
+#, kde-format
+msgctxt "Battery charge percentage"
+msgid "%1%"
+msgstr "%1%"
+
+#: package/contents/ui/DeviceDelegate.qml:310
+#, kde-format
+msgid "More options…"
+msgstr ""
+
+#: package/contents/ui/DeviceDelegate.qml:349
+#, fuzzy, kde-format
+#| msgid "Notifications:"
+msgid "Notifications"
+msgstr "Sciigoj:"
+
+#: package/contents/ui/DeviceDelegate.qml:361
+#, kde-format
+msgid "Dismiss all notifications"
+msgstr "Forĵeti ĉiujn sciigojn"
+
+#: package/contents/ui/DeviceDelegate.qml:379
+#, kde-format
+msgid "Remote Keyboard"
+msgstr "Fora Klavaro"
+
+#: package/contents/ui/DeviceDelegate.qml:608
+#, kde-format
+msgid "Reply"
+msgstr "Respondi"
+
+#: package/contents/ui/DeviceDelegate.qml:625
+#, kde-format
+msgid "Dismiss"
+msgstr "Forĵeti"
+
+#: package/contents/ui/DeviceDelegate.qml:651
+#, kde-format
+msgid "Cancel"
+msgstr "Nuligi"
+
+#: package/contents/ui/DeviceDelegate.qml:666
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Reply to %1…"
+msgstr "Respondi al %1…"
+
+#: package/contents/ui/DeviceDelegate.qml:684
+#, kde-format
+msgid "Send"
+msgstr "Sendi"
+
+#: package/contents/ui/DeviceDelegate.qml:716
+#, kde-format
+msgid "Run command"
+msgstr "Ruli komandon"
+
+#: package/contents/ui/DeviceDelegate.qml:723
+#, kde-format
+msgid "Add command"
+msgstr "Aldoni komandon"
+
+#: package/contents/ui/FullRepresentation.qml:68
+#, kde-format
+msgid "No paired devices"
+msgstr "Neniuj parigitaj aparatoj"
+
+#: package/contents/ui/FullRepresentation.qml:68
+#, kde-format
+msgid "Paired device is unavailable"
+msgid_plural "All paired devices are unavailable"
+msgstr[0] "Parigita aparato estas nedisponebla"
+msgstr[1] "Ĉiuj parigitaj aparatoj estas nedisponeblaj"
+
+#: package/contents/ui/FullRepresentation.qml:70
+#, kde-format
+msgid "Install KDE Connect on your Android device to integrate it with Plasma!"
+msgstr ""
+"Instalu KDE Connect sur via Android-aparato por integri ĝin kun Plasma!"
+
+#: package/contents/ui/FullRepresentation.qml:74
+#, kde-format
+msgid "Pair a Device…"
+msgstr "Parigi aparaton…"
+
+#: package/contents/ui/FullRepresentation.qml:86
+#, kde-format
+msgid "Install from Google Play"
+msgstr "Instali el Google Play"
+
+#: package/contents/ui/FullRepresentation.qml:96
+#, kde-format
+msgid "Install from F-Droid"
+msgstr "Instali de F-Droid"
+
+#: package/contents/ui/main.qml:55
+#, kde-format
+msgid "KDE Connect Settings…"
+msgstr "Agordoj de KDE Connect…"
+
+#~ msgid "Remote device does not have a VNC client (eg. krdc) installed."
+#~ msgstr "Fora aparato ne havas instalon de VNC-kliento (ekz. krdc)."
+
+#~ msgid "The krfb package is required on the local device."
+#~ msgstr "La pako krfb estas postulata sur la loka aparato."
+
+#~ msgid "Failed to create the virtual monitor."
+#~ msgstr "Malsukcesis krei la virtualan monitoron."

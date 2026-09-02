@@ -1,0 +1,286 @@
+# Copyright (C) 2024 This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+#
+# SPDX-FileCopyrightText: 2019, 2020, 2021, 2022, 2024 Steve Allewell <steve.allewell@gmail.com>
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-25 00:44+0000\n"
+"PO-Revision-Date: 2024-05-21 19:32+0100\n"
+"Last-Translator: Steve Allewell <steve.allewell@gmail.com>\n"
+"Language-Team: British English\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 24.02.2\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Steve Allewell"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "steve.allewell@gmail.com"
+
+#: attachmentshelper.cpp:36
+#, kde-format
+msgctxt "Caption/title for attachment download/save window"
+msgid "Download attachment"
+msgstr ""
+
+#: conversationlistmodel.cpp:212
+#, kde-format
+msgctxt "Used as a text placeholder when the most-recent message is an image"
+msgid "Picture"
+msgstr "Picture"
+
+#: conversationlistmodel.cpp:214
+#, kde-format
+msgctxt "Used as a text placeholder when the most-recent message is a video"
+msgid "Video"
+msgstr "Video"
+
+#: conversationlistmodel.cpp:218
+#, kde-format
+msgctxt ""
+"Used as a text placeholder when the most-recent message is an arbitrary "
+"attachment, resulting in something like \"pdf file\""
+msgid "%1 file"
+msgstr "%1 file"
+
+#: conversationlistmodel.cpp:239
+#, kde-format
+msgid "You: %1"
+msgstr "You: %1"
+
+#: conversationlistmodel.cpp:245
+#, kde-format
+msgid "%1: %2"
+msgstr "%1: %2"
+
+#: conversationlistmodel.cpp:287 conversationlistmodel.cpp:308
+#, kde-format
+msgid "%1"
+msgstr "%1"
+
+#: main.cpp:84 qml/Main.qml:73
+#, kde-format
+msgid "KDE Connect SMS"
+msgstr "KDE Connect SMS"
+
+#: main.cpp:86
+#, kde-format
+msgid "SMS Instant Messaging"
+msgstr "SMS Instant Messaging"
+
+#: main.cpp:88
+#, fuzzy, kde-format
+#| msgid "(C) 2018-2022, KDE Connect Team"
+msgid "© 2018–2025 KDE Connect Team"
+msgstr "(C) 2018-2022, KDE Connect Team"
+
+#: main.cpp:89
+#, kde-format
+msgid "Simon Redman"
+msgstr "Simon Redman"
+
+#: main.cpp:90
+#, kde-format
+msgid "Aleix Pol Gonzalez"
+msgstr "Aleix Pol Gonzalez"
+
+#: main.cpp:91
+#, kde-format
+msgid "Nicolas Fella"
+msgstr "Nicolas Fella"
+
+#: main.cpp:118
+#, kde-format
+msgid "Select a device"
+msgstr "Select a device"
+
+#: main.cpp:118
+#, kde-format
+msgid "id"
+msgstr "ID"
+
+#: main.cpp:119
+#, kde-format
+msgid "Send a message"
+msgstr "Send a message"
+
+#: main.cpp:119
+#, kde-format
+msgid "message"
+msgstr "message"
+
+#: qml/AttachmentViewer.qml:21
+#, kde-format
+msgid "Open with default"
+msgstr "Open with default"
+
+#: qml/AttachmentViewer.qml:28
+#, kde-format
+msgid "Download attachment…"
+msgstr ""
+
+#: qml/ConversationList.qml:24
+#, kde-format
+msgid "No devices available"
+msgstr "No devices available"
+
+#: qml/ConversationList.qml:33
+#, kde-format
+msgid ""
+"No new messages can be sent or received, but you can browse cached content"
+msgstr ""
+"No new messages can be sent or received, but you can browse cached content"
+
+#: qml/ConversationList.qml:49
+#, kde-format
+msgid ""
+"Loading conversations from device. If this takes a long time, please wake up "
+"your device and then click Refresh."
+msgstr ""
+"Loading conversations from device. If this takes a long time, please wake up "
+"your device and then click Refresh."
+
+#: qml/ConversationList.qml:57
+#, kde-format
+msgid ""
+"Tip: If you plug in your device, it should not go into doze mode and should "
+"load quickly."
+msgstr ""
+"Tip: If you plug in your device, it should not go into doze mode and should "
+"load quickly."
+
+#: qml/ConversationList.qml:65 qml/Main.qml:98
+#, kde-format
+msgid "Refresh"
+msgstr "Refresh"
+
+#: qml/ConversationList.qml:84
+#, kde-format
+msgid "Choose recipient"
+msgstr "Choose recipient"
+
+#: qml/ConversationList.qml:89
+#, kde-format
+msgid "Cancel"
+msgstr "Cancel"
+
+#: qml/ConversationList.qml:108
+#, kde-format
+msgid "Search or start a conversation"
+msgstr "Search or start a conversation"
+
+#: qml/ConversationList.qml:144
+#, kde-format
+msgid "Start new conversation"
+msgstr "Start new conversation"
+
+#: qml/ConversationList.qml:194
+#, fuzzy, kde-format
+#| msgctxt "Placeholder message text when no messages are found"
+#| msgid "No matches"
+msgctxt "Placeholder message text when no messages are found"
+msgid "No Matches"
+msgstr "No matches"
+
+#: qml/ConversationList.qml:204
+#, fuzzy, kde-format
+#| msgid "Start new conversation"
+msgctxt "@info:placeholder"
+msgid "No Conversations"
+msgstr "Start new conversation"
+
+#: qml/Main.qml:93
+#, kde-format
+msgid "Devices"
+msgstr "Devices"
+
+#: qml/Main.qml:106
+#, kde-format
+msgid "About"
+msgstr "About"
+
+#: qml/Main.qml:115
+#, fuzzy, kde-format
+#| msgid "About"
+msgid "About KDE"
+msgstr "About"
+
+#: qml/MessageAttachments.qml:114
+#, kde-format
+msgid "Audio clip"
+msgstr "Audio clip"
+
+#: qml/SendingArea.qml:24
+#, kde-format
+msgid "Failed to send"
+msgstr "Failed to send"
+
+#: qml/SendingArea.qml:25
+#, kde-format
+msgid "Max message size limit exceeded."
+msgstr "Maximum message size limit exceeded."
+
+#: qml/SendingArea.qml:67
+#, fuzzy, kde-format
+#| msgid "Send a message"
+msgid "Send a message…"
+msgstr "Send a message"
+
+#: qml/SendingArea.qml:123
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Attach an image or file"
+msgstr ""
+
+#: qml/SendingArea.qml:148
+#, kde-format
+msgctxt "@info:tooltip"
+msgid "Clear attachments"
+msgstr ""
+
+#: qml/SendingArea.qml:177
+#, fuzzy, kde-format
+#| msgid "Send a message"
+msgctxt "@info:tooltip"
+msgid "Send message"
+msgstr "Send a message"
+
+#~ msgid "Copy Message"
+#~ msgstr "Copy Message"
+
+#~ msgid "Copy Selection"
+#~ msgstr "Copy Selection"
+
+#~ msgid "Compose message"
+#~ msgstr "Compose message"
+
+#~ msgid "New"
+#~ msgstr "New"
+
+#~ msgid "Filter..."
+#~ msgstr "Filter..."
+
+#~ msgid "No matched results found : ("
+#~ msgstr "No matched results found : ("
+
+#~ msgid "(Unsupported Message Type)"
+#~ msgstr "(Unsupported Message Type)"
+
+#~ msgid "Replying to multitarget messages is not supported"
+#~ msgstr "Replying to multitarget messages is not supported"
+
+#~ msgid "Spoiler"
+#~ msgstr "Spoiler"
+
+#~ msgid "Download"
+#~ msgstr "Download"

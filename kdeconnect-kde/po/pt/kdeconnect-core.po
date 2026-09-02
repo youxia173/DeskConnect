@@ -1,0 +1,165 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-core\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-09-02 00:43+0000\n"
+"PO-Revision-Date: 2023-06-03 10:43+0100\n"
+"Last-Translator: José Nuno Coelho Pires <zepires@gmail.com>\n"
+"Language-Team: Portuguese <kde-i18n-pt@kde.org>\n"
+"Language: pt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-POFile-SpellExtra: Connect ossl RSA gnupg SHA\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: backends/lan/compositeuploadjob.cpp:83
+#, kde-format
+msgid "Couldn't find an available port"
+msgstr "Não foi possível detectar um porto disponível"
+
+#: backends/lan/compositeuploadjob.cpp:129
+#, kde-format
+msgid "Failed to send packet to %1"
+msgstr "Não foi possível enviar um pacote de dados para o %1"
+
+#: backends/lan/compositeuploadjob.cpp:252
+#, kde-format
+msgid "Timeout waiting for receiver to connect"
+msgstr ""
+
+#: backends/lan/compositeuploadjob.cpp:303
+#, kde-format
+msgid "Sending to %1"
+msgstr "A enviar para o %1"
+
+#: backends/lan/compositeuploadjob.cpp:303
+#, kde-format
+msgid "File"
+msgstr "Ficheiro"
+
+#: backends/pairinghandler.cpp:61
+#, kde-format
+msgid "Device clocks are out of sync"
+msgstr ""
+
+#: backends/pairinghandler.cpp:80
+#, kde-format
+msgid "Canceled by other peer"
+msgstr "Cancelado pelo outro dispositivo"
+
+#: backends/pairinghandler.cpp:96
+#, kde-format
+msgid "%1: Already paired"
+msgstr "%1: Já emparelhado"
+
+#: backends/pairinghandler.cpp:105 backends/pairinghandler.cpp:124
+#, kde-format
+msgid "%1: Device not reachable"
+msgstr "%1: Dispositivo inacessível"
+
+#: backends/pairinghandler.cpp:139
+#, kde-format
+msgid "Device not reachable"
+msgstr "Dispositivo inacessível"
+
+#: backends/pairinghandler.cpp:150
+#, kde-format
+msgid "Cancelled by user"
+msgstr "Cancelado pelo utilizador"
+
+#: backends/pairinghandler.cpp:166
+#, kde-format
+msgid "Timed out"
+msgstr "Tempo-limite expirado"
+
+#: compositefiletransferjob.cpp:47
+#, kde-format
+msgctxt "@title job"
+msgid "Receiving file"
+msgid_plural "Receiving files"
+msgstr[0] "A receber o ficheiro"
+msgstr[1] "A receber os ficheiros"
+
+#: compositefiletransferjob.cpp:48
+#, kde-format
+msgctxt "The source of a file operation"
+msgid "Source"
+msgstr "Origem"
+
+#: compositefiletransferjob.cpp:49
+#, kde-format
+msgctxt "The destination of a file operation"
+msgid "Destination"
+msgstr "Destino"
+
+#: device.cpp:473
+#, kde-format
+msgid "SHA256 fingerprint of your device certificate is: %1\n"
+msgstr "A impressão digital SHA256 do certificado do seu dispositivo é: %1\n"
+
+#: device.cpp:479
+#, kde-format
+msgid "SHA256 fingerprint of remote device certificate is: %1\n"
+msgstr ""
+"A impressão digital SHA256 do certificado do dispositivo remoto é: %1\n"
+
+#: device.cpp:481
+#, kde-format
+msgid "Protocol version: %1\n"
+msgstr ""
+
+#: filetransferjob.cpp:54
+#, kde-format
+msgid "Filename already present"
+msgstr "O nome do ficheiro já está presente"
+
+#: filetransferjob.cpp:70
+#, fuzzy, kde-format
+#| msgid "Could not store certificate file: %1"
+msgid "Could not create destination file: %1"
+msgstr "Não foi possível guardar o ficheiro do certificado: %1"
+
+#: filetransferjob.cpp:129
+#, kde-format
+msgid "Received incomplete file from: %1"
+msgstr "Foi recebido um ficheiro incompleto de: %1"
+
+#: kdeconnectconfig.cpp:352 kdeconnectconfig.cpp:386
+#, kde-format
+msgid "KDE Connect failed to start"
+msgstr "Não foi possível iniciar o  KDE Connect"
+
+#: kdeconnectconfig.cpp:352
+#, fuzzy, kde-format
+#| msgid "Could not store private key file: %1"
+msgid "Could not generate the private key."
+msgstr "Não foi possível guardar o ficheiro da chave privada: %1"
+
+#: kdeconnectconfig.cpp:371
+#, kde-format
+msgid "Could not store private key file: %1"
+msgstr "Não foi possível guardar o ficheiro da chave privada: %1"
+
+#: kdeconnectconfig.cpp:386
+#, fuzzy, kde-format
+#| msgid "Could not store certificate file: %1"
+msgid "Could not generate the device certificate."
+msgstr "Não foi possível guardar o ficheiro do certificado: %1"
+
+#: kdeconnectconfig.cpp:402
+#, kde-format
+msgid "Could not store certificate file: %1"
+msgstr "Não foi possível guardar o ficheiro do certificado: %1"
+
+#~ msgid "Received incomplete file: %1"
+#~ msgstr "Foi recebido um ficheiro incompleto: %1"
+
+#~ msgid ""
+#~ "Could not find support for RSA in your QCA installation. If your "
+#~ "distribution provides separate packets for QCA-ossl and QCA-gnupg, make "
+#~ "sure you have them installed and try again."
+#~ msgstr ""
+#~ "Não foi possível encontrar o suporte para o RSA na sua instalação do QCA. "
+#~ "Se a sua distribuição tiver pacotes separados para o QCA-ossl e o QCA-"
+#~ "gnupg, certifique-se que os tem instalados e tente de novo."

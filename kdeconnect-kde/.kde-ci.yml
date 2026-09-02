@@ -1,0 +1,36 @@
+# SPDX-FileCopyrightText: None
+# SPDX-License-Identifier: CC0-1.0
+
+Options:
+ require-passing-tests-on: ['Linux']
+
+Dependencies:
+ - 'on': ['Linux/Qt6', 'Linux/Qt6Next', 'FreeBSD/Qt6', 'Windows/Qt6']
+   'require':
+    'frameworks/extra-cmake-modules': '@latest-kf6'
+    'frameworks/kcoreaddons': '@latest-kf6'
+    'frameworks/kconfig': '@latest-kf6'
+    'frameworks/ki18n': '@latest-kf6'
+    'frameworks/kitemmodels': '@latest-kf6'
+    'frameworks/kcontacts': '@latest-kf6'
+    'frameworks/kirigami': '@latest-kf6'
+    'frameworks/kdbusaddons': '@latest-kf6'
+    'frameworks/knotifications': '@latest-kf6'
+    'frameworks/kiconthemes': '@latest-kf6'
+    'frameworks/kio': '@latest-kf6'
+    'frameworks/kcmutils': '@latest-kf6'
+    'frameworks/kservice': '@latest-kf6'
+    'frameworks/solid': '@latest-kf6'
+    'frameworks/kpeople': '@latest-kf6'
+    'frameworks/kwindowsystem': '@latest-kf6'
+    'frameworks/qqc2-desktop-style': '@latest-kf6'
+    'libraries/kirigami-addons': '@latest-kf6'
+ - 'on': ['Linux/Qt6', 'Linux/Qt6Next', 'FreeBSD/Qt6']
+   'require':
+    'frameworks/kpackage': '@latest-kf6'
+    'frameworks/kstatusnotifieritem': '@latest-kf6'
+    'libraries/pulseaudio-qt': '@latest-kf6'
+    'libraries/plasma-wayland-protocols': '@latest-kf6'
+ - 'on': ['Linux/Qt6', 'Linux/Qt6Next']
+   'require':
+    'frameworks/modemmanager-qt': '@latest-kf6'

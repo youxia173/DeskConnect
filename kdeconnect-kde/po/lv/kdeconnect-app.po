@@ -1,0 +1,524 @@
+# Copyright (C) 2024 This file is copyright:
+# This file is distributed under the same license as the kdeconnect-kde package.
+#
+# SPDX-FileCopyrightText: 2024, 2025 Toms Trasuns <toms.trasuns@posteo.net>
+msgid ""
+msgstr ""
+"Project-Id-Version: kdeconnect-kde\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2026-08-25 00:44+0000\n"
+"PO-Revision-Date: 2025-08-19 15:43+0300\n"
+"Last-Translator: Toms Trasūns <toms.trasuns@posteo.net>\n"
+"Language-Team: Latvian <kde-i18n-doc@kde.org>\n"
+"Language: lv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 : "
+"2);\n"
+"X-Generator: Lokalize 25.08.0\n"
+
+#: main.cpp:45 main.cpp:47
+#, kde-format
+msgid "KDE Connect"
+msgstr "KDE Connect"
+
+#: main.cpp:49
+#, kde-format
+msgid "© 2015–2025 KDE Connect Team"
+msgstr "© 2015—2025 „KDE Connect“ komanda"
+
+#: main.cpp:50
+#, kde-format
+msgid "Aleix Pol Gonzalez"
+msgstr "Aleix Pol Gonzalez"
+
+#: main.cpp:51
+#, kde-format
+msgid "Albert Vaca Cintora"
+msgstr "Albert Vaca Cintora"
+
+#: main.cpp:52
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Toms Trasūns"
+
+#: main.cpp:52
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "toms.trasuns@posteo.net"
+
+#: main.cpp:83
+#, kde-format
+msgctxt "@info:shell"
+msgid "Device id to open the app in"
+msgstr "Ierīces ID, kurā atvērt lietotni"
+
+#: main.cpp:86
+#, kde-format
+msgctxt "@info:shell"
+msgid "Configuration module to show, requires --device to be set."
+msgstr "Parādāmais konfigurācijas modelis. Nepieciešamas iestatīt „--device“."
+
+#: main.cpp:90
+#, kde-format
+msgctxt "command line description"
+msgid "Replace an existing instance"
+msgstr "Aizstāt esošu instanci"
+
+#: main.cpp:93
+#, kde-format
+msgid "URL to share"
+msgstr "URL, ar kuru dalīties"
+
+#: qml/BatteryInfo.qml:26
+#, kde-format
+msgid "Battery: No info"
+msgstr ""
+
+#: qml/BatteryInfo.qml:28
+#, kde-format
+msgid "Battery: %1% (Charging)"
+msgstr ""
+
+#: qml/BatteryInfo.qml:30
+#, kde-format
+msgid "Battery: %1%"
+msgstr ""
+
+#: qml/ConnectivityInfo.qml:20
+#, kde-format
+msgid "Unknown"
+msgstr ""
+
+#: qml/ConnectivityInfo.qml:26
+#, kde-format
+msgid "Mobile Network: No signal"
+msgstr ""
+
+#: qml/ConnectivityInfo.qml:28
+#, kde-format
+msgid "Mobile Network: %1"
+msgstr ""
+
+#: qml/DevicePage.qml:46
+#, kde-format
+msgid "Unpair"
+msgstr "Atpārot"
+
+#: qml/DevicePage.qml:51
+#, kde-format
+msgid "Send Ping"
+msgstr "Nosūtīt „ping“"
+
+#: qml/DevicePage.qml:59 qml/PluginSettings.qml:20
+#, kde-format
+msgid "Plugin Settings"
+msgstr "Papildinājuma iestatījumi"
+
+#: qml/DevicePage.qml:75
+#, kde-format
+msgctxt "@title:group device page section header"
+msgid "Actions"
+msgstr "Darbības"
+
+#: qml/DevicePage.qml:77
+#, kde-format
+msgctxt "@title:group device page section header"
+msgid "Controls"
+msgstr "Vadība"
+
+#: qml/DevicePage.qml:79
+#, kde-format
+msgctxt "@title:group device page section header"
+msgid "Information"
+msgstr ""
+
+#: qml/DevicePage.qml:141
+#, kde-format
+msgid "Multimedia control"
+msgstr "Multivides pārvaldība"
+
+#: qml/DevicePage.qml:149
+#, kde-format
+msgid "Notifications"
+msgstr ""
+
+#: qml/DevicePage.qml:157
+#, kde-format
+msgid "Remote input"
+msgstr "Attālā ievade"
+
+#: qml/DevicePage.qml:165 qml/runcommand.qml:16
+#, kde-format
+msgid "Run command"
+msgstr "Palaist komandu"
+
+#: qml/DevicePage.qml:173 qml/presentationRemote.qml:15
+#, kde-format
+msgid "Presentation Remote"
+msgstr "Prezentācijas pults"
+
+#: qml/DevicePage.qml:182 qml/volume.qml:16
+#, kde-format
+msgid "Volume control"
+msgstr "Skaļuma pārvaldība"
+
+#: qml/DevicePage.qml:192
+#, kde-format
+msgid "SMS Messages"
+msgstr ""
+
+#: qml/DevicePage.qml:200 qml/mousepad.qml:44
+#, kde-format
+msgid "Lock"
+msgstr "Bloķēt"
+
+#: qml/DevicePage.qml:200
+#, kde-format
+msgid "Unlock"
+msgstr "Atbloķēt"
+
+#: qml/DevicePage.qml:208
+#, kde-format
+msgid "Find Device"
+msgstr "Atrast ierīci"
+
+#: qml/DevicePage.qml:216
+#, kde-format
+msgid "Send Clipboard"
+msgstr "Nosūtīt starpliktuves saturu"
+
+#: qml/DevicePage.qml:223
+#, kde-format
+msgid "Share File"
+msgstr "Dalīties ar datni"
+
+#: qml/DevicePage.qml:231
+#, kde-format
+msgid "Browse this device"
+msgstr "Pārlūkot ierīci"
+
+#: qml/DevicePage.qml:239
+#, kde-format
+msgid "Stop virtual monitor session"
+msgstr "Apturēt virtuālā monitora sesiju"
+
+#: qml/DevicePage.qml:239
+#, kde-format
+msgid "Use device as an external monitor"
+msgstr "Lietot ierīci kā ārēju monitoru"
+
+#: qml/DevicePage.qml:270
+#, kde-format
+msgid "Address: %1 via %2"
+msgstr ""
+
+#: qml/DevicePage.qml:279
+#, kde-format
+msgid "This device is not paired."
+msgstr "Ierīce nav sapārota"
+
+#: qml/DevicePage.qml:283
+#, kde-format
+msgctxt "Request pairing with a given device"
+msgid "Pair"
+msgstr "Sapārot"
+
+#: qml/DevicePage.qml:290 qml/DevicePage.qml:299
+#, kde-format
+msgid ""
+"Pair requested\n"
+"Key: "
+msgstr ""
+"Pieprasīta sapārošana\n"
+"Atslēga: "
+
+#: qml/DevicePage.qml:305
+#, kde-format
+msgid "Accept"
+msgstr "Pieņemt"
+
+#: qml/DevicePage.qml:311
+#, kde-format
+msgid "Reject"
+msgstr "Noraidīt"
+
+#: qml/DevicePage.qml:322
+#, kde-format
+msgid "This device is not reachable"
+msgstr "Šo ierīci nav iespējams sasniegt"
+
+#: qml/DevicePage.qml:330
+#, kde-format
+msgid "Please choose a file"
+msgstr "Izvēlieties datni"
+
+#: qml/Main.qml:105
+#, kde-format
+msgid "Devices"
+msgstr "Ierīces"
+
+#: qml/Main.qml:113
+#, kde-format
+msgctxt "@action:button"
+msgid "Refresh"
+msgstr "Pārlādēt"
+
+#: qml/Main.qml:116
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Refresh Devices"
+msgstr "Pārlādēt ierīces"
+
+#: qml/Main.qml:152
+#, kde-format
+msgid "Remembered"
+msgstr "Atcerējās"
+
+#: qml/Main.qml:154
+#, kde-format
+msgid "Available"
+msgstr "Pieejams"
+
+#: qml/Main.qml:156
+#, kde-format
+msgid "Connected"
+msgstr "Savienots"
+
+#: qml/Main.qml:161
+#, kde-format
+msgid "No devices found"
+msgstr "Nav atrasta neviena ierīce"
+
+#: qml/Main.qml:240
+#, fuzzy, kde-format
+#| msgid "Settings"
+msgctxt "@action:button"
+msgid "Settings"
+msgstr "Iestatījumi"
+
+#: qml/Main.qml:255
+#, kde-format
+msgid "Settings"
+msgstr "Iestatījumi"
+
+#: qml/mousepad.qml:16
+#, kde-format
+msgid "Remote Control"
+msgstr "Attālā vadība"
+
+#: qml/mousepad.qml:61
+#, kde-format
+msgid "Press %1 or the left and right mouse buttons at the same time to unlock"
+msgstr "Nospiediet %1 vai vienlaicīgi kreiso un labo peles pogu, lai atbloķētu"
+
+#: qml/mousepad.qml:213
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Left Click"
+msgstr "Kreisais klikšķis"
+
+#: qml/mousepad.qml:222
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Middle Click"
+msgstr "Vidējais klikšķis"
+
+#: qml/mousepad.qml:231
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Right Click"
+msgstr "Labais klikšķis"
+
+#: qml/mpris.qml:20
+#, kde-format
+msgid "Multimedia Controls"
+msgstr "Multivides pārvaldība"
+
+#: qml/mpris.qml:68
+#, kde-format
+msgid "No players available"
+msgstr "Nav pieejami atskaņotāji"
+
+#: qml/mpris.qml:128
+#, kde-format
+msgid "%1 - %2"
+msgstr "%1 — %2"
+
+#: qml/NotificationPanel.qml:21
+#, kde-format
+msgctxt "@title:window"
+msgid "Notifications"
+msgstr ""
+
+#: qml/NotificationPanel.qml:196
+#, kde-format
+msgid "Reply"
+msgstr ""
+
+#: qml/NotificationPanel.qml:213
+#, kde-format
+msgid "Dismiss"
+msgstr ""
+
+#: qml/NotificationPanel.qml:244
+#, kde-format
+msgid "Cancel"
+msgstr ""
+
+#: qml/NotificationPanel.qml:262
+#, kde-format
+msgctxt "@info:placeholder"
+msgid "Reply to %1…"
+msgstr ""
+
+#: qml/NotificationPanel.qml:281
+#, fuzzy, kde-format
+#| msgid "Send Ping"
+msgid "Send"
+msgstr "Nosūtīt „ping“"
+
+#: qml/PluginSettings.qml:140
+#, kde-format
+msgid "Configure plugin"
+msgstr "Konfigurēt spraudni"
+
+#: qml/presentationRemote.qml:22
+#, kde-format
+msgid "Enable Full-Screen"
+msgstr "Ieslēgt pilnekrāna režīmu"
+
+#: qml/presentationRemote.qml:39
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Previous Slide"
+msgstr ""
+
+#: qml/presentationRemote.qml:47
+#, kde-format
+msgctxt "@action:button accessible"
+msgid "Next Slide"
+msgstr ""
+
+#: qml/runcommand.qml:23
+#, kde-format
+msgid "Edit commands"
+msgstr "Rediģēt komandas"
+
+#: qml/runcommand.qml:26
+#, kde-format
+msgid "You can edit commands on the connected device"
+msgstr "Varat rediģēt savienotās ierīces komandas"
+
+#: qml/runcommand.qml:53
+#, kde-format
+msgid "No commands defined"
+msgstr "Nav definētu komandu"
+
+#: qml/Settings.qml:15
+#, kde-format
+msgctxt "@title:window"
+msgid "Settings"
+msgstr "Iestatījumi"
+
+#: qml/Settings.qml:27
+#, kde-format
+msgid "Device name"
+msgstr "Ierīces nosaukums"
+
+#: qml/Settings.qml:39
+#, kde-format
+msgctxt "@title:group"
+msgid "Backends"
+msgstr "Aizmugursistēmas"
+
+#: qml/Settings.qml:72
+#, kde-format
+msgid "About KDE Connect"
+msgstr "Par „KDE Connect“"
+
+#: qml/Settings.qml:80
+#, kde-format
+msgid "About KDE"
+msgstr "Par KDE"
+
+#: qml/Settings.qml:91
+#, kde-format
+msgid "Close"
+msgstr ""
+
+#: qml/WelcomePage.qml:27
+#, kde-format
+msgctxt "@title"
+msgid "No Device Selected"
+msgstr "Neviena ierīce nav atlasīta"
+
+#: qml/WelcomePage.qml:35
+#, kde-format
+msgctxt "@info"
+msgid "Make sure to install KDE Connect on your other devices."
+msgstr "Ieinstalējiet „KDE Connect“ savās pārējās ierīcēs."
+
+#: qml/WelcomePage.qml:43
+#, kde-format
+msgctxt "@title:context"
+msgid "KDE Connect Android App"
+msgstr "„KDE Connect“ lietotne „Android“ ierīcēm"
+
+#: qml/WelcomePage.qml:50
+#, kde-format
+msgctxt "Android Application Store"
+msgid "F-Droid"
+msgstr "F-Droid"
+
+#: qml/WelcomePage.qml:57
+#, kde-format
+msgctxt "Android Application Store"
+msgid "Play Store"
+msgstr "Play Store"
+
+#: qml/WelcomePage.qml:63
+#, kde-format
+msgctxt "@title:context"
+msgid "KDE Connect iOS App"
+msgstr "„KDE Connect“ lietotne „iOS“ ierīcēm"
+
+#: qml/WelcomePage.qml:68
+#, kde-format
+msgid "Apple Store"
+msgstr "Apple Store"
+
+#: qml/WelcomePage.qml:74
+#, kde-format
+msgid ""
+"If you are having problems, visit the <a href=\"https://userbase.kde.org/"
+"KDEConnect\"><span style=\" text-decoration: underline;\">KDE Connect "
+"Community wiki</span></a> for help."
+msgstr ""
+"Ja saskaraties ar problēmām, meklējiet palīdzību <a href=\"https://userbase."
+"kde.org/KDEConnect\"><span style=\" text-decoration: underline;\">„KDE "
+"Connect“ kopienas vikilapā</span></a>."
+
+#~ msgctxt "@info KDE Connect provider name"
+#~ msgid "Bluetooth"
+#~ msgstr "Bluetooth"
+
+#~ msgctxt "@info KDE Connect provider name"
+#~ msgid "Loopback"
+#~ msgstr "Atgriezeniskā cilpa"
+
+#~ msgctxt "@info KDE Connect provider name"
+#~ msgid "Network"
+#~ msgstr "Tīkls"
+
+#~ msgid "(c) 2015, Aleix Pol Gonzalez"
+#~ msgstr "(c) 2015, Aleix Pol Gonzalez"
+
+#~ msgid "Maintainer"
+#~ msgstr "Uzturētājs"
+
+#~ msgid "Find devices..."
+#~ msgstr "Atrast ierīces"
