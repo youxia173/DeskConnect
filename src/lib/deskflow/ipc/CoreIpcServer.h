@@ -27,6 +27,8 @@ public:
 
 Q_SIGNALS:
   void sendFilesRequested(const QString &peer, const QStringList &paths);
+  void cancelFileTransferRequested();
+  void fileTransferFullSpeedRequested();
 
 private:
   void processCommand(QLocalSocket *clientSocket, const QString &command, const QStringList &parts) override;

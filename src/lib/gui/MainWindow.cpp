@@ -301,31 +301,53 @@ void MainWindow::connectSlots()
   connect(m_actionStopCore, &QAction::triggered, this, &MainWindow::stopCore);
   connect(m_actionShowHelp, &QAction::triggered, this, &MainWindow::showHelpViewer);
   connect(m_actionSendFiles, &QAction::triggered, this, &MainWindow::sendFiles);
+  connect(m_fileTransferPanel, &FileTransferProgressPanel::cancelRequested, this, [this]() {
+    m_coreProcess.cancelFileTransfer();
+  });
+  connect(m_fileTransferPanel, &FileTransferProgressPanel::fullSpeedRequested, this, [this]() {
+    m_coreProcess.fileTransferFullSpeed();
+    m_fileTransferPanel->setFullSpeedEnabled(false);
+  });
   connect(&m_coreProcess, &CoreProcess::fileTransferProgress, this,
           [this](
               bool sending, const QString &fileName, int fileIndex, int fileCount, qint64 bytesDone, qint64 bytesTotal,
               qint64 bytesPerSec, int etaSeconds
           ) {
+            m_fileTransferPanel->setHostControlsVisible(m_coreProcess.mode() == CoreMode::Server);
             m_fileTransferPanel->updateProgress(
                 sending, fileName, fileIndex, fileCount, bytesDone, bytesTotal, bytesPerSec, etaSeconds
             );
           });
   connect(&m_coreProcess, &CoreProcess::fileTransferStatus, this, [this](const QString &status, const QString &detail) {
+    const bool isServer = m_coreProcess.mode() == CoreMode::Server;
     if (status == QLatin1String("sending")) {
       const auto msg = tr("Sending %1 file(s)…").arg(detail);
       m_statusBar->showMessage(msg, 4000);
       m_trayIcon->showMessage(kAppName, msg, QSystemTrayIcon::Information, 3000);
+      m_fileTransferPanel->setHostControlsVisible(isServer);
+      m_fileTransferPanel->setFullSpeedEnabled(
+          isServer && Settings::value(Settings::FileTransfer::LimitSpeed).toBool()
+      );
       m_fileTransferPanel->updateProgress(true, tr("(starting…)"), 0, detail.toInt(), 0, 0, 0, -1);
+    } else if (status == QLatin1String("fullSpeed")) {
+      m_fileTransferPanel->setFullSpeedEnabled(false);
+      m_statusBar->showMessage(tr("Speed limit disabled for this transfer"), 4000);
     } else if (status == QLatin1String("ok")) {
       const auto msg = tr("Sent %1 file(s)").arg(detail);
       m_statusBar->showMessage(msg, 5000);
       m_trayIcon->showMessage(kAppName, msg, QSystemTrayIcon::Information, 4000);
       m_fileTransferPanel->transferFinished(true, msg);
     } else if (status == QLatin1String("error")) {
-      const auto msg = tr("File transfer failed: %1").arg(detail);
-      m_statusBar->showMessage(msg, 8000);
-      m_fileTransferPanel->transferFinished(false, msg);
-      QMessageBox::warning(this, kAppName, msg);
+      if (detail == QLatin1String("transfer cancelled")) {
+        const auto msg = tr("File transfer cancelled");
+        m_statusBar->showMessage(msg, 5000);
+        m_fileTransferPanel->transferFinished(false, msg);
+      } else {
+        const auto msg = tr("File transfer failed: %1").arg(detail);
+        m_statusBar->showMessage(msg, 8000);
+        m_fileTransferPanel->transferFinished(false, msg);
+        QMessageBox::warning(this, kAppName, msg);
+      }
     }
   });
   connect(&m_coreProcess, &CoreProcess::filesReceived, this, [this](int count, const QString &directory) {

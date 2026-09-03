@@ -549,6 +549,12 @@ int ServerApp::mainLoop()
       sendFiles(info->peer, info->paths);
     }
   });
+  getEvents()->addHandler(EventTypes::AppCancelFileTransfer, getEvents()->getSystemTarget(), [this](const auto &) {
+    cancelFileTransfer();
+  });
+  getEvents()->addHandler(EventTypes::AppFileTransferFullSpeed, getEvents()->getSystemTarget(), [this](const auto &) {
+    setFileTransferFullSpeed();
+  });
 
   // run event loop.  if startServer() failed we're supposed to retry
   // later.  the timer installed by startServer() will take care of
@@ -560,6 +566,8 @@ int ServerApp::mainLoop()
   getEvents()->removeHandler(EventTypes::ServerAppForceReconnect, getEvents()->getSystemTarget());
   getEvents()->removeHandler(EventTypes::ServerAppReloadConfig, getEvents()->getSystemTarget());
   getEvents()->removeHandler(EventTypes::AppSendFiles, getEvents()->getSystemTarget());
+  getEvents()->removeHandler(EventTypes::AppCancelFileTransfer, getEvents()->getSystemTarget());
+  getEvents()->removeHandler(EventTypes::AppFileTransferFullSpeed, getEvents()->getSystemTarget());
   cleanupServer();
   LOG_INFO("stopped server");
 
@@ -618,4 +626,20 @@ void ServerApp::sendFiles(const std::string &peer, const std::vector<std::string
     return;
   }
   m_server->sendFilesTo(peer, paths);
+}
+
+void ServerApp::cancelFileTransfer()
+{
+  if (m_server == nullptr) {
+    return;
+  }
+  m_server->cancelActiveFileTransfer();
+}
+
+void ServerApp::setFileTransferFullSpeed()
+{
+  if (m_server == nullptr) {
+    return;
+  }
+  m_server->setOutboundFileTransferFullSpeed();
 }

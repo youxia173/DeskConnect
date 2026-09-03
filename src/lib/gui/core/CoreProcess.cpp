@@ -657,6 +657,24 @@ bool CoreProcess::sendFiles(const QString &peer, const QStringList &paths)
   return true;
 }
 
+void CoreProcess::cancelFileTransfer()
+{
+  if (!m_coreIpcClient || !m_coreIpcClient->isConnected()) {
+    qWarning("cannot cancel file transfer, core ipc is not connected");
+    return;
+  }
+  m_coreIpcClient->cancelFileTransfer();
+}
+
+void CoreProcess::fileTransferFullSpeed()
+{
+  if (!m_coreIpcClient || !m_coreIpcClient->isConnected()) {
+    qWarning("cannot boost file transfer, core ipc is not connected");
+    return;
+  }
+  m_coreIpcClient->fileTransferFullSpeed();
+}
+
 void CoreProcess::onCoreIpcMessageReceived(const QString &command, const QString &args)
 {
   if (command == "connectionState") {

@@ -41,6 +41,15 @@ FileTransferProgressPanel::FileTransferProgressPanel(QWidget *parent)
   m_progress->setMinimumHeight(16);
   m_progress->setMaximumHeight(18);
 
+  m_fullSpeedButton = new QPushButton(frame);
+  m_cancelButton = new QPushButton(frame);
+  m_fullSpeedButton->setVisible(false);
+  m_cancelButton->setVisible(false);
+  m_fullSpeedButton->setAutoDefault(false);
+  m_cancelButton->setAutoDefault(false);
+  connect(m_fullSpeedButton, &QPushButton::clicked, this, &FileTransferProgressPanel::fullSpeedRequested);
+  connect(m_cancelButton, &QPushButton::clicked, this, &FileTransferProgressPanel::cancelRequested);
+
   auto *topRow = new QHBoxLayout;
   topRow->setContentsMargins(0, 0, 0, 0);
   topRow->setSpacing(8);
@@ -54,6 +63,8 @@ FileTransferProgressPanel::FileTransferProgressPanel(QWidget *parent)
   bottomRow->addWidget(m_progress, 1);
   bottomRow->addWidget(m_speedLabel);
   bottomRow->addWidget(m_etaLabel);
+  bottomRow->addWidget(m_fullSpeedButton);
+  bottomRow->addWidget(m_cancelButton);
 
   auto *inner = new QVBoxLayout(frame);
   inner->setContentsMargins(8, 6, 8, 6);
@@ -69,6 +80,18 @@ FileTransferProgressPanel::FileTransferProgressPanel(QWidget *parent)
   retranslate();
 }
 
+void FileTransferProgressPanel::setHostControlsVisible(bool visible)
+{
+  m_hostControls = visible;
+  m_fullSpeedButton->setVisible(visible && m_sending);
+  m_cancelButton->setVisible(visible);
+}
+
+void FileTransferProgressPanel::setFullSpeedEnabled(bool enabled)
+{
+  m_fullSpeedButton->setEnabled(enabled);
+}
+
 void FileTransferProgressPanel::changeEvent(QEvent *event)
 {
   if (event->type() == QEvent::LanguageChange) {
@@ -80,6 +103,10 @@ void FileTransferProgressPanel::changeEvent(QEvent *event)
 void FileTransferProgressPanel::retranslate()
 {
   m_titleLabel->setText(m_sending ? tr("Sending") : tr("Receiving"));
+  m_fullSpeedButton->setText(tr("Full speed"));
+  m_fullSpeedButton->setToolTip(tr("Disable speed limit for this transfer only"));
+  m_cancelButton->setText(tr("Cancel"));
+  m_cancelButton->setToolTip(tr("Cancel this file transfer"));
 }
 
 QString FileTransferProgressPanel::formatBytes(qint64 bytes)
@@ -124,6 +151,7 @@ void FileTransferProgressPanel::updateProgress(
 {
   m_sending = sending;
   retranslate();
+  setHostControlsVisible(m_hostControls);
 
   const int displayIndex = fileCount > 0 ? qMin(fileIndex + 1, fileCount) : 0;
   m_fileLabel->setText(tr("%1 (%2/%3)").arg(fileName).arg(displayIndex).arg(fileCount));
@@ -150,6 +178,8 @@ void FileTransferProgressPanel::updateProgress(
 
 void FileTransferProgressPanel::transferFinished(bool success, const QString &message)
 {
+  m_fullSpeedButton->setVisible(false);
+  m_cancelButton->setVisible(false);
   m_progress->setRange(0, 1000);
   m_progress->setValue(success ? 1000 : m_progress->value());
   m_etaLabel->setText(success ? tr("Done") : tr("Failed"));

@@ -49,7 +49,7 @@ void FileSendSession::invokeDone(bool success)
   }
 }
 
-void FileSendSession::cancel()
+void FileSendSession::cancel(bool notifyDone)
 {
   clearTimer();
   if (m_file.isOpen()) {
@@ -58,6 +58,7 @@ void FileSendSession::cancel()
   const bool wasActive = m_active;
   m_active = false;
   m_startedFile = false;
+  m_forceFullSpeed = false;
   m_stream = nullptr;
   m_events = nullptr;
   m_offers.clear();
@@ -68,11 +69,32 @@ void FileSendSession::cancel()
   m_lastChunkBytes = 0;
   m_fingerprint.clear();
   m_onProgress = {};
-  if (wasActive) {
+  if (wasActive && notifyDone) {
     invokeDone(false);
   } else {
     m_onDone = {};
   }
+}
+
+void FileSendSession::setFullSpeedForSession()
+{
+  if (!m_active || m_forceFullSpeed) {
+    return;
+  }
+  m_forceFullSpeed = true;
+  LOG_INFO("file transfer speed limit disabled for this send");
+  // Reschedule immediately so the next chunk is not delayed by the old interval.
+  if (m_events != nullptr) {
+    schedulePump();
+  }
+}
+
+uint64_t FileSendSession::effectiveLimitBytesPerSec() const
+{
+  if (m_forceFullSpeed) {
+    return 0;
+  }
+  return transferSpeedLimitBytesPerSec();
 }
 
 bool FileSendSession::start(
@@ -113,6 +135,7 @@ bool FileSendSession::start(
   m_onDone = {};
   m_onProgress = {};
   m_startedFile = false;
+  m_forceFullSpeed = false;
   m_offers.clear();
   m_index = 0;
   m_sent = 0;
@@ -136,7 +159,7 @@ bool FileSendSession::start(
 
   const std::string drag = encodeDragInfo(m_offers);
   ProtocolUtil::writef(m_stream, kMsgDDragInfo, static_cast<uint16_t>(m_offers.size()), &drag);
-  const uint64_t limitBps = transferSpeedLimitBytesPerSec();
+  const uint64_t limitBps = effectiveLimitBytesPerSec();
   if (limitBps > 0) {
     LOG_INFO(
         "sending %zu clipboard file(s) asynchronously (limited to %llu KiB/s)", m_offers.size(),
@@ -159,7 +182,7 @@ void FileSendSession::schedulePump()
   clearTimer();
 
   double interval = kMinPumpIntervalSec;
-  const uint64_t limitBps = transferSpeedLimitBytesPerSec();
+  const uint64_t limitBps = effectiveLimitBytesPerSec();
   if (limitBps > 0) {
     const uint64_t bytes = m_lastChunkBytes > 0 ? m_lastChunkBytes : static_cast<uint64_t>(kFileChunkSize);
     interval = static_cast<double>(bytes) / static_cast<double>(limitBps);
@@ -222,6 +245,7 @@ void FileSendSession::completeOk()
   }
   m_active = false;
   m_startedFile = false;
+  m_forceFullSpeed = false;
   m_stream = nullptr;
   m_events = nullptr;
   m_offers.clear();
@@ -244,6 +268,7 @@ void FileSendSession::fail(const char *reason)
   }
   m_active = false;
   m_startedFile = false;
+  m_forceFullSpeed = false;
   m_stream = nullptr;
   m_events = nullptr;
   m_offers.clear();

@@ -169,10 +169,10 @@
           <item>
            <widget class="QCheckBox" name="cbFileTransferLimitSpeed">
             <property name="toolTip">
-             <string>Slow transfers so mouse and keyboard stay usable on the shared connection. Uncheck for maximum speed.</string>
+             <string>Only applies on the server (keyboard/mouse host). Slow transfers so mouse and keyboard stay usable. Uncheck for maximum speed.</string>
             </property>
             <property name="text">
-             <string>Limit speed (keep mouse/keyboard responsive)</string>
+             <string>Limit speed on server (keep mouse/keyboard responsive)</string>
             </property>
             <property name="checked">
              <bool>true</bool>

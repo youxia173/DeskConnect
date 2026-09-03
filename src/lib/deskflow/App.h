@@ -82,7 +82,11 @@ public:
   void run(QThread &coreThread);
   void quit() const;
   void queueSendFiles(const QString &peer, const QStringList &paths);
+  void queueCancelFileTransfer();
+  void queueFileTransferFullSpeed();
   virtual void sendFiles(const std::string &peer, const std::vector<std::string> &paths);
+  virtual void cancelFileTransfer();
+  virtual void setFileTransferFullSpeed();
   void setupFileLogging();
   void loggingFilterWarning() const;
   void initApp() override;

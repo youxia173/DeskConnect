@@ -240,6 +240,22 @@ p, li { white-space: pre-wrap; }
         <source>Failed</source>
         <translation>失败</translation>
     </message>
+    <message>
+        <source>Full speed</source>
+        <translation>本次不限速</translation>
+    </message>
+    <message>
+        <source>Disable speed limit for this transfer only</source>
+        <translation>仅本次传输取消限速</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Cancel this file transfer</source>
+        <translation>取消本次文件传输</translation>
+    </message>
 </context>
 <context>
     <name>FingerprintDialog</name>
@@ -683,6 +699,14 @@ Current Wi-Fi: %1</source>
     <message>
         <source>File transfer failed: %1</source>
         <translation>文件传输失败：%1</translation>
+    </message>
+    <message>
+        <source>Speed limit disabled for this transfer</source>
+        <translation>本次传输已取消限速</translation>
+    </message>
+    <message>
+        <source>File transfer cancelled</source>
+        <translation>已取消文件传输</translation>
     </message>
     <message>
         <source>Received %1 file(s) in %2</source>
@@ -1421,12 +1445,12 @@ Enabling this setting will disable the server config GUI.</source>
         <translation>最大大小 (MB)</translation>
     </message>
     <message>
-        <source>Limit speed (keep mouse/keyboard responsive)</source>
-        <translation>限制速度（保证键鼠可操控）</translation>
+        <source>Limit speed on server (keep mouse/keyboard responsive)</source>
+        <translation>服务器限速（保证键鼠可操控）</translation>
     </message>
     <message>
-        <source>Slow transfers so mouse and keyboard stay usable on the shared connection. Uncheck for maximum speed.</source>
-        <translation>限制传输速度，让同一连接上的键鼠仍可正常使用。取消勾选即为全速传输。</translation>
+        <source>Only applies on the server (keyboard/mouse host). Slow transfers so mouse and keyboard stay usable. Uncheck for maximum speed.</source>
+        <translation>仅对键鼠主机（服务器）生效。限制传输速度，让同一连接上的键鼠仍可正常使用。取消勾选即为全速传输。</translation>
     </message>
     <message>
         <source>Max speed (MiB/s)</source>

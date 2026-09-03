@@ -211,6 +211,10 @@ public:
   void onClipboardFileRequest(BaseClientProxy *sender);
   //! Push local files to a named client (empty name = the only connected client).
   bool sendFilesTo(const std::string &clientName, const std::vector<std::string> &paths);
+  //! Cancel active outbound send and/or inbound receive.
+  void cancelActiveFileTransfer();
+  //! Disable speed limiting for the current outbound send only.
+  void setOutboundFileTransferFullSpeed();
 
   //@}
 

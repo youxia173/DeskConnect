@@ -49,6 +49,8 @@ public:
   void clearSettings();
   void retryDaemon();
   bool sendFiles(const QString &peer, const QStringList &paths);
+  void cancelFileTransfer();
+  void fileTransferFullSpeed();
 
   // getters
   Settings::CoreMode mode() const

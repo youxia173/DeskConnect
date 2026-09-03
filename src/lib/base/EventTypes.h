@@ -161,6 +161,12 @@ enum class EventTypes : uint32_t
   /// GUI requested sending files to a connected peer (data is SendFilesInfo).
   AppSendFiles,
 
+  /// GUI requested cancelling the current outbound/inbound file transfer.
+  AppCancelFileTransfer,
+
+  /// GUI requested full-speed for the current outbound file transfer only.
+  AppFileTransferFullSpeed,
+
   /// This event is sent when key is down. Event data is a pointer to KeyInfo (count == 1)
   KeyStateKeyDown,
   /// This event is sent when key is up. Event data is a pointer to KeyInfo (count == 1)

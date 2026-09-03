@@ -2231,6 +2231,39 @@ bool Server::sendFilesTo(const std::string &clientName, const std::vector<std::s
   return true;
 }
 
+void Server::cancelActiveFileTransfer()
+{
+  bool cancelled = false;
+  if (m_fileSend.isActive()) {
+    LOG_INFO("cancelling outbound file transfer");
+    m_fileSend.cancel(false);
+    m_sentFilesTarget.clear();
+    m_fileSendFromClipboard = false;
+    cancelled = true;
+  }
+  if (m_fileReceive.isActive()) {
+    LOG_INFO("cancelling inbound file transfer");
+    m_fileReceive.reset();
+    m_recvProgress.reset();
+    cancelled = true;
+  }
+  if (cancelled) {
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer cancelled"));
+  } else {
+    LOG_DEBUG("cancel file transfer: nothing active");
+  }
+}
+
+void Server::setOutboundFileTransferFullSpeed()
+{
+  if (!m_fileSend.isActive()) {
+    LOG_DEBUG("full-speed request ignored: no active outbound transfer");
+    return;
+  }
+  m_fileSend.setFullSpeedForSession();
+  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("fullSpeed|1"));
+}
+
 void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::string &info)
 {
   if (!deskflow::isFileTransferEnabled()) {

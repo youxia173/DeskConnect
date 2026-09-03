@@ -203,6 +203,11 @@ bool isFileTransferEnabled()
 
 bool isTransferSpeedLimited()
 {
+  // Speed limiting is for the keyboard/mouse host (server) only; clients always send full speed.
+  const auto mode = Settings::value(Settings::Core::CoreMode).value<Settings::CoreMode>();
+  if (mode != Settings::CoreMode::Server) {
+    return false;
+  }
   return Settings::value(Settings::FileTransfer::LimitSpeed).toBool();
 }
 

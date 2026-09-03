@@ -27,6 +27,16 @@ void CoreIpcClient::sendFiles(const QString &manifestPath)
   sendMessage(QStringLiteral("sendFiles=%1").arg(manifestPath));
 }
 
+void CoreIpcClient::cancelFileTransfer()
+{
+  sendMessage(QStringLiteral("cancelFileTransfer"));
+}
+
+void CoreIpcClient::fileTransferFullSpeed()
+{
+  sendMessage(QStringLiteral("fileTransferFullSpeed"));
+}
+
 void CoreIpcClient::processCommand(const QString &command, const QStringList &parts)
 {
   const auto args = parts.size() >= 2 ? parts.at(1) : QString();

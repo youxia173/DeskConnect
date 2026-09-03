@@ -83,6 +83,16 @@ void CoreIpcServer::processCommand(QLocalSocket *clientSocket, const QString &co
     Q_EMIT sendFilesRequested(peer, paths);
     return;
   }
+  if (command == QStringLiteral("cancelFileTransfer")) {
+    writeToClientSocket(clientSocket, QStringLiteral("ok"));
+    Q_EMIT cancelFileTransferRequested();
+    return;
+  }
+  if (command == QStringLiteral("fileTransferFullSpeed")) {
+    writeToClientSocket(clientSocket, QStringLiteral("ok"));
+    Q_EMIT fileTransferFullSpeedRequested();
+    return;
+  }
   LOG_WARN("core ipc server got unknown command: %s", command.toUtf8().constData());
 }
 

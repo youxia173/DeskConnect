@@ -21,6 +21,8 @@ public:
 
   void sendStop();
   void sendFiles(const QString &manifestPath);
+  void cancelFileTransfer();
+  void fileTransferFullSpeed();
 
 Q_SIGNALS:
   void commandReceived(const QString &command, const QString &args);

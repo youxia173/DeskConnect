@@ -63,6 +63,8 @@ public:
   void startNode() override;
 
   void sendFiles(const std::string &peer, const std::vector<std::string> &paths) override;
+  void cancelFileTransfer() override;
+  void setFileTransferFullSpeed() override;
 
   //
   // Regular functions

@@ -47,10 +47,16 @@ public:
       DoneCallback onDone = {}, ProgressCallback onProgress = {}
   );
 
-  void cancel();
+  void cancel(bool notifyDone = true);
+  //! Drop the speed limit for the remainder of this send (does not change settings).
+  void setFullSpeedForSession();
   bool isActive() const
   {
     return m_active;
+  }
+  bool isFullSpeedForSession() const
+  {
+    return m_forceFullSpeed;
   }
   const std::string &fingerprint() const
   {
@@ -68,6 +74,7 @@ private:
   void invokeDone(bool success);
   void emitProgress(bool force = false);
   uint64_t sessionBytesDone() const;
+  uint64_t effectiveLimitBytesPerSec() const;
 
   IStream *m_stream = nullptr;
   IEventQueue *m_events = nullptr;
@@ -81,6 +88,7 @@ private:
   uint64_t m_lastChunkBytes = 0;
   bool m_active = false;
   bool m_startedFile = false;
+  bool m_forceFullSpeed = false;
   std::string m_fingerprint;
   DoneCallback m_onDone;
   ProgressCallback m_onProgress;

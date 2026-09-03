@@ -187,10 +187,30 @@ void App::queueSendFiles(const QString &peer, const QStringList &paths)
   getEvents()->addEvent(Event(EventTypes::AppSendFiles, getEvents()->getSystemTarget(), info));
 }
 
+void App::queueCancelFileTransfer()
+{
+  getEvents()->addEvent(Event(EventTypes::AppCancelFileTransfer, getEvents()->getSystemTarget()));
+}
+
+void App::queueFileTransferFullSpeed()
+{
+  getEvents()->addEvent(Event(EventTypes::AppFileTransferFullSpeed, getEvents()->getSystemTarget()));
+}
+
 void App::sendFiles(const std::string &, const std::vector<std::string> &)
 {
   LOG_WARN("send files is not supported in this mode");
   ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|send files is not supported"));
+}
+
+void App::cancelFileTransfer()
+{
+  LOG_DEBUG("cancel file transfer ignored in this mode");
+}
+
+void App::setFileTransferFullSpeed()
+{
+  LOG_DEBUG("file transfer full-speed ignored in this mode");
 }
 
 void App::runEventsLoop(const void *)

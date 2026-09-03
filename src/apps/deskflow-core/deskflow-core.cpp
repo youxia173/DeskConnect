@@ -130,6 +130,14 @@ int main(int argc, char **argv)
       [coreApp](const QString &peer, const QStringList &paths) { coreApp->queueSendFiles(peer, paths); },
       Qt::DirectConnection
   );
+  QObject::connect(
+      ipcServer, &deskflow::core::ipc::CoreIpcServer::cancelFileTransferRequested, coreApp,
+      [coreApp]() { coreApp->queueCancelFileTransfer(); }, Qt::DirectConnection
+  );
+  QObject::connect(
+      ipcServer, &deskflow::core::ipc::CoreIpcServer::fileTransferFullSpeedRequested, coreApp,
+      [coreApp]() { coreApp->queueFileTransferFullSpeed(); }, Qt::DirectConnection
+  );
   ipcServer->listen();
 
   QThread coreThread;
