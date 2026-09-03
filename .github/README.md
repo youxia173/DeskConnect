@@ -1,187 +1,67 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/deskflow/deskflow-artwork/blob/main/logo/deskflow-logo-dark-200px.png?raw=true">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/deskflow/deskflow-artwork/blob/main/logo/deskflow-logo-light-200px.png?raw=true">
-  <img alt="Deskflow" src="https://github.com/user-attachments/assets/f005b958-24df-4f4a-9bfd-4f834dae59d6">
-</picture>
+﻿# DeskConnect
 
-**Deskflow** is a free and open source keyboard and mouse sharing app.
-Use the keyboard, mouse, or trackpad of one computer to control nearby computers,
-and work seamlessly between them.
-It's like a software KVM (but without the video).
-TLS encryption is enabled by default. Wayland is supported. Clipboard sharing is supported.
+基于 [Deskflow](https://github.com/deskflow/deskflow) 的键鼠共享工具，在 DeskConnect 品牌下维护与扩展。
 
-> [!TIP]
->
-> **Chat with us**
->
-> - Main discussion on Matrix: [`#deskflow:matrix.org`](https://matrix.to/#/#deskflow:matrix.org) ([Matrix clients](https://matrix.org/ecosystem/clients/))
-> - Discussion also happens on IRC: `#deskflow` or `#deskflow-dev` on [Libera Chat](https://libera.chat/)
-> - Start a [new discussion](https://github.com/deskflow/deskflow/discussions) on our GitHub project.
+支持 Windows / Linux / macOS 跨设备共用一套键鼠，并在 DeskConnect ↔ DeskConnect 之间支持**剪切板式跨机传文件**。
 
-## Download
+仓库地址：<https://github.com/youxia173/DeskConnect>
 
-[![Downloads: Stable Release](https://img.shields.io/github/downloads/deskflow/deskflow/latest/total?style=for-the-badge&logo=github&label=Download%20Stable)](https://github.com/deskflow/deskflow/releases/latest)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Downloads: Continuous Build](https://img.shields.io/github/downloads/deskflow/deskflow/continuous/total?style=for-the-badge&logo=github&label=Download%20Continuous)](https://github.com/deskflow/deskflow/releases/continuous)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Download From Flathub](https://img.shields.io/flathub/downloads/org.deskflow.deskflow?style=for-the-badge&logo=flathub&label=Download%20from%20flathub)](https://flathub.org/apps/org.deskflow.deskflow)
+## 主要功能
 
-> [!NOTE]
-> On Windows, you will need to install the
-> [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version).  
-> Download latest: [`vc_redist.x64.exe`](https://aka.ms/vc14/vc_redist.x64.exe) [`vc_redist.arm64.exe`](https://aka.ms/vc14/vc_redist.arm64.exe)
+- 键鼠跨屏共享（Deskflow 协议，默认端口 `24800`）
+- 文本 / HTML / 图片剪切板同步
+- **复制文件 → 切到另一台 → 粘贴落地**（两侧均需本仓库构建的 DeskConnect）
+  - Windows：`CF_HDROP`
+  - Linux：`text/uri-list`（X11 / Portal）
+- 开机启动、主机历史、按 WiFi 记忆 IP、中文界面等客户端便利功能
 
-> [!TIP]
-> For macOS users, the easiest way to install and stay up to date is to use [Homebrew](https://brew.sh) with our [homebrew-tap](https://github.com/deskflow/homebrew-tap).
-> macOS reports unsigned apps as damaged. This occurs because we do not use an Apple certificate for notarization. Clear the quarantine attribute to run the app: `xattr -c Deskflow.app`
+## 目录说明
 
-To use Deskflow, download one of our [packages](https://github.com/deskflow/deskflow/releases), install `deskflow` (from your package repository), or [build it](https://github.com/deskflow/deskflow/wiki/Building) from source.
+| 路径 | 说明 |
+|------|------|
+| `src/`、`cmake/`、`deploy/` 等 | 产品源码（品牌为 DeskConnect） |
+| `kdeconnect-kde/` | KDE Connect 桌面端源码，供后续参考，未接入当前构建 |
+| `docs/` | 上游开发文档 |
 
-## Stats
+## 传文件怎么用
 
-[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/deskflow/deskflow?logo=github)](https://github.com/deskflow/deskflow/commits/master/)
-[![GitHub top language](https://img.shields.io/github/languages/top/deskflow/deskflow?logo=github)](https://github.com/deskflow/deskflow/commits/master/)
-[![GitHub License](https://img.shields.io/github/license/deskflow/deskflow?logo=github)](LICENSE)
-[![REUSE status](https://api.reuse.software/badge/github.com/deskflow/deskflow)](https://api.reuse.software/info/github.com/deskflow/deskflow)
+1. 两台电脑都安装并运行**本仓库编出的** DeskConnect（官方 Deskflow 无效）
+2. 在 A 的资源管理器中复制文件
+3. 把鼠标切到 B
+4. 等待日志出现接收完成提示后，在 B 上粘贴
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=deskflow_deskflow&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=deskflow_deskflow)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=deskflow_deskflow&metric=coverage)](https://sonarcloud.io/summary/new_code?id=deskflow_deskflow)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=deskflow_deskflow&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=deskflow_deskflow)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=deskflow_deskflow&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=deskflow_deskflow)
+文件会先落到接收目录（默认 `下载/DeskConnect` 或 `Downloads/DeskConnect`），再写入本地剪切板。可在「偏好设置 → Clipboard file transfer」中开关、改目录与大小上限。
 
-[![CI](https://github.com/deskflow/deskflow/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/deskflow/deskflow/actions/workflows/continuous-integration.yml)
-[![CodeQL Analysis](https://github.com/deskflow/deskflow/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/deskflow/deskflow/actions/workflows/codeql-analysis.yml)
-[![SonarCloud Analysis](https://github.com/deskflow/deskflow/actions/workflows/sonarcloud-analysis.yml/badge.svg)](https://github.com/deskflow/deskflow/actions/workflows/sonarcloud-analysis.yml)
+> 当前不传文件夹；不兼容手机 / 官方 KDE Connect 传文件协议。
 
-## Contribute
+## 编译
 
-[![Good first issues](https://img.shields.io/github/issues/deskflow/deskflow/good%20first%20issue?label=good%20first%20issues&color=%2344cc11)](https://github.com/deskflow/deskflow/labels/good%20first%20issue)
+依赖概要：CMake 3.24+、Qt 6.7+、OpenSSL 3。Linux 还需 libei、libportal，以及可选的 X11 开发库。详见 [`docs/dev/build.md`](docs/dev/build.md)。
 
-There are many ways to contribute to the Deskflow project.
+### Windows
 
-We're a friendly, active, and welcoming community focused on building a great app.
+用 Visual Studio 2022 + Qt 6（MSVC）配置并编译 Release，运行：
 
-Read our [Contributing](https://github.com/deskflow/deskflow/wiki/Contributing) page to get started.
-
-For instructions on building Deskflow, use the wiki page: [Building](https://github.com/deskflow/deskflow/wiki/Building)
-
-## Operating Systems
-
-We support all major operating systems, including Windows, macOS, Linux, and Unix-like BSD-derived.
-
-Windows 10 v1809 or higher is required.
-
-macOS 13 or higher is required to use our CI builds for Apple Silicon machines. macOS 12 or higher is required for Intel macs or local builds.
-
-Linux requires libei 1.3+ and libportal 0.8+ for the server/client. Additionally, Qt 6.7+ is required for the GUI.
-Linux users with systems not meeting these requirements should use flatpak in place of a native package.
-
-We officially support FreeBSD, and would also like to support: OpenBSD, NetBSD, DragonFly, Solaris.
-
-## Repology
-
-Repology monitors a huge number of package repositories and other sources comparing package
-versions across them and gathering other information.
-
-[![Repology](https://repology.org/badge/vertical-allrepos/deskflow.svg?columns=2&exclude_unsupported)](https://repology.org/project/deskflow/versions)
-
-## Installing on macOS
-
-When you install Deskflow on macOS, you need to allow accessibility access (Privacy & Security) to both the `Deskflow` app and the `deskflow` process.
-
-If using Sequoia, you may also need to allow `Deskflow` under Local Network‍ settings (Privacy & Security).
-When prompted by the OS, go to the settings and enable the access.
-
-If you are upgrading and you already have `Deskflow` or `deskflow`
-on the allowed list you will need to manually remove them before accessibility access can be granted to the new version.
-
-macOS users who download directly from releases may need to run `xattr -c /Applications/Deskflow.app` after copying the app to the `Applications` dir.
-
-It is recommended to install Deskflow using [Homebrew](https://brew.sh) from our [homebrew-tap](https://github.com/deskflow/homebrew-tap)
-
-To add our tap, run:
-
-```
-brew tap deskflow/tap
+```text
+build/bin/Release/DeskConnect.exe
 ```
 
-Then install either:
+### Linux
 
-- Stable: `brew install deskflow`
-- Continuous: `brew install deskflow-dev`
+```bash
+# Debian/Ubuntu 示例
+sudo apt install build-essential cmake \
+  qt6-base-dev libssl-dev \
+  libx11-dev libxtst-dev \
+  libei-dev libportal-dev
 
-## Similar Projects
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
+```
 
-In the open source developer community, similar projects collaborate for the improvement of all
-mouse and keyboard sharing tools. We aim for idea sharing and interoperability.
+产物一般在 `build/bin/`（如 `DeskConnect` / `deskflow` 与 `deskflow-core`）。
 
-- [**Lan Mouse**](https://github.com/feschber/lan-mouse) -
-  Rust implementation with the goal of having native front-ends and interoperability with
-  Deskflow/Synergy.
-- [**Synergy**](https://symless.com/synergy) -
-  Downstream commercial fork. Synergy sponsors Deskflow with financial support and contributes code ([learn more](https://github.com/deskflow/deskflow/wiki/Relationship-with-Synergy)).
-- [**Input Leap**](https://github.com/input-leap/input-leap) -
-  Inactive Deskflow/Synergy-derivative with the goal continuing Barrier development (now a dead fork).
+## 许可证
 
-## FAQ
-
-### Is Deskflow compatible with Synergy, Input Leap, or Barrier?
-
-Yes, Deskflow has network compatibility with all forks:
-
-- Requires Deskflow >= v1.17.0.96
-- Deskflow will _just work_ with Input Leap and Barrier (server or client).
-- Connecting a Deskflow client to a Synergy 1 server will also _just work_.
-- To connect a Synergy 1 client, you need to select the Synergy protocol in the Deskflow server settings.
-
-_Note:_ Only Synergy 1 is compatible with Deskflow (Synergy 3 is not yet compatible).
-
-### Is Deskflow compatible with Lan Mouse?
-
-We would love to see compatibility with Lan Mouse. This may be quite an effort as currently the way they handle the generated input is very different.
-
-### If I want to solve issues in Deskflow do I need to contribute to a fork?
-
-We welcome PRs (pull requests) from the community. If you'd like to make a change, please feel
-free to [start a discussion](https://github.com/deskflow/deskflow/discussions) or
-[open a PR](https://github.com/deskflow/deskflow/wiki/Contributing).
-
-### Is clipboard sharing supported?
-
-Absolutely. The clipboard-sharing feature is a cornerstone feature of the product and we are
-committed to maintaining and improving that feature.
-
-### Is Wayland for Linux supported?
-
-Yes! Wayland (the Linux display server protocol aimed to become the successor of the X Window
-System) is an important platform for us.
-The [`libei`](https://gitlab.freedesktop.org/libinput/libei) and
-[`libportal`](https://github.com/flatpak/libportal) libraries enable
-Wayland support for Deskflow. We would like to give special thanks to Peter Hutterer,
-who is the author of `libei`, a major contributor to `libportal`, and the author of the Wayland
-implementation in Deskflow. Others such as Olivier Fourdan and Povilas Kanapickas helped with the
-Wayland implementation.
-
-Some features _may_ be unavailable or broken on Wayland. Please see the [known Wayland issues](https://github.com/deskflow/deskflow/discussions/7499).
-
-### Where did it all start?
-
-Deskflow was first created as Synergy in 2001 by Chris Schoeneman.
-Read about the [history of the project](https://github.com/deskflow/deskflow/wiki/History) on our
-wiki.
-
-## Meow'Dib (our mascot)
-
-![Meow'Dib](https://github.com/user-attachments/assets/726f695c-3dfb-4abd-875d-ed658f6c610f)
-
-## Deskflow Contributors
-
-[![Sponsored by Synergy](https://raw.githubusercontent.com/deskflow/deskflow-artwork/b2c72a3e60a42dee793bd47efc275b5ee0bdaa5f/misc/synergy-sponsor.svg)](https://symless.com/synergy)
-
-[Synergy](https://symless.com/synergy) sponsors the Deskflow project by contributing code and providing financial support ([learn more](https://github.com/deskflow/deskflow/wiki/Relationship-with-Synergy)).
-
-Deskflow is made by possible by these contributors.
-
- <a href = "https://github.com/deskflow/deskflow/graphs/contributors">
-   <img src = "https://contrib.rocks/image?repo=deskflow/deskflow"/>
- </a>
-
-## License
-
-This project is licensed under [GPL-2.0](LICENSE) with an [OpenSSL exception](../LICENSES/LicenseRef-OpenSSL-Exception.txt).
+- Deskflow 衍生代码：GPL-2.0（见 `LICENSE`、`LICENSES/`）
+- `kdeconnect-kde/`：保留其原有许可证
