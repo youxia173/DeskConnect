@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
-#include "platform/XWindowsClipboardPNGConverter.h"
-
+// Qt headers must come before X11 (Status/Bool macros).
 #include "base/Log.h"
 #include "platform/ClipboardImage.h"
+
+#include "platform/XWindowsClipboardPNGConverter.h"
 
 XWindowsClipboardPNGConverter::XWindowsClipboardPNGConverter(Display *display)
     : m_atom(XInternAtom(display, "image/png", False))
