@@ -163,6 +163,11 @@ public:
   }
   size_t getMaximumClipboardReceiveSizeBytes() const;
 
+  deskflow::Screen *getScreen() const
+  {
+    return m_screen;
+  }
+
   //@}
 
   // IScreen overrides

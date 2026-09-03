@@ -10,15 +10,19 @@
 
 #include "base/IEventQueue.h"
 #include "base/Log.h"
+#include "base/Stopwatch.h"
 #include "client/Client.h"
 #include "deskflow/Clipboard.h"
 #include "deskflow/ClipboardChunk.h"
 #include "deskflow/DeskflowException.h"
+#include "deskflow/IPlatformScreen.h"
 #include "deskflow/OptionTypes.h"
 #include "deskflow/ProtocolTypes.h"
 #include "deskflow/ProtocolUtil.h"
+#include "deskflow/Screen.h"
 #include "deskflow/StreamChunker.h"
 #include "deskflow/ipc/CoreIpc.h"
+#include "filetransfer/FileReceiveSession.h"
 #include "filetransfer/FileSend.h"
 #include "filetransfer/FileTransfer.h"
 #include "io/IStream.h"
@@ -55,6 +59,7 @@ ServerProxy::ServerProxy(Client *client, deskflow::IStream *stream, IEventQueue 
 
 ServerProxy::~ServerProxy()
 {
+  m_fileSend.cancel();
   setKeepAliveRate(-1.0);
   m_events->removeHandler(EventTypes::StreamInputReady, m_stream->getEventTarget());
   m_events->removeHandler(EventTypes::ClipboardSending, this);
@@ -300,10 +305,17 @@ ServerProxy::ConnectionResult ServerProxy::parseMessage(const uint8_t *code)
   }
 
   else if (memcmp(code, kMsgDDragInfo, 4) == 0) {
+    resetKeepAliveAlarm();
     dragInfoReceived();
   }
 
+  else if (memcmp(code, kMsgDFileOffer, 4) == 0) {
+    resetKeepAliveAlarm();
+    fileOfferReceived();
+  }
+
   else if (memcmp(code, kMsgDFileTransfer, 4) == 0) {
+    resetKeepAliveAlarm();
     fileChunkReceived();
   }
 
@@ -901,13 +913,22 @@ void ServerProxy::sendClipboardFiles()
     return;
   }
 
-  const auto offers = deskflow::fileOffersFromClipboardData(clipboard.get(IClipboard::Format::Files));
+  const std::string filesData = clipboard.get(IClipboard::Format::Files);
+  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
   if (offers.empty()) {
     return;
   }
 
-  LOG_INFO("sending %zu clipboard file(s) to server", offers.size());
-  deskflow::writeFileOffersToStream(m_stream, offers);
+  if (m_fileSend.fingerprint() == filesData) {
+    if (m_fileSend.isActive()) {
+      LOG_DEBUG("clipboard file transfer already in progress");
+      return;
+    }
+    LOG_DEBUG("clipboard file list already sent, skipping");
+    return;
+  }
+
+  m_fileSend.start(m_stream, m_events, offers, filesData);
 }
 
 void ServerProxy::applyReceivedFiles(const std::vector<std::string> &paths)
@@ -916,6 +937,8 @@ void ServerProxy::applyReceivedFiles(const std::vector<std::string> &paths)
     return;
   }
 
+  m_cachedReceivedPaths = paths;
+
   Clipboard clipboard;
   if (!clipboard.open(0)) {
     return;
@@ -923,8 +946,81 @@ void ServerProxy::applyReceivedFiles(const std::vector<std::string> &paths)
   clipboard.empty();
   clipboard.add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
   clipboard.close();
-  m_client->setClipboard(kClipboardClipboard, &clipboard);
-  LOG_INFO("clipboard ready with %zu received file(s) — paste to place them", paths.size());
+  // When paste uses delayed CF_HDROP, Explorer is already waiting in RENDERFORMAT —
+  // do not synthesize another Ctrl+V. Still publish files for non-delayed consumers.
+  if (!m_pullWaiting) {
+    m_client->setClipboard(kClipboardClipboard, &clipboard);
+  }
+  LOG_INFO(
+      "clipboard ready with %zu received file(s) (saved under receive folder)", paths.size()
+  );
+}
+
+void ServerProxy::fileOfferReceived()
+{
+  uint16_t fileCount = 0;
+  std::string info;
+  if (!ProtocolUtil::readf(m_stream, kMsgDFileOffer + 4, &fileCount, &info)) {
+    LOG_ERR("failed to read file offer from server");
+    return;
+  }
+  if (!deskflow::isFileTransferEnabled()) {
+    return;
+  }
+  auto names = deskflow::decodeDragInfo(info);
+  if (names.empty()) {
+    return;
+  }
+  if (fileCount != 0 && names.size() != fileCount) {
+    LOG_WARN("file offer count mismatch: header=%u decoded=%zu", fileCount, names.size());
+  }
+
+  m_pendingOfferNames = names;
+  m_cachedReceivedPaths.clear();
+  LOG_INFO("file offer from server: %zu file(s) — will transfer on paste", names.size());
+
+  m_client->getScreen()->getPlatformScreen()->prepareDelayedFilePaste([this]() { return pullFilesForPaste(); });
+}
+
+std::vector<std::string> ServerProxy::pullFilesForPaste()
+{
+  if (!m_cachedReceivedPaths.empty()) {
+    return m_cachedReceivedPaths;
+  }
+  if (m_pendingOfferNames.empty() || !deskflow::isFileTransferEnabled()) {
+    return {};
+  }
+  if (m_pullWaiting) {
+    LOG_WARN("file paste pull already in progress");
+    return {};
+  }
+
+  m_pullWaiting = true;
+  m_pullDone = false;
+  m_pullSuccess = false;
+  m_fileReceive.reset();
+  m_fileReceive.begin(m_pendingOfferNames, deskflow::maxTransferBytes());
+
+  ProtocolUtil::writef(m_stream, kMsgCFileRequest);
+  LOG_INFO("requesting clipboard file(s) from server for paste");
+
+  // Nested dispatch so DFTR chunks arrive while Explorer waits in WM_RENDERFORMAT.
+  Stopwatch timer;
+  constexpr double kMaxWaitSec = 600.0;
+  while (!m_pullDone && timer.getTime() < kMaxWaitSec) {
+    Event event;
+    if (m_events->getEvent(event, 0.05)) {
+      m_events->dispatchEvent(event);
+    }
+  }
+
+  m_pullWaiting = false;
+  if (!m_pullSuccess || m_cachedReceivedPaths.empty()) {
+    LOG_ERR("timed out or failed waiting for clipboard file transfer");
+    m_fileReceive.reset();
+    return {};
+  }
+  return m_cachedReceivedPaths;
 }
 
 void ServerProxy::dragInfoReceived()
@@ -943,7 +1039,9 @@ void ServerProxy::dragInfoReceived()
     return;
   }
   LOG_INFO("drag info from server: %zu file(s)", names.size());
-  m_fileReceive.begin(names, deskflow::maxTransferBytes());
+  if (!m_fileReceive.isActive()) {
+    m_fileReceive.begin(names, deskflow::maxTransferBytes());
+  }
 }
 
 void ServerProxy::fileChunkReceived()
@@ -958,16 +1056,28 @@ void ServerProxy::fileChunkReceived()
     return;
   }
   if (!m_fileReceive.isActive()) {
-    LOG_WARN("file chunk from server without drag info");
-    return;
+    if (!m_pendingOfferNames.empty()) {
+      m_fileReceive.begin(m_pendingOfferNames, deskflow::maxTransferBytes());
+    } else {
+      LOG_WARN("file chunk from server without drag info");
+      return;
+    }
   }
 
   const auto state = m_fileReceive.onChunk(mark, data, deskflow::maxTransferBytes());
   if (state == TransferState::Finished) {
     applyReceivedFiles(m_fileReceive.receivedPaths());
     m_fileReceive.reset();
+    if (m_pullWaiting) {
+      m_pullDone = true;
+      m_pullSuccess = true;
+    }
   } else if (state == TransferState::Error) {
     LOG_ERR("file transfer from server failed");
     m_fileReceive.reset();
+    if (m_pullWaiting) {
+      m_pullDone = true;
+      m_pullSuccess = false;
+    }
   }
 }

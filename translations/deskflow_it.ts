@@ -1286,7 +1286,7 @@ L&apos;abilitazione di questa impostazione disabiliterà l&apos;interfaccia graf
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Clipboard file transfer</source>
+        <source>Clipboard file transfer (on paste)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

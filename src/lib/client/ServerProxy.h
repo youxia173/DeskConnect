@@ -14,6 +14,9 @@
 #include "deskflow/KeyTypes.h"
 #include "deskflow/KeyboardLayoutManager.h"
 #include "filetransfer/FileReceiveSession.h"
+#include "filetransfer/FileSend.h"
+
+#include <vector>
 
 class Client;
 class ClientInfo;
@@ -52,6 +55,8 @@ public:
   void onClipboardChanged(ClipboardID, const IClipboard *);
   void sendClipboardFiles();
   void applyReceivedFiles(const std::vector<std::string> &paths);
+  void fileOfferReceived();
+  std::vector<std::string> pullFilesForPaste();
 
   //@}
 
@@ -138,4 +143,10 @@ private:
   bool m_isUserNotifiedAboutLayoutSyncError = false;
   deskflow::KeyboardLayoutManager m_layoutManager;
   deskflow::FileReceiveSession m_fileReceive;
+  deskflow::FileSendSession m_fileSend;
+  std::vector<std::string> m_pendingOfferNames;
+  std::vector<std::string> m_cachedReceivedPaths;
+  bool m_pullWaiting = false;
+  bool m_pullDone = false;
+  bool m_pullSuccess = false;
 };

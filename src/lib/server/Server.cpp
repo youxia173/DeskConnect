@@ -16,6 +16,7 @@
 #include "deskflow/OptionTypes.h"
 #include "deskflow/PacketStreamFilter.h"
 #include "deskflow/ProtocolTypes.h"
+#include "deskflow/ProtocolUtil.h"
 #include "deskflow/Screen.h"
 #include "deskflow/StreamChunker.h"
 #include "deskflow/ipc/CoreIpc.h"
@@ -491,9 +492,9 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
       }
     }
 
-    // Clipboard file transfer: primary → secondary when entering a remote screen.
+    // File offer only — actual contents transfer when the peer pastes (Ctrl+V or context menu).
     if (m_active != m_primaryClient) {
-      sendClipboardFilesTo(m_active);
+      sendClipboardFileOfferTo(m_active);
     }
 
     auto *info = new Server::SwitchToScreenInfo(m_active->getName());
@@ -1462,6 +1463,12 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
   LOG_INFO("screen \"%s\" updated clipboard %d", clipboard.m_clipboardOwner.c_str(), id);
   clipboard.m_clipboardData = data;
 
+  // New clipboard content invalidates any prior outbound file-transfer fingerprint.
+  if (id == kClipboardClipboard) {
+    m_fileSend.cancel();
+    m_sentFilesTarget.clear();
+  }
+
   // tell all clients except the sender that the clipboard is dirty
   for (ClientList::const_iterator index = m_clients.begin(); index != m_clients.end(); ++index) {
     BaseClientProxy *client = index->second;
@@ -1471,11 +1478,9 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
   // send the new clipboard to the active screen
   m_active->setClipboard(id, &clipboard.m_clipboard);
 
-  // File contents are not in the marshall()'d clipboard payload. If the primary
-  // screen copied files while (or just before) the cursor is on a client, push
-  // DDRG/DFTR now — switchScreen alone often runs before X11 has filled Files.
+  // Offer file metadata when primary clipboard gains files while on a client.
   if (id == kClipboardClipboard && sender == m_primaryClient && m_active != m_primaryClient) {
-    sendClipboardFilesTo(m_active);
+    sendClipboardFileOfferTo(m_active);
   }
 }
 
@@ -1929,6 +1934,12 @@ bool Server::removeClient(BaseClientProxy *client)
     return false;
   }
 
+  // Abort outbound file transfer if it targets this client.
+  if (getName(client) == m_sentFilesTarget) {
+    m_fileSend.cancel();
+    m_sentFilesTarget.clear();
+  }
+
   // remove event handlers
   m_events->removeHandler(ScreenShapeChanged, client->getEventTarget());
   m_events->removeHandler(ClipboardGrabbed, client->getEventTarget());
@@ -2063,17 +2074,15 @@ void Server::forceLeaveClient(const BaseClientProxy *client)
   m_primaryClient->reconfigure(getActivePrimarySides());
 }
 
-void Server::sendClipboardFilesTo(BaseClientProxy *dst)
+bool Server::trySendClipboardFilesTo(BaseClientProxy *dst)
 {
   if (dst == nullptr || dst == m_primaryClient || dst->getStream() == nullptr) {
-    return;
+    return false;
   }
   if (!deskflow::isFileTransferEnabled()) {
-    return;
+    return false;
   }
 
-  // Prefer the server's already-synced primary clipboard (includes Files).
-  // Clipboard::has()/get() require the clipboard to be open.
   std::string filesData;
   auto &cached = m_clipboards[kClipboardClipboard].m_clipboard;
   if (cached.open(0)) {
@@ -2094,6 +2103,55 @@ void Server::sendClipboardFilesTo(BaseClientProxy *dst)
   }
 
   if (filesData.empty()) {
+    return false;
+  }
+
+  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
+  if (offers.empty()) {
+    return false;
+  }
+
+  const std::string target = getName(dst);
+  if (m_fileSend.isActive()) {
+    LOG_DEBUG("clipboard file transfer already in progress to \"%s\"", target.c_str());
+    return true;
+  }
+
+  m_sentFilesTarget = target;
+  if (!m_fileSend.start(dst->getStream(), m_events, offers, filesData)) {
+    m_sentFilesTarget.clear();
+    return false;
+  }
+  return true;
+}
+
+void Server::sendClipboardFileOfferTo(BaseClientProxy *dst)
+{
+  if (dst == nullptr || dst == m_primaryClient || dst->getStream() == nullptr) {
+    return;
+  }
+  if (!deskflow::isFileTransferEnabled()) {
+    return;
+  }
+
+  std::string filesData;
+  auto &cached = m_clipboards[kClipboardClipboard].m_clipboard;
+  if (cached.open(0)) {
+    if (cached.has(IClipboard::Format::Files)) {
+      filesData = cached.get(IClipboard::Format::Files);
+    }
+    cached.close();
+  }
+  if (filesData.empty()) {
+    Clipboard live;
+    if (m_primaryClient->getClipboard(kClipboardClipboard, &live) && live.open(0)) {
+      if (live.has(IClipboard::Format::Files)) {
+        filesData = live.get(IClipboard::Format::Files);
+      }
+      live.close();
+    }
+  }
+  if (filesData.empty()) {
     return;
   }
 
@@ -2102,8 +2160,23 @@ void Server::sendClipboardFilesTo(BaseClientProxy *dst)
     return;
   }
 
-  LOG_INFO("sending %zu clipboard file(s) to \"%s\"", offers.size(), getName(dst).c_str());
-  deskflow::writeFileOffersToStream(dst->getStream(), offers);
+  const std::string drag = deskflow::encodeDragInfo(offers);
+  ProtocolUtil::writef(dst->getStream(), kMsgDFileOffer, static_cast<uint16_t>(offers.size()), &drag);
+  LOG_INFO("offered %zu clipboard file(s) to \"%s\" for paste", offers.size(), getName(dst).c_str());
+}
+
+void Server::onClipboardFileRequest(BaseClientProxy *sender)
+{
+  if (sender == nullptr) {
+    return;
+  }
+  LOG_INFO("clipboard file request from \"%s\"", getName(sender).c_str());
+  trySendClipboardFilesTo(sender);
+}
+
+void Server::sendClipboardFilesTo(BaseClientProxy *dst)
+{
+  trySendClipboardFilesTo(dst);
 }
 
 void Server::applyReceivedFiles(const std::vector<std::string> &paths)
@@ -2120,7 +2193,9 @@ void Server::applyReceivedFiles(const std::vector<std::string> &paths)
   clipboard.add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
   clipboard.close();
   m_primaryClient->setClipboard(kClipboardClipboard, &clipboard);
-  LOG_INFO("clipboard ready with %zu received file(s) — paste to place them", paths.size());
+  LOG_INFO(
+      "clipboard ready with %zu received file(s) — paste to place them (saved under receive folder)", paths.size()
+  );
 }
 
 void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::string &info)

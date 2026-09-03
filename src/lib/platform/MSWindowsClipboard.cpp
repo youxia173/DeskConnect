@@ -15,6 +15,8 @@
 #include "platform/MSWindowsClipboardHTMLConverter.h"
 #include "platform/MSWindowsClipboardUTF16Converter.h"
 
+#include <shlobj.h>
+
 //
 // MSWindowsClipboard
 //
@@ -102,6 +104,24 @@ void MSWindowsClipboard::add(Format format, const std::string &data)
       if (win32Data != nullptr) {
         LOG_DEBUG("add %d bytes to clipboard format: %d", data.size(), format);
         m_facade->write(win32Data, converter->getWin32Format());
+        // Tell Explorer paste should copy (not move) CF_HDROP file lists.
+        if (format == Format::Files) {
+          const UINT dropEffectFmt = RegisterClipboardFormat(L"Preferred DropEffect");
+          if (dropEffectFmt != 0) {
+            HGLOBAL effectHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(DWORD));
+            if (effectHandle != nullptr) {
+              if (auto *effect = static_cast<DWORD *>(GlobalLock(effectHandle))) {
+                *effect = DROPEFFECT_COPY;
+                GlobalUnlock(effectHandle);
+                if (SetClipboardData(dropEffectFmt, effectHandle) == nullptr) {
+                  GlobalFree(effectHandle);
+                }
+              } else {
+                GlobalFree(effectHandle);
+              }
+            }
+          }
+        }
         isSucceeded = true;
         break;
       } else {

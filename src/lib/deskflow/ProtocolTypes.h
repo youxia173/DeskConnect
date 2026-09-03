@@ -1059,6 +1059,18 @@ extern const char *const kMsgDFileTransfer;
  */
 extern const char *const kMsgDDragInfo;
 
+/**
+ * @brief Clipboard file offer (metadata only; contents follow on paste)
+ * **Message Code**: `"DFOF"` **Format**: `"DFOF%2i%s"`
+ */
+extern const char *const kMsgDFileOffer;
+
+/**
+ * @brief Request clipboard file contents after paste
+ * **Message Code**: `"CFTR"` Secondary → Primary
+ */
+extern const char *const kMsgCFileRequest;
+
 /** @} */ // end of protocol_files group
 
 /**

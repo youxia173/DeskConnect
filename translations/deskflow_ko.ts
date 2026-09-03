@@ -1286,7 +1286,7 @@ Enabling this setting will disable the server config GUI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Clipboard file transfer</source>
+        <source>Clipboard file transfer (on paste)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

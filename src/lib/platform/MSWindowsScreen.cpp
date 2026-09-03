@@ -22,7 +22,9 @@
 #include "deskflow/Clipboard.h"
 #include "deskflow/KeyMap.h"
 #include "deskflow/ScreenException.h"
+#include "filetransfer/FileTransfer.h"
 #include "platform/MSWindowsClipboard.h"
+#include "platform/MSWindowsClipboardFileConverter.h"
 #include "platform/MSWindowsDesks.h"
 #include "platform/MSWindowsEventQueueBuffer.h"
 #include "platform/MSWindowsKeyState.h"
@@ -318,6 +320,7 @@ void MSWindowsScreen::leave()
 
 bool MSWindowsScreen::setClipboard(ClipboardID, const IClipboard *src)
 {
+  clearDelayedFilePaste();
   MSWindowsClipboard dst(m_window);
   if (src != nullptr) {
     // save clipboard data
@@ -331,6 +334,86 @@ bool MSWindowsScreen::setClipboard(ClipboardID, const IClipboard *src)
     dst.close();
     return true;
   }
+}
+
+void MSWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
+{
+  m_delayedFilePull = std::move(pullFiles);
+  m_hasDelayedFilePaste = (m_delayedFilePull != nullptr);
+  if (!m_hasDelayedFilePaste) {
+    return;
+  }
+
+  MSWindowsClipboard dst(m_window);
+  if (!dst.open(0)) {
+    LOG_WARN("failed to open clipboard for delayed file paste");
+    clearDelayedFilePaste();
+    return;
+  }
+  if (!dst.empty()) {
+    LOG_WARN("failed to take clipboard for delayed file paste");
+    dst.close();
+    clearDelayedFilePaste();
+    return;
+  }
+
+  // NULL handle = delayed rendering; Explorer paste (incl. context menu) will send WM_RENDERFORMAT.
+  SetClipboardData(CF_HDROP, nullptr);
+
+  const UINT dropEffectFmt = RegisterClipboardFormat(L"Preferred DropEffect");
+  if (dropEffectFmt != 0) {
+    HGLOBAL effectHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(DWORD));
+    if (effectHandle != nullptr) {
+      if (auto *effect = static_cast<DWORD *>(GlobalLock(effectHandle))) {
+        *effect = DROPEFFECT_COPY;
+        GlobalUnlock(effectHandle);
+        if (SetClipboardData(dropEffectFmt, effectHandle) == nullptr) {
+          GlobalFree(effectHandle);
+        }
+      } else {
+        GlobalFree(effectHandle);
+      }
+    }
+  }
+
+  dst.close();
+  m_ownClipboard = true;
+  LOG_INFO("delayed clipboard file paste armed (Ctrl+V or context-menu paste)");
+}
+
+void MSWindowsScreen::clearDelayedFilePaste()
+{
+  m_hasDelayedFilePaste = false;
+  m_delayedFilePull = {};
+}
+
+bool MSWindowsScreen::renderDelayedFilePaste()
+{
+  if (!m_hasDelayedFilePaste || !m_delayedFilePull) {
+    return false;
+  }
+
+  LOG_INFO("paste requested — fetching remote clipboard file(s)");
+  const auto paths = m_delayedFilePull();
+  if (paths.empty()) {
+    LOG_ERR("delayed file paste failed: no files received");
+    return false;
+  }
+
+  const std::string data = deskflow::clipboardDataFromPaths(paths);
+  MSWindowsClipboardFileConverter converter;
+  HANDLE handle = converter.fromIClipboard(data);
+  if (handle == nullptr) {
+    LOG_ERR("delayed file paste failed: could not build CF_HDROP");
+    return false;
+  }
+  if (SetClipboardData(CF_HDROP, handle) == nullptr) {
+    LOG_ERR("delayed file paste failed: SetClipboardData error %u", GetLastError());
+    GlobalFree(handle);
+    return false;
+  }
+  LOG_INFO("delayed file paste ready with %zu file(s)", paths.size());
+  return true;
 }
 
 void MSWindowsScreen::checkClipboards()
@@ -944,6 +1027,26 @@ bool MSWindowsScreen::onEvent(HWND, UINT msg, WPARAM wParam, LPARAM lParam, LRES
     }
     return 0; // message processed
   }
+
+  case WM_RENDERFORMAT:
+    if (wParam == CF_HDROP && m_hasDelayedFilePaste) {
+      renderDelayedFilePaste();
+      *result = 0;
+      return true;
+    }
+    break;
+
+  case WM_RENDERALLFORMATS:
+    if (m_hasDelayedFilePaste) {
+      if (OpenClipboard(m_window)) {
+        EmptyClipboard();
+        renderDelayedFilePaste();
+        CloseClipboard();
+      }
+      *result = 0;
+      return true;
+    }
+    break;
 
   case WM_DISPLAYCHANGE:
     return onDisplayChange();

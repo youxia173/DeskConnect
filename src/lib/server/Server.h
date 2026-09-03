@@ -16,6 +16,7 @@
 #include "deskflow/KeyTypes.h"
 #include "deskflow/MouseTypes.h"
 #include "filetransfer/FileReceiveSession.h"
+#include "filetransfer/FileSend.h"
 #include "server/Config.h"
 
 #include <climits>
@@ -205,11 +206,17 @@ public:
   void onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::string &info);
   //! Handle DFTR from a secondary client
   void onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data);
+  //! Handle CFTR (paste requested remote file contents)
+  void onClipboardFileRequest(BaseClientProxy *sender);
 
   //@}
 
 private:
   void sendClipboardFilesTo(BaseClientProxy *dst);
+  //! Offer file metadata for delayed paste (no contents yet).
+  void sendClipboardFileOfferTo(BaseClientProxy *dst);
+  //! Start file transfer to \p dst if clipboard has files. Returns true if a new send was started.
+  bool trySendClipboardFilesTo(BaseClientProxy *dst);
   void applyReceivedFiles(const std::vector<std::string> &paths);
 
   // get canonical name of client
@@ -479,4 +486,6 @@ private:
   bool m_enableClipboard = true;
 
   deskflow::FileReceiveSession m_fileReceive;
+  deskflow::FileSendSession m_fileSend;
+  std::string m_sentFilesTarget;
 };

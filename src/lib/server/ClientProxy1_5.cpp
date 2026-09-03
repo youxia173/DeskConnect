@@ -8,6 +8,7 @@
 #include "server/ClientProxy1_5.h"
 
 #include "base/Log.h"
+#include "deskflow/ProtocolTypes.h"
 #include "deskflow/ProtocolUtil.h"
 #include "filetransfer/FileTransfer.h"
 #include "io/IStream.h"
@@ -43,6 +44,8 @@ bool ClientProxy1_5::parseMessage(const uint8_t *code)
     fileChunkReceived();
   } else if (memcmp(code, kMsgDDragInfo, 4) == 0) {
     dragInfoReceived();
+  } else if (memcmp(code, kMsgCFileRequest, 4) == 0) {
+    m_server->onClipboardFileRequest(this);
   } else {
     return ClientProxy1_4::parseMessage(code);
   }

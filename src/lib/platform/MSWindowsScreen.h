@@ -12,8 +12,10 @@
 #include "platform/MSWindowsHook.h"
 #include "platform/MSWindowsPowerManager.h"
 
+#include <functional>
 #include <map>
 #include <string>
+#include <vector>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -112,6 +114,8 @@ public:
   bool canLeave() override;
   void leave() override;
   bool setClipboard(ClipboardID, const IClipboard *) override;
+  void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles) override;
+  void clearDelayedFilePaste() override;
   void checkClipboards() override;
   void openScreensaver(bool notify) override;
   void closeScreensaver() override;
@@ -132,6 +136,8 @@ protected:
   void fakeLocalKey(KeyButton button, bool press) const;
 
 private:
+  bool renderDelayedFilePaste();
+
   // initialization and shutdown operations
   HCURSOR createBlankCursor() const;
   void destroyCursor(HCURSOR cursor) const;
@@ -303,6 +309,8 @@ private:
   HWND m_window = nullptr;
   DWORD m_clipboardSequenceNumber = 0;
   bool m_ownClipboard = false;
+  bool m_hasDelayedFilePaste = false;
+  std::function<std::vector<std::string>()> m_delayedFilePull;
 
   // one desk per desktop and a cond var to communicate with it
   MSWindowsDesks *m_desks = nullptr;

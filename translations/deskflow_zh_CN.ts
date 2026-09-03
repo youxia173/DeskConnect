@@ -1286,28 +1286,28 @@ Enabling this setting will disable the server config GUI.</source>
         <translation>开机时启动</translation>
     </message>
     <message>
-        <source>Clipboard file transfer</source>
-        <translation type="unfinished"></translation>
+        <source>Clipboard file transfer (on paste)</source>
+        <translation>剪切板传文件（粘贴时传输）</translation>
     </message>
     <message>
         <source>Receive folder</source>
-        <translation type="unfinished"></translation>
+        <translation>接收文件夹</translation>
     </message>
     <message>
         <source>Downloads/DeskConnect</source>
-        <translation type="unfinished"></translation>
+        <translation>下载/DeskConnect</translation>
     </message>
     <message>
         <source>Browse...</source>
-        <translation type="unfinished"></translation>
+        <translation>浏览...</translation>
     </message>
     <message>
         <source>Max size (MB)</source>
-        <translation type="unfinished"></translation>
+        <translation>最大大小 (MB)</translation>
     </message>
     <message>
         <source>Select receive folder</source>
-        <translation type="unfinished"></translation>
+        <translation>选择接收文件夹</translation>
     </message>
 </context>
 <context>
