@@ -92,10 +92,12 @@ do
   done < <(ldd "$plug" 2>/dev/null || true)
 done
 
-# Also pull known non-system deps we built ourselves
+# Also pull known non-system deps we built ourselves / Qt dlopens at runtime
 for extra in \
   /usr/local/lib/x86_64-linux-gnu/libei.so.1 \
   /usr/local/lib/x86_64-linux-gnu/libportal.so.1 \
+  /usr/lib/x86_64-linux-gnu/libxcb-cursor.so.0 \
+  /lib/x86_64-linux-gnu/libxcb-cursor.so.0 \
   "$QTDIR/lib/libicuuc.so.73" \
   "$QTDIR/lib/libicui18n.so.73" \
   "$QTDIR/lib/libicudata.so.73" \
@@ -103,6 +105,7 @@ for extra in \
   "$QTDIR/lib/libQt6WaylandClient.so.6" \
   "$QTDIR/lib/libQt6Svg.so.6"
 do
+  [[ -e "$extra" ]] || continue
   enqueue "$extra"
 done
 
@@ -120,10 +123,10 @@ while (( idx < ${#queue[@]} )); do
   # Copy Qt /usr/local and any other non-skipped
   case "$lib" in
     /lib/*|/usr/lib/*)
-      # Only keep libei/libportal if somehow resolved from system (prefer /usr/local)
+      # Only keep selected runtime libs resolved from system paths
       base="$(basename "$lib")"
       case "$base" in
-        libei.so*|libportal.so*) ;;
+        libei.so*|libportal.so*|libxcb-cursor.so*) ;;
         *) continue ;;
       esac
       ;;
@@ -154,11 +157,14 @@ do
   fi
 done
 
-# Prefer /usr/local libei/portal over older system
-for need in libei.so.1 libportal.so.1; do
-  if [[ -e /usr/local/lib/x86_64-linux-gnu/$need ]]; then
-    cp -a /usr/local/lib/x86_64-linux-gnu/$need* "$OUT_DIR/lib/"
-  fi
+# Prefer /usr/local libei/portal over older system; always ship xcb-cursor for X11/Qt6.5+
+for need in libei.so.1 libportal.so.1 libxcb-cursor.so.0; do
+  for dir in /usr/local/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu; do
+    if [[ -e "$dir/$need" ]]; then
+      cp -a "$dir/$need"* "$OUT_DIR/lib/" 2>/dev/null || cp -a "$dir/$need" "$OUT_DIR/lib/"
+      break
+    fi
+  done
 done
 
 # ---- plugins ----

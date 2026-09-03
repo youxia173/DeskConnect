@@ -1470,6 +1470,13 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
 
   // send the new clipboard to the active screen
   m_active->setClipboard(id, &clipboard.m_clipboard);
+
+  // File contents are not in the marshall()'d clipboard payload. If the primary
+  // screen copied files while (or just before) the cursor is on a client, push
+  // DDRG/DFTR now — switchScreen alone often runs before X11 has filled Files.
+  if (id == kClipboardClipboard && sender == m_primaryClient && m_active != m_primaryClient) {
+    sendClipboardFilesTo(m_active);
+  }
 }
 
 void Server::onScreensaver(bool activated)
@@ -2065,15 +2072,32 @@ void Server::sendClipboardFilesTo(BaseClientProxy *dst)
     return;
   }
 
-  Clipboard clipboard;
-  if (!m_primaryClient->getClipboard(kClipboardClipboard, &clipboard)) {
-    return;
+  // Prefer the server's already-synced primary clipboard (includes Files).
+  // Clipboard::has()/get() require the clipboard to be open.
+  std::string filesData;
+  auto &cached = m_clipboards[kClipboardClipboard].m_clipboard;
+  if (cached.open(0)) {
+    if (cached.has(IClipboard::Format::Files)) {
+      filesData = cached.get(IClipboard::Format::Files);
+    }
+    cached.close();
   }
-  if (!clipboard.has(IClipboard::Format::Files)) {
+
+  if (filesData.empty()) {
+    Clipboard live;
+    if (m_primaryClient->getClipboard(kClipboardClipboard, &live) && live.open(0)) {
+      if (live.has(IClipboard::Format::Files)) {
+        filesData = live.get(IClipboard::Format::Files);
+      }
+      live.close();
+    }
+  }
+
+  if (filesData.empty()) {
     return;
   }
 
-  const auto offers = deskflow::fileOffersFromClipboardData(clipboard.get(IClipboard::Format::Files));
+  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
   if (offers.empty()) {
     return;
   }

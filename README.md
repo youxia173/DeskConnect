@@ -21,9 +21,21 @@
 
 | 文件 | 说明 |
 |------|------|
-| `dist/DeskConnect-v*-linux-x86_64.tar.gz` | **推荐**：自带 Qt 的便携包（约 30MB） |
+| `dist/DeskConnect-v*-linux-x86_64.tar.gz` | 自带 Qt 的便携包（约 30MB） |
+| `dist/deskconnect_*_amd64.deb` | **推荐**：自带 Qt 的 deb，安装到 `/opt/DeskConnect` |
 | `dist/DeskConnect/` | 解压后的目录树（可直接运行或执行安装脚本） |
-| `build/deskflow-*-ubuntu-*.deb` | CPack 生成的 deb（通常**不**捆绑 Qt 6.8，系统 Qt 过旧时可能无法启动） |
+| `build/deskflow-*-ubuntu-*.deb` | CPack 瘦包（**不**捆绑 Qt，系统 Qt 过旧时可能无法启动） |
+
+### deb 安装
+
+```bash
+# 生成（会先确保便携目录存在）
+QTDIR=/path/to/Qt/6.8.x/gcc_64 ./deploy/linux/make-deb.sh
+
+sudo apt install ./dist/deskconnect_*_amd64.deb
+# 或
+sudo dpkg -i ./dist/deskconnect_*_amd64.deb
+```
 
 ### 便携包使用
 
