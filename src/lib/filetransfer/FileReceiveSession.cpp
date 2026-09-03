@@ -8,7 +8,6 @@
 
 #include "base/Log.h"
 
-#include <QFile>
 #include <QString>
 
 namespace deskflow {
@@ -63,8 +62,9 @@ bool FileReceiveSession::openNextFile(uint64_t expectedSize)
     return false;
   }
 
-  m_out.open(m_currentPath, std::ios::binary | std::ios::trunc);
-  if (!m_out) {
+  // QFile handles UTF-8 paths on Windows; std::ofstream does not.
+  m_out.setFileName(QString::fromUtf8(m_currentPath.data(), static_cast<qsizetype>(m_currentPath.size())));
+  if (!m_out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
     LOG_ERR("file transfer: failed to open %s for write", m_currentPath.c_str());
     return false;
   }
@@ -79,7 +79,7 @@ bool FileReceiveSession::openNextFile(uint64_t expectedSize)
 
 void FileReceiveSession::closeCurrent(bool success)
 {
-  if (m_out.is_open()) {
+  if (m_out.isOpen()) {
     m_out.close();
   }
   if (!m_currentPath.empty()) {
@@ -88,7 +88,7 @@ void FileReceiveSession::closeCurrent(bool success)
       m_totalWritten += m_written;
       ++m_index;
     } else {
-      QFile::remove(QString::fromStdString(m_currentPath));
+      QFile::remove(QString::fromUtf8(m_currentPath.data(), static_cast<qsizetype>(m_currentPath.size())));
     }
     m_currentPath.clear();
   }
@@ -105,7 +105,7 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
 
   if (mark == ChunkType::DataStart) {
     bool ok = false;
-    const auto expected = QString::fromStdString(data).toULongLong(&ok);
+    const auto expected = QString::fromUtf8(data.data(), static_cast<qsizetype>(data.size())).toULongLong(&ok);
     if (!ok) {
       LOG_ERR("file transfer: invalid size header");
       reset();
@@ -124,7 +124,7 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
   }
 
   if (mark == ChunkType::DataChunk) {
-    if (!m_out.is_open()) {
+    if (!m_out.isOpen()) {
       LOG_ERR("file transfer: data before start");
       reset();
       return Error;
@@ -134,8 +134,8 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
       reset();
       return Error;
     }
-    m_out.write(data.data(), static_cast<std::streamsize>(data.size()));
-    if (!m_out) {
+    const qint64 written = m_out.write(data.data(), static_cast<qint64>(data.size()));
+    if (written < 0 || static_cast<size_t>(written) != data.size()) {
       LOG_ERR("file transfer: write failed");
       reset();
       return Error;
@@ -145,13 +145,13 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
   }
 
   if (mark == ChunkType::DataEnd) {
-    if (!m_out.is_open() && m_expectedSize != 0) {
+    if (!m_out.isOpen() && m_expectedSize != 0) {
       LOG_ERR("file transfer: end before start");
       reset();
       return Error;
     }
     // Zero-byte files: openNextFile left stream open with expectedSize 0.
-    if (m_out.is_open() || m_expectedSize == 0) {
+    if (m_out.isOpen() || m_expectedSize == 0) {
       if (m_written != m_expectedSize) {
         LOG_ERR(
             "file transfer: size mismatch expected=%llu actual=%llu", static_cast<unsigned long long>(m_expectedSize),

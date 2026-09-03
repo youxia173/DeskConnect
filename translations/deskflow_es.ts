@@ -607,6 +607,50 @@ Successfully connected addresses are remembered.
 Current Wi-Fi: %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Sending %1 file(s)…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sent %1 file(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File transfer failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Received %1 file(s) in %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send &amp;files…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ctrl+Shift+F</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No client is connected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send to:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select files to send</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not send files. Is DeskConnect running?</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NewScreenWidget</name>
@@ -1286,10 +1330,6 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Clipboard file transfer (on paste)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Receive folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1307,6 +1347,10 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
     </message>
     <message>
         <source>Select receive folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File transfer</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

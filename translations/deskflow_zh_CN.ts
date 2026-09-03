@@ -163,7 +163,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>Scale</source>
-        <translation type="unfinished">规模</translation>
+        <translation>缩放</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Allow the client to slow the rate it attempts to reconnect to the server when connections attempts are failing. The delay between connection attempts will  start at 1 second intervals and can be a maxium of 5 minutes between connection attempts.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -319,7 +319,7 @@ Do you want to connect to the server?
     </message>
     <message>
         <source>Verbose</source>
-        <translation type="unfinished">冗长的</translation>
+        <translation>详细</translation>
     </message>
 </context>
 <context>
@@ -575,15 +575,15 @@ Additionally, check you are able to %1 the server config file: %2</source>
     </message>
     <message>
         <source>Don&apos;t show this again</source>
-        <translation type="unfinished"></translation>
+        <translation>不再显示</translation>
     </message>
     <message>
         <source>Missing Keyboard Layouts</source>
-        <translation type="unfinished"></translation>
+        <translation>缺少键盘布局</translation>
     </message>
     <message>
         <source>&lt;p&gt;Keyboard layout support requires matching layouts on all computers. The following layouts from the other computer are not installed on this computer:&lt;/p&gt;&lt;p&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please install them to enable support for these layouts.&lt;/p&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;键盘布局支持要求所有计算机上安装匹配的布局。另一台计算机上的下列布局未安装在本机：&lt;/p&gt;&lt;p&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;请安装这些布局以启用支持。&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&lt;html&gt;Hostname or IP address of the server computer.&lt;br/&gt;May contain a comma separated list.&lt;br/&gt;Successfully connected addresses are remembered here.&lt;/html&gt;</source>
@@ -604,6 +604,50 @@ Current Wi-Fi: %1</source>
         <translation>服务器计算机的主机名或 IP 地址。
 成功连接过的地址会保存在这里。
 当前 Wi-Fi：%1</translation>
+    </message>
+    <message>
+        <source>Sending %1 file(s)…</source>
+        <translation>正在发送 %1 个文件…</translation>
+    </message>
+    <message>
+        <source>Sent %1 file(s)</source>
+        <translation>已发送 %1 个文件</translation>
+    </message>
+    <message>
+        <source>File transfer failed: %1</source>
+        <translation>文件传输失败：%1</translation>
+    </message>
+    <message>
+        <source>Received %1 file(s) in %2</source>
+        <translation>已接收 %1 个文件，保存在 %2</translation>
+    </message>
+    <message>
+        <source>Send &amp;files…</source>
+        <translation>发送文件(&amp;F)…</translation>
+    </message>
+    <message>
+        <source>Ctrl+Shift+F</source>
+        <translation>Ctrl+Shift+F</translation>
+    </message>
+    <message>
+        <source>No client is connected.</source>
+        <translation>当前没有已连接的客户端。</translation>
+    </message>
+    <message>
+        <source>Send files</source>
+        <translation>发送文件</translation>
+    </message>
+    <message>
+        <source>Send to:</source>
+        <translation>发送到：</translation>
+    </message>
+    <message>
+        <source>Select files to send</source>
+        <translation>选择要发送的文件</translation>
+    </message>
+    <message>
+        <source>Could not send files. Is DeskConnect running?</source>
+        <translation>无法发送文件。DeskConnect 是否正在运行？</translation>
     </message>
 </context>
 <context>
@@ -894,11 +938,11 @@ Current Wi-Fi: %1</source>
     </message>
     <message>
         <source>Alt Gr</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt Gr</translation>
     </message>
     <message>
         <source>Alt &amp;Gr</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt &amp;Gr</translation>
     </message>
 </context>
 <context>
@@ -1215,7 +1259,7 @@ Enabling this setting will disable the server config GUI.</source>
     </message>
     <message>
         <source>Automatic</source>
-        <translation type="unfinished">自动的</translation>
+        <translation>自动</translation>
     </message>
     <message>
         <source>Include version in the window title</source>
@@ -1239,7 +1283,7 @@ Enabling this setting will disable the server config GUI.</source>
     </message>
     <message>
         <source>&amp;Window</source>
-        <translation type="unfinished">窗户(&amp;W)</translation>
+        <translation>窗口(&amp;W)</translation>
     </message>
     <message>
         <source>When the main window is closed</source>
@@ -1247,7 +1291,7 @@ Enabling this setting will disable the server config GUI.</source>
     </message>
     <message>
         <source>Exit</source>
-        <translation type="unfinished">出口</translation>
+        <translation>退出</translation>
     </message>
     <message>
         <source>Send to background</source>
@@ -1287,7 +1331,7 @@ Enabling this setting will disable the server config GUI.</source>
     </message>
     <message>
         <source>Clipboard file transfer (on paste)</source>
-        <translation>剪切板传文件（粘贴时传输）</translation>
+        <translation type="vanished">剪切板传文件（粘贴时传输）</translation>
     </message>
     <message>
         <source>Receive folder</source>
@@ -1308,6 +1352,10 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Select receive folder</source>
         <translation>选择接收文件夹</translation>
+    </message>
+    <message>
+        <source>File transfer</source>
+        <translation>文件传输</translation>
     </message>
 </context>
 <context>

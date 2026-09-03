@@ -42,27 +42,27 @@ std::vector<std::string> splitNul(const std::string &data)
 
 std::string sanitizeFileName(const std::string &name)
 {
-  QFileInfo info(QString::fromStdString(name));
+  QFileInfo info(QString::fromUtf8(name.data(), static_cast<qsizetype>(name.size())));
   const QString base = info.fileName();
   if (base.isEmpty() || base == QLatin1String(".") || base == QLatin1String("..") || base.contains(QLatin1Char('/')) ||
       base.contains(QLatin1Char('\\'))) {
     return {};
   }
-  return base.toStdString();
+  return base.toUtf8().toStdString();
 }
 
 std::vector<FileOffer> fileOffersFromClipboardData(const std::string &filesData)
 {
   std::vector<FileOffer> offers;
   for (const auto &path : splitNul(filesData)) {
-    QFileInfo info(QString::fromStdString(path));
+    QFileInfo info(QString::fromUtf8(path.data(), static_cast<qsizetype>(path.size())));
     if (!info.exists() || !info.isFile()) {
       LOG_INFO("skipping non-file clipboard path: %s", path.c_str());
       continue;
     }
     FileOffer offer;
-    offer.localPath = info.absoluteFilePath().toStdString();
-    offer.name = sanitizeFileName(info.fileName().toStdString());
+    offer.localPath = info.absoluteFilePath().toUtf8().toStdString();
+    offer.name = sanitizeFileName(info.fileName().toUtf8().toStdString());
     offer.size = static_cast<uint64_t>(info.size());
     if (offer.name.empty()) {
       continue;
@@ -92,7 +92,7 @@ std::string uriListFromClipboardData(const std::string &filesData)
     if (path.empty()) {
       continue;
     }
-    const QUrl url = QUrl::fromLocalFile(QString::fromStdString(path));
+    const QUrl url = QUrl::fromLocalFile(QString::fromUtf8(path.data(), static_cast<qsizetype>(path.size())));
     if (url.isValid()) {
       lines.append(url.toString(QUrl::FullyEncoded));
     }
@@ -100,7 +100,7 @@ std::string uriListFromClipboardData(const std::string &filesData)
   if (lines.isEmpty()) {
     return {};
   }
-  return lines.join(QLatin1Char('\n')).append(QLatin1Char('\n')).toStdString();
+  return lines.join(QLatin1Char('\n')).append(QLatin1Char('\n')).toUtf8().toStdString();
 }
 
 std::string clipboardDataFromUriList(const std::string &uriList)
@@ -163,11 +163,11 @@ std::vector<std::string> decodeDragInfo(const std::string &info)
 
 std::string uniqueReceivePath(const std::string &receiveDir, const std::string &baseName)
 {
-  const QString dir = QString::fromStdString(receiveDir);
-  const QString name = QString::fromStdString(baseName);
+  const QString dir = QString::fromUtf8(receiveDir.data(), static_cast<qsizetype>(receiveDir.size()));
+  const QString name = QString::fromUtf8(baseName.data(), static_cast<qsizetype>(baseName.size()));
   QFileInfo candidate(dir, name);
   if (!candidate.exists()) {
-    return candidate.absoluteFilePath().toStdString();
+    return candidate.absoluteFilePath().toUtf8().toStdString();
   }
 
   const QString stem = candidate.completeBaseName();
@@ -178,7 +178,7 @@ std::string uniqueReceivePath(const std::string &receiveDir, const std::string &
                          : QStringLiteral("%1 (%2).%3").arg(stem).arg(i).arg(suffix);
     QFileInfo next(dir, numbered);
     if (!next.exists()) {
-      return next.absoluteFilePath().toStdString();
+      return next.absoluteFilePath().toUtf8().toStdString();
     }
   }
   return {};

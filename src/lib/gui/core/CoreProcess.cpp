@@ -26,6 +26,8 @@
 #include <QMetaEnum>
 #include <QMutexLocker>
 #include <QRegularExpression>
+#include <QTemporaryFile>
+#include <QTextStream>
 
 namespace deskflow::gui {
 
@@ -625,6 +627,36 @@ void CoreProcess::setProcessState(ProcessState state)
   Q_EMIT processStateChanged(state);
 }
 
+bool CoreProcess::sendFiles(const QString &peer, const QStringList &paths)
+{
+  if (!m_coreIpcClient || !m_coreIpcClient->isConnected()) {
+    qWarning("cannot send files, core ipc is not connected");
+    return false;
+  }
+  if (paths.isEmpty()) {
+    return false;
+  }
+
+  QTemporaryFile manifest(QDir::temp().filePath(QStringLiteral("deskconnect-send-XXXXXX.txt")));
+  manifest.setAutoRemove(false);
+  if (!manifest.open()) {
+    qWarning("cannot send files, failed to write manifest");
+    return false;
+  }
+
+  QTextStream out(&manifest);
+  out << QStringLiteral("peer=%1\n").arg(peer);
+  for (const auto &path : paths) {
+    out << path << '\n';
+  }
+  out.flush();
+  const QString manifestPath = manifest.fileName();
+  manifest.close();
+
+  m_coreIpcClient->sendFiles(manifestPath);
+  return true;
+}
+
 void CoreProcess::onCoreIpcMessageReceived(const QString &command, const QString &args)
 {
   if (command == "connectionState") {
@@ -663,6 +695,14 @@ void CoreProcess::onCoreIpcMessageReceived(const QString &command, const QString
     Q_EMIT peerFingerprint(args);
   } else if (command == "missingKeyboardLayouts") {
     Q_EMIT missingKeyboardLayouts(args);
+  } else if (command == "fileTransfer") {
+    const auto parts = args.split(QLatin1Char('|'));
+    const auto status = parts.value(0);
+    const auto detail = parts.mid(1).join(QLatin1Char('|'));
+    Q_EMIT fileTransferStatus(status, detail);
+  } else if (command == "fileReceived") {
+    const auto parts = args.split(QLatin1Char('|'));
+    Q_EMIT filesReceived(parts.value(0).toInt(), parts.mid(1).join(QLatin1Char('|')));
   }
 }
 

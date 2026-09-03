@@ -15,6 +15,7 @@
 #include <QMutex>
 #include <QObject>
 #include <QProcess>
+#include <QStringList>
 #include <QTimer>
 
 namespace deskflow::gui {
@@ -47,6 +48,7 @@ public:
   void applyLogLevel();
   void clearSettings();
   void retryDaemon();
+  bool sendFiles(const QString &peer, const QStringList &paths);
 
   // getters
   Settings::CoreMode mode() const
@@ -88,6 +90,8 @@ Q_SIGNALS:
   void secureSocket(bool enabled);
   void daemonIpcClientConnectionFailed();
   void connectedClientsChanged(const QStringList &clients);
+  void fileTransferStatus(const QString &status, const QString &detail);
+  void filesReceived(int count, const QString &directory);
   void securityLevelChanged(QString securityLevel);
   void unrecognisedClient(const QString &clientName);
   void connectionRefused(deskflow::core::ConnectionRefusal reason);

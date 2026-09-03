@@ -232,6 +232,13 @@ exec "$HERE/bin/deskflow-core" "$@"
 EOF
 chmod 755 "$OUT_DIR/deskflow-core"
 
+# ---- translations (I18N looks for ../share/deskflow/translations from bin/) ----
+mkdir -p "$OUT_DIR/share/deskflow/translations"
+TR_SRC="${BUILD_BIN%/bin}/translations"
+if [[ -d "$TR_SRC" ]]; then
+  cp -a "$TR_SRC"/deskflow_*.qm "$OUT_DIR/share/deskflow/translations/" 2>/dev/null || true
+fi
+
 # ---- desktop + icons ----
 ICON_SRC="$ROOT/deploy/linux/org.deskconnect.deskconnect.png"
 [[ -f "$ICON_SRC" ]] || ICON_SRC="$ROOT/deploy/linux/icons/hicolor/512x512/apps/org.deskconnect.deskconnect.png"

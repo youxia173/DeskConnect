@@ -247,9 +247,19 @@ bool Client::leave()
     }
   }
 
-  // File contents are transferred when the peer pastes, not when leaving.
+  // File contents are transferred via Send files, not when leaving.
 
   return true;
+}
+
+void Client::sendFiles(const std::vector<std::string> &paths)
+{
+  if (m_server == nullptr || !isConnected()) {
+    LOG_ERR("send files: not connected to server");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|not connected"));
+    return;
+  }
+  m_server->sendFiles(paths);
 }
 
 void Client::setClipboard(ClipboardID id, const IClipboard *clipboard)

@@ -95,7 +95,7 @@
        <item>
         <widget class="QGroupBox" name="groupFileTransfer">
          <property name="title">
-          <string>Clipboard file transfer (on paste)</string>
+          <string>File transfer</string>
          </property>
          <property name="checkable">
           <bool>true</bool>

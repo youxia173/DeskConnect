@@ -11,6 +11,8 @@
 
 #include <assert.h>
 #include <cstdlib>
+#include <string>
+#include <vector>
 
 using deskflow::EventTypes;
 
@@ -33,6 +35,13 @@ public:
 
 private:
   int m_exitCode;
+};
+
+class SendFilesInfo : public EventData
+{
+public:
+  std::string peer;
+  std::vector<std::string> paths;
 };
 
 //! Event

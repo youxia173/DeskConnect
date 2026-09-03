@@ -13,8 +13,10 @@
 #include "common/Constants.h"
 #include "common/Settings.h"
 #include "deskflow/App.h"
+#include "deskflow/Clipboard.h"
 #include "deskflow/IScreen.h"
 #include "deskflow/OptionTypes.h"
+#include "filetransfer/FileTransfer.h"
 #include "platform/EiClipboard.h"
 #include "platform/EiEventQueueBuffer.h"
 #include "platform/EiKeyState.h"
@@ -468,6 +470,35 @@ bool EiScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
   }
 
   return ok;
+}
+
+void EiScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
+{
+  // Wayland portals have no CF_HDROP-style delayed render; pull on offer so paste still works.
+  if (!pullFiles) {
+    return;
+  }
+
+  LOG_INFO("Wayland clipboard file paste — transferring on offer (no delayed render)");
+  const auto paths = pullFiles();
+  if (paths.empty()) {
+    LOG_ERR("clipboard file paste failed: no files received");
+    return;
+  }
+
+  Clipboard clipboard;
+  if (!clipboard.open(0)) {
+    LOG_ERR("clipboard file paste failed: could not open clipboard");
+    return;
+  }
+  clipboard.empty();
+  clipboard.add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
+  clipboard.close();
+  if (!setClipboard(kClipboardClipboard, &clipboard)) {
+    LOG_ERR("clipboard file paste failed: could not set clipboard");
+    return;
+  }
+  LOG_INFO("clipboard file paste ready with %zu file(s)", paths.size());
 }
 
 void EiScreen::checkClipboards()

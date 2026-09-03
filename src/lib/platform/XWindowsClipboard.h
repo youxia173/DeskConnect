@@ -79,6 +79,9 @@ public:
   */
   Atom getSelection() const;
 
+  //! True if \p target converts to/from the given clipboard \p format
+  bool isFormatTarget(Atom target, Format format) const;
+
   // IClipboard overrides
   bool empty() override;
   void add(Format, const std::string &data) override;

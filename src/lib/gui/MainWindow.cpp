@@ -38,6 +38,7 @@
 #include <QComboBox>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QLineEdit>
 #include <QLocalServer>
 #include <QLocalSocket>
@@ -85,6 +86,7 @@ MainWindow::MainWindow()
       m_actionRestartCore{new QAction(this)},
       m_actionStopCore{new QAction(this)},
       m_actionShowHelp{new QAction(this)},
+      m_actionSendFiles{new QAction(this)},
       m_networkMonitor{new NetworkMonitor(this)}
 {
   ui->setupUi(this);
@@ -130,6 +132,10 @@ MainWindow::MainWindow()
   m_actionShowHelp->setIcon(QIcon::fromTheme(QStringLiteral("question")));
   m_actionShowHelp->setMenuRole(QAction::NoRole);
   m_actionShowHelp->setShortcut(QKeySequence::HelpContents);
+
+  m_actionSendFiles->setIcon(QIcon::fromTheme(QStringLiteral("document-send")));
+  m_actionSendFiles->setMenuRole(QAction::NoRole);
+  m_actionSendFiles->setEnabled(false);
 
   // Setup the Instance Checking
   // In case of a previous crash remove first
@@ -279,6 +285,27 @@ void MainWindow::connectSlots()
   connect(m_actionRestartCore, &QAction::triggered, this, &MainWindow::resetCore);
   connect(m_actionStopCore, &QAction::triggered, this, &MainWindow::stopCore);
   connect(m_actionShowHelp, &QAction::triggered, this, &MainWindow::showHelpViewer);
+  connect(m_actionSendFiles, &QAction::triggered, this, &MainWindow::sendFiles);
+  connect(&m_coreProcess, &CoreProcess::fileTransferStatus, this, [this](const QString &status, const QString &detail) {
+    if (status == QLatin1String("sending")) {
+      const auto msg = tr("Sending %1 file(s)…").arg(detail);
+      m_statusBar->showMessage(msg, 4000);
+      m_trayIcon->showMessage(kAppName, msg, QSystemTrayIcon::Information, 3000);
+    } else if (status == QLatin1String("ok")) {
+      const auto msg = tr("Sent %1 file(s)").arg(detail);
+      m_statusBar->showMessage(msg, 5000);
+      m_trayIcon->showMessage(kAppName, msg, QSystemTrayIcon::Information, 4000);
+    } else if (status == QLatin1String("error")) {
+      const auto msg = tr("File transfer failed: %1").arg(detail);
+      m_statusBar->showMessage(msg, 8000);
+      QMessageBox::warning(this, kAppName, msg);
+    }
+  });
+  connect(&m_coreProcess, &CoreProcess::filesReceived, this, [this](int count, const QString &directory) {
+    const auto msg = tr("Received %1 file(s) in %2").arg(count).arg(directory);
+    m_statusBar->showMessage(msg, 8000);
+    m_trayIcon->showMessage(kAppName, msg, QSystemTrayIcon::Information, 5000);
+  });
 
   // Mac os tray will only show a menu
   if (!deskflow::platform::isMac())
@@ -362,6 +389,10 @@ void MainWindow::toggleLogVisible(bool visible)
 
 void MainWindow::settingsChanged(const QString &key)
 {
+  if (key == Settings::FileTransfer::Enabled) {
+    updateSendFilesAction();
+  }
+
   if (key == Settings::Log::Level) {
     m_coreProcess.applyLogLevel();
     return;
@@ -680,6 +711,8 @@ void MainWindow::createMenuBar()
   m_menuFile->addAction(m_actionRestartCore);
   m_menuFile->addAction(m_actionStopCore);
   m_menuFile->addSeparator();
+  m_menuFile->addAction(m_actionSendFiles);
+  m_menuFile->addSeparator();
   m_menuFile->addAction(m_actionQuit);
 
   m_menuEdit->addAction(m_actionSettings);
@@ -702,8 +735,10 @@ void MainWindow::setupTrayIcon()
 {
   auto trayMenu = new QMenu(this);
   trayMenu->addActions(
-      {m_actionStartCore, m_actionRestartCore, m_actionStopCore, m_actionMinimize, m_actionRestore, m_actionTrayQuit}
+      {m_actionStartCore, m_actionRestartCore, m_actionStopCore, m_actionSendFiles, m_actionMinimize, m_actionRestore,
+       m_actionTrayQuit}
   );
+  trayMenu->insertSeparator(m_actionSendFiles);
   trayMenu->insertSeparator(m_actionMinimize);
   trayMenu->insertSeparator(m_actionTrayQuit);
   m_trayIcon->setContextMenu(trayMenu);
@@ -999,6 +1034,7 @@ void MainWindow::coreProcessStateChanged(ProcessState state)
     m_actionStopCore->setEnabled(false);
   }
   updateModeControlLabels();
+  updateSendFilesAction();
 }
 
 void MainWindow::coreConnectionStateChanged(ConnectionState state)
@@ -1018,6 +1054,7 @@ void MainWindow::coreConnectionStateChanged(ConnectionState state)
       showFirstConnectedMessage();
     }
   }
+  updateSendFilesAction();
 }
 
 void MainWindow::updateFingerprintButton()
@@ -1085,6 +1122,8 @@ void MainWindow::updateText()
   m_actionStartCore->setText(tr("&Start"));
   m_actionRestartCore->setText(tr("Rest&art"));
   m_actionStopCore->setText(tr("S&top"));
+  m_actionSendFiles->setText(tr("Send &files…"));
+  m_actionSendFiles->setShortcut(QKeySequence(tr("Ctrl+Shift+F")));
   //: %1 will be the replaced with the appname
   m_actionAbout->setText(tr("About %1...").arg(kAppName));
 
@@ -1225,9 +1264,11 @@ bool MainWindow::generateCertificate()
 
 void MainWindow::serverClientsChanged(const QStringList &clients)
 {
-  if (m_coreProcess.mode() != CoreMode::Server || !m_coreProcess.isStarted())
-    return;
-  m_statusBar->setServerClients(clients);
+  m_connectedClients = clients;
+  if (m_coreProcess.mode() == CoreMode::Server && m_coreProcess.isStarted()) {
+    m_statusBar->setServerClients(clients);
+  }
+  updateSendFilesAction();
 }
 
 void MainWindow::daemonIpcClientConnectionFailed()
@@ -1244,6 +1285,58 @@ void MainWindow::toggleCanRunCore(bool enableButtons)
   ui->btnRestartCore->setEnabled(enableButtons && isStarted);
   m_actionStartCore->setEnabled(enableButtons);
   m_actionStopCore->setEnabled(enableButtons && isStarted);
+  updateSendFilesAction();
+}
+
+void MainWindow::updateSendFilesAction()
+{
+  const bool enabledSetting = Settings::value(Settings::FileTransfer::Enabled).toBool();
+  const bool started = m_coreProcess.isStarted();
+  const auto connection = m_coreProcess.connectionState();
+  bool canSend = false;
+  if (enabledSetting && started) {
+    if (m_coreProcess.mode() == CoreMode::Client) {
+      canSend = connection == ConnectionState::Connected;
+    } else if (m_coreProcess.mode() == CoreMode::Server) {
+      canSend = !m_connectedClients.isEmpty();
+    }
+  }
+  m_actionSendFiles->setEnabled(canSend);
+}
+
+void MainWindow::sendFiles()
+{
+  if (!m_actionSendFiles->isEnabled()) {
+    return;
+  }
+
+  QString peer;
+  if (m_coreProcess.mode() == CoreMode::Server) {
+    if (m_connectedClients.isEmpty()) {
+      QMessageBox::information(this, kAppName, tr("No client is connected."));
+      return;
+    }
+    if (m_connectedClients.size() == 1) {
+      peer = m_connectedClients.constFirst();
+    } else {
+      bool ok = false;
+      peer = QInputDialog::getItem(
+          this, tr("Send files"), tr("Send to:"), m_connectedClients, 0, false, &ok
+      );
+      if (!ok || peer.isEmpty()) {
+        return;
+      }
+    }
+  }
+
+  const auto paths = QFileDialog::getOpenFileNames(this, tr("Select files to send"));
+  if (paths.isEmpty()) {
+    return;
+  }
+
+  if (!m_coreProcess.sendFiles(peer, paths)) {
+    QMessageBox::warning(this, kAppName, tr("Could not send files. Is DeskConnect running?"));
+  }
 }
 
 void MainWindow::remoteHostChanged(const QString &newRemoteHost)

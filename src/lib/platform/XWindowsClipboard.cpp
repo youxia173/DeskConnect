@@ -133,6 +133,12 @@ void XWindowsClipboard::addRequest(Window owner, Window requestor, Atom target, 
   pushReplies();
 }
 
+bool XWindowsClipboard::isFormatTarget(Atom target, Format format) const
+{
+  const IXWindowsClipboardConverter *converter = getConverter(target);
+  return converter != nullptr && converter->getFormat() == format;
+}
+
 bool XWindowsClipboard::addSimpleRequest(Window requestor, Atom target, ::Time time, Atom property)
 {
   // obsolete requestors may supply a None property.  in

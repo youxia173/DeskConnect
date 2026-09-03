@@ -13,6 +13,7 @@
 #include <QMap>
 #include <QProcess>
 #include <QRegularExpression>
+#include <QStringList>
 #include <QSystemTrayIcon>
 #include <QUrl>
 
@@ -146,6 +147,8 @@ private:
   void updateTimeoutDelay(int newDelay);
   void setHelpFilePath();
   void showHelpViewer() const;
+  void sendFiles();
+  void updateSendFilesAction();
   void loadHostnameHistory();
   void rememberSuccessfulHost();
   void removeSelectedHostnameFromHistory();
@@ -213,6 +216,8 @@ private:
   QAction *m_actionRestartCore = nullptr;
   QAction *m_actionStopCore = nullptr;
   QAction *m_actionShowHelp = nullptr;
+  QAction *m_actionSendFiles = nullptr;
+  QStringList m_connectedClients;
 
   // Network monitoring
   NetworkMonitor *m_networkMonitor = nullptr;

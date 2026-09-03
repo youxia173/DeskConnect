@@ -18,6 +18,7 @@
 
 #include <climits>
 #include <string>
+#include <vector>
 
 class Event;
 class EventQueueTimer;
@@ -167,6 +168,8 @@ public:
   {
     return m_screen;
   }
+
+  void sendFiles(const std::vector<std::string> &paths);
 
   //@}
 

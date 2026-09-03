@@ -49,7 +49,7 @@ std::string defaultReceiveDirectory();
 //! Max transfer size in bytes from settings (0 = disabled).
 uint64_t maxTransferBytes();
 
-//! Whether clipboard file transfer is enabled in settings.
+//! Whether file transfer is enabled in settings.
 bool isFileTransferEnabled();
 
 //! Ensure receive directory exists; returns absolute path or empty on failure.

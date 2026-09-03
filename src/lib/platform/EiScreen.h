@@ -12,6 +12,7 @@
 #include "platform/XDGPowerManager.h"
 
 #include <climits>
+#include <functional>
 #include <libei.h>
 #include <map>
 #include <mutex>
@@ -72,6 +73,7 @@ public:
   bool canLeave() override;
   void leave() override;
   bool setClipboard(ClipboardID, const IClipboard *) override;
+  void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles) override;
   void checkClipboards() override;
   void openScreensaver(bool notify) override;
   void closeScreensaver() override;

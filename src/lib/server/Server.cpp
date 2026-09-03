@@ -28,6 +28,9 @@
 #include "server/ClientProxyUnknown.h"
 #include "server/PrimaryClient.h"
 
+#include <QFileInfo>
+#include <QString>
+
 #ifdef _WIN32
 #include <algorithm>
 #include <array>
@@ -490,11 +493,6 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
         }
         m_active->setClipboard(id, &m_clipboards[id].m_clipboard);
       }
-    }
-
-    // File offer only — actual contents transfer when the peer pastes (Ctrl+V or context menu).
-    if (m_active != m_primaryClient) {
-      sendClipboardFileOfferTo(m_active);
     }
 
     auto *info = new Server::SwitchToScreenInfo(m_active->getName());
@@ -1477,11 +1475,6 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
 
   // send the new clipboard to the active screen
   m_active->setClipboard(id, &clipboard.m_clipboard);
-
-  // Offer file metadata when primary clipboard gains files while on a client.
-  if (id == kClipboardClipboard && sender == m_primaryClient && m_active != m_primaryClient) {
-    sendClipboardFileOfferTo(m_active);
-  }
 }
 
 void Server::onScreensaver(bool activated)
@@ -2125,46 +2118,6 @@ bool Server::trySendClipboardFilesTo(BaseClientProxy *dst)
   return true;
 }
 
-void Server::sendClipboardFileOfferTo(BaseClientProxy *dst)
-{
-  if (dst == nullptr || dst == m_primaryClient || dst->getStream() == nullptr) {
-    return;
-  }
-  if (!deskflow::isFileTransferEnabled()) {
-    return;
-  }
-
-  std::string filesData;
-  auto &cached = m_clipboards[kClipboardClipboard].m_clipboard;
-  if (cached.open(0)) {
-    if (cached.has(IClipboard::Format::Files)) {
-      filesData = cached.get(IClipboard::Format::Files);
-    }
-    cached.close();
-  }
-  if (filesData.empty()) {
-    Clipboard live;
-    if (m_primaryClient->getClipboard(kClipboardClipboard, &live) && live.open(0)) {
-      if (live.has(IClipboard::Format::Files)) {
-        filesData = live.get(IClipboard::Format::Files);
-      }
-      live.close();
-    }
-  }
-  if (filesData.empty()) {
-    return;
-  }
-
-  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
-  if (offers.empty()) {
-    return;
-  }
-
-  const std::string drag = deskflow::encodeDragInfo(offers);
-  ProtocolUtil::writef(dst->getStream(), kMsgDFileOffer, static_cast<uint16_t>(offers.size()), &drag);
-  LOG_INFO("offered %zu clipboard file(s) to \"%s\" for paste", offers.size(), getName(dst).c_str());
-}
-
 void Server::onClipboardFileRequest(BaseClientProxy *sender)
 {
   if (sender == nullptr) {
@@ -2179,23 +2132,81 @@ void Server::sendClipboardFilesTo(BaseClientProxy *dst)
   trySendClipboardFilesTo(dst);
 }
 
-void Server::applyReceivedFiles(const std::vector<std::string> &paths)
+void Server::notifyReceivedFiles(const std::vector<std::string> &paths)
 {
-  if (paths.empty() || m_primaryClient == nullptr) {
+  if (paths.empty()) {
     return;
   }
 
-  Clipboard clipboard;
-  if (!clipboard.open(0)) {
-    return;
-  }
-  clipboard.empty();
-  clipboard.add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
-  clipboard.close();
-  m_primaryClient->setClipboard(kClipboardClipboard, &clipboard);
-  LOG_INFO(
-      "clipboard ready with %zu received file(s) — paste to place them (saved under receive folder)", paths.size()
+  const QString dir = QFileInfo(QString::fromUtf8(paths.front().data(), static_cast<qsizetype>(paths.front().size())))
+                          .absolutePath();
+  LOG_INFO("received %zu file(s) in %s", paths.size(), qPrintable(dir));
+  ipcSendToClient(
+      QStringLiteral("fileReceived"), QStringLiteral("%1|%2").arg(paths.size()).arg(dir)
   );
+}
+
+bool Server::sendFilesTo(const std::string &clientName, const std::vector<std::string> &paths)
+{
+  if (!deskflow::isFileTransferEnabled()) {
+    LOG_WARN("file transfer is disabled");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|file transfer is disabled"));
+    return false;
+  }
+
+  BaseClientProxy *dst = nullptr;
+  if (!clientName.empty()) {
+    const auto index = m_clients.find(clientName);
+    if (index != m_clients.end()) {
+      dst = index->second;
+    }
+  } else {
+    const auto primaryName = getName(m_primaryClient);
+    for (const auto &[name, client] : m_clients) {
+      if (name != primaryName) {
+        if (dst != nullptr) {
+          dst = nullptr;
+          break;
+        }
+        dst = client;
+      }
+    }
+  }
+
+  if (dst == nullptr || dst == m_primaryClient || dst->getStream() == nullptr) {
+    LOG_ERR("send files: no matching client");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|no connected client"));
+    return false;
+  }
+
+  const std::string filesData = deskflow::clipboardDataFromPaths(paths);
+  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
+  if (offers.empty()) {
+    LOG_ERR("send files: no readable files");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|no readable files"));
+    return false;
+  }
+
+  const std::string target = getName(dst);
+  if (!m_fileSend.start(
+          dst->getStream(), m_events, offers, filesData,
+          [offers](bool success) {
+            if (success) {
+              ipcSendToClient(
+                  QStringLiteral("fileTransfer"), QStringLiteral("ok|%1").arg(offers.size())
+              );
+            } else {
+              ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer failed"));
+            }
+          }
+      )) {
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|could not start transfer"));
+    return false;
+  }
+
+  LOG_INFO("sending %zu file(s) to \"%s\"", offers.size(), target.c_str());
+  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("sending|%1").arg(offers.size()));
+  return true;
 }
 
 void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::string &info)
@@ -2226,7 +2237,7 @@ void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::strin
 
   const auto state = m_fileReceive.onChunk(mark, data, deskflow::maxTransferBytes());
   if (state == TransferState::Finished) {
-    applyReceivedFiles(m_fileReceive.receivedPaths());
+    notifyReceivedFiles(m_fileReceive.receivedPaths());
     m_fileReceive.reset();
   } else if (state == TransferState::Error) {
     LOG_ERR("file transfer from \"%s\" failed", getName(sender).c_str());

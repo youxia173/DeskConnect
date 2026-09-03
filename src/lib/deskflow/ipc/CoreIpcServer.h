@@ -9,7 +9,8 @@
 #include "IpcServer.h"
 
 #include <QObject>
-#include <QSet>
+#include <QString>
+#include <QStringList>
 
 class QLocalSocket;
 
@@ -23,6 +24,9 @@ public:
   explicit CoreIpcServer(QObject *parent);
 
   static CoreIpcServer &instance();
+
+Q_SIGNALS:
+  void sendFilesRequested(const QString &peer, const QStringList &paths);
 
 private:
   void processCommand(QLocalSocket *clientSocket, const QString &command, const QStringList &parts) override;

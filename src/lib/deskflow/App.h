@@ -21,10 +21,13 @@
 #endif
 
 #include <QObject>
+#include <QStringList>
 #include <QThread>
 
 #include <memory>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace deskflow {
 class Screen;
@@ -78,6 +81,8 @@ public:
 
   void run(QThread &coreThread);
   void quit() const;
+  void queueSendFiles(const QString &peer, const QStringList &paths);
+  virtual void sendFiles(const std::string &peer, const std::vector<std::string> &paths);
   void setupFileLogging();
   void loggingFilterWarning() const;
   void initApp() override;

@@ -13,6 +13,7 @@
 #include "platform/XDGPowerManager.h"
 #include "platform/XWindowsConfig.h"
 
+#include <functional>
 #include <set>
 #include <vector>
 
@@ -67,6 +68,8 @@ public:
   bool canLeave() override;
   void leave() override;
   bool setClipboard(ClipboardID, const IClipboard *) override;
+  void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles) override;
+  void clearDelayedFilePaste() override;
   void checkClipboards() override;
   void openScreensaver(bool notify) override;
   void closeScreensaver() override;
@@ -97,6 +100,9 @@ private:
 
   // continue processing a selection request
   void processClipboardRequest(Window window, Time time, Atom property) const;
+
+  // materialize remote file paths into the local clipboard (X11 delayed paste)
+  bool renderDelayedFilePaste();
 
   // terminate a selection request
   void destroyClipboardRequest(Window window) const;
@@ -207,6 +213,9 @@ private:
   // clipboards
   XWindowsClipboard *m_clipboard[kClipboardEnd];
   uint32_t m_sequenceNumber = 0;
+  bool m_hasDelayedFilePaste = false;
+  bool m_renderingDelayedFilePaste = false;
+  std::function<std::vector<std::string>()> m_delayedFilePull;
 
   // screen saver stuff
   XWindowsScreenSaver *m_screensaver = nullptr;

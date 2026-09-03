@@ -54,9 +54,8 @@ public:
   bool onGrabClipboard(ClipboardID);
   void onClipboardChanged(ClipboardID, const IClipboard *);
   void sendClipboardFiles();
+  void sendFiles(const std::vector<std::string> &paths);
   void applyReceivedFiles(const std::vector<std::string> &paths);
-  void fileOfferReceived();
-  std::vector<std::string> pullFilesForPaste();
 
   //@}
 
@@ -112,6 +111,7 @@ private:
   void setActiveServerLanguage(const std::string_view &language);
   void dragInfoReceived();
   void fileChunkReceived();
+  void fileOfferReceived();
 
 private:
   using MessageParser = ConnectionResult (ServerProxy::*)(const uint8_t *);

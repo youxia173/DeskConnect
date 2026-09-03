@@ -9,11 +9,13 @@
 
 #include "DisplayInvalidException.h"
 #include "arch/Arch.h"
+#include "base/Event.h"
 #include "base/Log.h"
 #include "base/LogOutputters.h"
 #include "common/ExitCodes.h"
 #include "common/Settings.h"
 #include "deskflow/DeskflowException.h"
+#include "deskflow/ipc/CoreIpc.h"
 #include "mt/ThreadException.h"
 
 #if defined(Q_OS_WIN)
@@ -172,6 +174,23 @@ void App::quit() const
 {
   LOG_INFO("quitting");
   getEvents()->addEvent(Event(EventTypes::Quit));
+}
+
+void App::queueSendFiles(const QString &peer, const QStringList &paths)
+{
+  auto *info = new SendFilesInfo();
+  info->peer = peer.toStdString();
+  info->paths.reserve(static_cast<size_t>(paths.size()));
+  for (const auto &path : paths) {
+    info->paths.emplace_back(path.toUtf8().constData());
+  }
+  getEvents()->addEvent(Event(EventTypes::AppSendFiles, getEvents()->getSystemTarget(), info));
+}
+
+void App::sendFiles(const std::string &, const std::vector<std::string> &)
+{
+  LOG_WARN("send files is not supported in this mode");
+  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|send files is not supported"));
 }
 
 void App::runEventsLoop(const void *)

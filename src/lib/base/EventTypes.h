@@ -158,6 +158,9 @@ enum class EventTypes : uint32_t
   ServerAppForceReconnect,
   ServerAppResetServer,
 
+  /// GUI requested sending files to a connected peer (data is SendFilesInfo).
+  AppSendFiles,
+
   /// This event is sent when key is down. Event data is a pointer to KeyInfo (count == 1)
   KeyStateKeyDown,
   /// This event is sent when key is up. Event data is a pointer to KeyInfo (count == 1)

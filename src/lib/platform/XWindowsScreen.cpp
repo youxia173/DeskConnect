@@ -19,6 +19,7 @@
 #include "deskflow/Clipboard.h"
 #include "deskflow/KeyMap.h"
 #include "deskflow/ScreenException.h"
+#include "filetransfer/FileTransfer.h"
 #include "platform/XDGKeyUtil.h"
 #include "platform/XWindowsClipboard.h"
 #include "platform/XWindowsConfig.h"
@@ -346,6 +347,14 @@ bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
     return false;
   }
 
+  // Keep delayed uri-list ownership; a subsequent text DCLIP must not cancel paste-time transfer.
+  if (m_hasDelayedFilePaste && id == kClipboardClipboard) {
+    LOG_DEBUG("ignoring clipboard update; delayed file paste is armed");
+    return true;
+  }
+
+  clearDelayedFilePaste();
+
   // get the actual time.  ICCCM does not allow CurrentTime.
   Time timestamp = XWindowsUtil::getCurrentTime(m_display, m_clipboard[id]->getWindow());
 
@@ -361,6 +370,71 @@ bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
     m_clipboard[id]->close();
     return true;
   }
+}
+
+void XWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
+{
+  m_delayedFilePull = std::move(pullFiles);
+  m_hasDelayedFilePaste = (m_delayedFilePull != nullptr);
+  if (!m_hasDelayedFilePaste || m_clipboard[kClipboardClipboard] == nullptr) {
+    return;
+  }
+
+  Time timestamp = XWindowsUtil::getCurrentTime(m_display, m_clipboard[kClipboardClipboard]->getWindow());
+  if (!m_clipboard[kClipboardClipboard]->open(timestamp)) {
+    LOG_WARN("failed to open clipboard for delayed file paste");
+    clearDelayedFilePaste();
+    return;
+  }
+  if (!m_clipboard[kClipboardClipboard]->empty()) {
+    LOG_WARN("failed to take clipboard for delayed file paste");
+    m_clipboard[kClipboardClipboard]->close();
+    clearDelayedFilePaste();
+    return;
+  }
+
+  // Advertise text/uri-list via TARGETS; real paths are filled on SelectionRequest (paste).
+  m_clipboard[kClipboardClipboard]->add(IClipboard::Format::Files, std::string());
+  m_clipboard[kClipboardClipboard]->close();
+  LOG_INFO("delayed clipboard file paste armed (Ctrl+V or context-menu paste)");
+}
+
+void XWindowsScreen::clearDelayedFilePaste()
+{
+  m_hasDelayedFilePaste = false;
+  m_renderingDelayedFilePaste = false;
+  m_delayedFilePull = {};
+}
+
+bool XWindowsScreen::renderDelayedFilePaste()
+{
+  if (!m_hasDelayedFilePaste || !m_delayedFilePull || m_clipboard[kClipboardClipboard] == nullptr) {
+    return false;
+  }
+  if (m_renderingDelayedFilePaste) {
+    return false;
+  }
+
+  m_renderingDelayedFilePaste = true;
+  LOG_INFO("paste requested — fetching remote clipboard file(s)");
+  const auto paths = m_delayedFilePull();
+  m_renderingDelayedFilePaste = false;
+
+  if (paths.empty()) {
+    LOG_ERR("delayed file paste failed: no files received");
+    return false;
+  }
+
+  Time timestamp = XWindowsUtil::getCurrentTime(m_display, m_clipboard[kClipboardClipboard]->getWindow());
+  if (!m_clipboard[kClipboardClipboard]->open(timestamp)) {
+    LOG_ERR("delayed file paste failed: could not open clipboard");
+    return false;
+  }
+  // Keep ownership from prepareDelayedFilePaste; only replace Files payload.
+  m_clipboard[kClipboardClipboard]->add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
+  m_clipboard[kClipboardClipboard]->close();
+  LOG_INFO("delayed file paste ready with %zu file(s)", paths.size());
+  return true;
 }
 
 void XWindowsScreen::checkClipboards()
@@ -1235,6 +1309,11 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
     // somebody is asking for clipboard data
     ClipboardID id = getClipboardID(xevent->xselectionrequest.selection);
     if (id != kClipboardEnd) {
+      // Match Windows WM_RENDERFORMAT: transfer remote files only when uri-list is requested.
+      if (m_hasDelayedFilePaste && id == kClipboardClipboard && m_clipboard[id] != nullptr &&
+          m_clipboard[id]->isFormatTarget(xevent->xselectionrequest.target, IClipboard::Format::Files)) {
+        renderDelayedFilePaste();
+      }
       m_clipboard[id]->addRequest(
           xevent->xselectionrequest.owner, xevent->xselectionrequest.requestor, xevent->xselectionrequest.target,
           xevent->xselectionrequest.time, xevent->xselectionrequest.property

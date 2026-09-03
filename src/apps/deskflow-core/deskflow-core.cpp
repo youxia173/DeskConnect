@@ -125,6 +125,11 @@ int main(int argc, char **argv)
   QObject::connect(
       ipcServer, &deskflow::core::ipc::IpcServer::stopProcessRequested, coreApp, &App::quit, Qt::DirectConnection
   );
+  QObject::connect(
+      ipcServer, &deskflow::core::ipc::CoreIpcServer::sendFilesRequested, coreApp,
+      [coreApp](const QString &peer, const QStringList &paths) { coreApp->queueSendFiles(peer, paths); },
+      Qt::DirectConnection
+  );
   ipcServer->listen();
 
   QThread coreThread;

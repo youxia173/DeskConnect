@@ -27,6 +27,9 @@
 #include "filetransfer/FileTransfer.h"
 #include "io/IStream.h"
 
+#include <QFileInfo>
+#include <QString>
+
 #include <cstring>
 
 //
@@ -931,29 +934,50 @@ void ServerProxy::sendClipboardFiles()
   m_fileSend.start(m_stream, m_events, offers, filesData);
 }
 
+void ServerProxy::sendFiles(const std::vector<std::string> &paths)
+{
+  if (!deskflow::isFileTransferEnabled()) {
+    LOG_WARN("file transfer is disabled");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|file transfer is disabled"));
+    return;
+  }
+
+  const std::string filesData = deskflow::clipboardDataFromPaths(paths);
+  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
+  if (offers.empty()) {
+    LOG_ERR("send files: no readable files");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|no readable files"));
+    return;
+  }
+
+  if (!m_fileSend.start(
+          m_stream, m_events, offers, filesData,
+          [offers](bool success) {
+            if (success) {
+              ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("ok|%1").arg(offers.size()));
+            } else {
+              ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer failed"));
+            }
+          }
+      )) {
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|could not start transfer"));
+    return;
+  }
+
+  LOG_INFO("sending %zu file(s) to server", offers.size());
+  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("sending|%1").arg(offers.size()));
+}
+
 void ServerProxy::applyReceivedFiles(const std::vector<std::string> &paths)
 {
   if (paths.empty()) {
     return;
   }
 
-  m_cachedReceivedPaths = paths;
-
-  Clipboard clipboard;
-  if (!clipboard.open(0)) {
-    return;
-  }
-  clipboard.empty();
-  clipboard.add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
-  clipboard.close();
-  // When paste uses delayed CF_HDROP, Explorer is already waiting in RENDERFORMAT —
-  // do not synthesize another Ctrl+V. Still publish files for non-delayed consumers.
-  if (!m_pullWaiting) {
-    m_client->setClipboard(kClipboardClipboard, &clipboard);
-  }
-  LOG_INFO(
-      "clipboard ready with %zu received file(s) (saved under receive folder)", paths.size()
-  );
+  const QString dir = QFileInfo(QString::fromUtf8(paths.front().data(), static_cast<qsizetype>(paths.front().size())))
+                          .absolutePath();
+  LOG_INFO("received %zu file(s) in %s", paths.size(), qPrintable(dir));
+  ipcSendToClient(QStringLiteral("fileReceived"), QStringLiteral("%1|%2").arg(paths.size()).arg(dir));
 }
 
 void ServerProxy::fileOfferReceived()
@@ -964,63 +988,7 @@ void ServerProxy::fileOfferReceived()
     LOG_ERR("failed to read file offer from server");
     return;
   }
-  if (!deskflow::isFileTransferEnabled()) {
-    return;
-  }
-  auto names = deskflow::decodeDragInfo(info);
-  if (names.empty()) {
-    return;
-  }
-  if (fileCount != 0 && names.size() != fileCount) {
-    LOG_WARN("file offer count mismatch: header=%u decoded=%zu", fileCount, names.size());
-  }
-
-  m_pendingOfferNames = names;
-  m_cachedReceivedPaths.clear();
-  LOG_INFO("file offer from server: %zu file(s) — will transfer on paste", names.size());
-
-  m_client->getScreen()->getPlatformScreen()->prepareDelayedFilePaste([this]() { return pullFilesForPaste(); });
-}
-
-std::vector<std::string> ServerProxy::pullFilesForPaste()
-{
-  if (!m_cachedReceivedPaths.empty()) {
-    return m_cachedReceivedPaths;
-  }
-  if (m_pendingOfferNames.empty() || !deskflow::isFileTransferEnabled()) {
-    return {};
-  }
-  if (m_pullWaiting) {
-    LOG_WARN("file paste pull already in progress");
-    return {};
-  }
-
-  m_pullWaiting = true;
-  m_pullDone = false;
-  m_pullSuccess = false;
-  m_fileReceive.reset();
-  m_fileReceive.begin(m_pendingOfferNames, deskflow::maxTransferBytes());
-
-  ProtocolUtil::writef(m_stream, kMsgCFileRequest);
-  LOG_INFO("requesting clipboard file(s) from server for paste");
-
-  // Nested dispatch so DFTR chunks arrive while Explorer waits in WM_RENDERFORMAT.
-  Stopwatch timer;
-  constexpr double kMaxWaitSec = 600.0;
-  while (!m_pullDone && timer.getTime() < kMaxWaitSec) {
-    Event event;
-    if (m_events->getEvent(event, 0.05)) {
-      m_events->dispatchEvent(event);
-    }
-  }
-
-  m_pullWaiting = false;
-  if (!m_pullSuccess || m_cachedReceivedPaths.empty()) {
-    LOG_ERR("timed out or failed waiting for clipboard file transfer");
-    m_fileReceive.reset();
-    return {};
-  }
-  return m_cachedReceivedPaths;
+  LOG_DEBUG("ignored clipboard file offer (%u file(s)); use Send files", fileCount);
 }
 
 void ServerProxy::dragInfoReceived()
@@ -1068,16 +1036,8 @@ void ServerProxy::fileChunkReceived()
   if (state == TransferState::Finished) {
     applyReceivedFiles(m_fileReceive.receivedPaths());
     m_fileReceive.reset();
-    if (m_pullWaiting) {
-      m_pullDone = true;
-      m_pullSuccess = true;
-    }
   } else if (state == TransferState::Error) {
     LOG_ERR("file transfer from server failed");
     m_fileReceive.reset();
-    if (m_pullWaiting) {
-      m_pullDone = true;
-      m_pullSuccess = false;
-    }
   }
 }

@@ -325,6 +325,13 @@ int ClientApp::mainLoop()
   // start client, etc
   startNode();
 
+  getEvents()->addHandler(EventTypes::AppSendFiles, getEvents()->getSystemTarget(), [this](const auto &e) {
+    const auto *info = static_cast<const SendFilesInfo *>(e.getDataObject());
+    if (info != nullptr) {
+      sendFiles(info->peer, info->paths);
+    }
+  });
+
   // run event loop.  if startClient() failed we're supposed to retry
   // later.  the timer installed by startClient() will take care of
   // that.
@@ -332,6 +339,7 @@ int ClientApp::mainLoop()
 
   // close down
   LOG_DEBUG("stopping client");
+  getEvents()->removeHandler(EventTypes::AppSendFiles, getEvents()->getSystemTarget());
   stopClient();
   LOG_INFO("stopped client");
 
@@ -403,4 +411,14 @@ double ClientApp::retryTime() const
   if (m_retryCount < 430) // 20 minutes
     return 120;
   return 300;
+}
+
+void ClientApp::sendFiles(const std::string &, const std::vector<std::string> &paths)
+{
+  if (m_client == nullptr || !m_client->isConnected()) {
+    LOG_ERR("send files: not connected to server");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|not connected"));
+    return;
+  }
+  m_client->sendFiles(paths);
 }

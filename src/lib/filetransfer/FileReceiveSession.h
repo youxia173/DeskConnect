@@ -9,8 +9,9 @@
 #include "filetransfer/FileTransfer.h"
 #include "deskflow/ProtocolTypes.h"
 
+#include <QFile>
+
 #include <cstdint>
-#include <fstream>
 #include <string>
 #include <vector>
 
@@ -51,7 +52,7 @@ private:
   uint64_t m_maxTotalBytes = 0;
   std::string m_receiveDir;
   std::string m_currentPath;
-  std::ofstream m_out;
+  QFile m_out;
   std::vector<std::string> m_receivedPaths;
 };
 

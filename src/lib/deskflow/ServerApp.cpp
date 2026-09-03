@@ -9,6 +9,7 @@
 #include "deskflow/ServerApp.h"
 
 #include "arch/Arch.h"
+#include "base/Event.h"
 #include "base/IEventQueue.h"
 #include "base/Log.h"
 #include "common/ExitCodes.h"
@@ -542,6 +543,12 @@ int ServerApp::mainLoop()
   getEvents()->addHandler(EventTypes::ServerAppResetServer, getEvents()->getSystemTarget(), [this](const auto &) {
     resetServer();
   });
+  getEvents()->addHandler(EventTypes::AppSendFiles, getEvents()->getSystemTarget(), [this](const auto &e) {
+    const auto *info = static_cast<const SendFilesInfo *>(e.getDataObject());
+    if (info != nullptr) {
+      sendFiles(info->peer, info->paths);
+    }
+  });
 
   // run event loop.  if startServer() failed we're supposed to retry
   // later.  the timer installed by startServer() will take care of
@@ -552,6 +559,7 @@ int ServerApp::mainLoop()
   LOG_DEBUG("stopping server");
   getEvents()->removeHandler(EventTypes::ServerAppForceReconnect, getEvents()->getSystemTarget());
   getEvents()->removeHandler(EventTypes::ServerAppReloadConfig, getEvents()->getSystemTarget());
+  getEvents()->removeHandler(EventTypes::AppSendFiles, getEvents()->getSystemTarget());
   cleanupServer();
   LOG_INFO("stopped server");
 
@@ -600,4 +608,14 @@ void ServerApp::startNode()
   if (!startServer()) {
     bye(s_exitFailed);
   }
+}
+
+void ServerApp::sendFiles(const std::string &peer, const std::vector<std::string> &paths)
+{
+  if (m_server == nullptr) {
+    LOG_ERR("send files: server is not running");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|server is not running"));
+    return;
+  }
+  m_server->sendFilesTo(peer, paths);
 }

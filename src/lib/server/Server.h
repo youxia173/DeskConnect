@@ -208,16 +208,16 @@ public:
   void onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data);
   //! Handle CFTR (paste requested remote file contents)
   void onClipboardFileRequest(BaseClientProxy *sender);
+  //! Push local files to a named client (empty name = the only connected client).
+  bool sendFilesTo(const std::string &clientName, const std::vector<std::string> &paths);
 
   //@}
 
 private:
   void sendClipboardFilesTo(BaseClientProxy *dst);
-  //! Offer file metadata for delayed paste (no contents yet).
-  void sendClipboardFileOfferTo(BaseClientProxy *dst);
   //! Start file transfer to \p dst if clipboard has files. Returns true if a new send was started.
   bool trySendClipboardFilesTo(BaseClientProxy *dst);
-  void applyReceivedFiles(const std::vector<std::string> &paths);
+  void notifyReceivedFiles(const std::vector<std::string> &paths);
 
   // get canonical name of client
   std::string getName(const BaseClientProxy *) const;
