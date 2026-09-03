@@ -150,9 +150,11 @@ void CoreProcess::checkExistingProcess()
   qInfo("checking existing core");
 
   auto *client = new ipc::CoreIpcClient(this);
+  // Always stop an existing core so this GUI can own the process and IPC.
+  // Leaving it running left the UI stuck on "Start" with no connection state.
   connect(client, &ipc::CoreIpcClient::connected, this, [client] {
-    qInfo("existing core has matching version, leaving it running");
-    client->deleteLater();
+    qInfo("existing core found, asking it to stop so this GUI can take over");
+    client->sendStop();
   });
   connect(client, &ipc::CoreIpcClient::versionMismatch, this, [client] {
     qInfo("existing core has mismatched version, asking it to stop");
@@ -165,9 +167,12 @@ void CoreProcess::checkExistingProcess()
     m_retryTimer.setSingleShot(true);
     m_retryTimer.start(kRetryDelay);
   });
-  connect(client, &ipc::CoreIpcClient::connectionFailed, this, [client] {
-    qCritical("could not contact existing core");
+  connect(client, &ipc::CoreIpcClient::connectionFailed, this, [this, client] {
+    qInfo("could not contact existing core, retrying start");
     client->deleteLater();
+    setProcessState(ProcessState::RetryPending);
+    m_retryTimer.setSingleShot(true);
+    m_retryTimer.start(kRetryDelay);
   });
   client->connectToServer();
 }
