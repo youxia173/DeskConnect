@@ -491,4 +491,6 @@ private:
   deskflow::TransferProgressReporter m_sendProgress;
   deskflow::TransferProgressReporter m_recvProgress;
   std::string m_sentFilesTarget;
+  //! True only for clipboard-paste transfers; menu Send files must not be cancelled by clipboard churn.
+  bool m_fileSendFromClipboard = false;
 };

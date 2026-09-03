@@ -1464,10 +1464,11 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
   LOG_INFO("screen \"%s\" updated clipboard %d", clipboard.m_clipboardOwner.c_str(), id);
   clipboard.m_clipboardData = data;
 
-  // New clipboard content invalidates any prior outbound file-transfer fingerprint.
-  if (id == kClipboardClipboard) {
+  // Clipboard-paste transfers are tied to clipboard content; menu Send files is not.
+  if (id == kClipboardClipboard && m_fileSendFromClipboard) {
     m_fileSend.cancel();
     m_sentFilesTarget.clear();
+    m_fileSendFromClipboard = false;
   }
 
   // tell all clients except the sender that the clipboard is dirty
@@ -1931,9 +1932,10 @@ bool Server::removeClient(BaseClientProxy *client)
   }
 
   // Abort outbound file transfer if it targets this client.
-  if (getName(client) == m_sentFilesTarget) {
+  if (m_fileSend.isActive() && (m_sentFilesTarget.empty() || getName(client) == m_sentFilesTarget)) {
     m_fileSend.cancel();
     m_sentFilesTarget.clear();
+    m_fileSendFromClipboard = false;
   }
 
   // remove event handlers
@@ -2114,8 +2116,10 @@ bool Server::trySendClipboardFilesTo(BaseClientProxy *dst)
   }
 
   m_sentFilesTarget = target;
+  m_fileSendFromClipboard = true;
   if (!m_fileSend.start(dst->getStream(), m_events, offers, filesData)) {
     m_sentFilesTarget.clear();
+    m_fileSendFromClipboard = false;
     return false;
   }
   return true;
@@ -2199,9 +2203,13 @@ bool Server::sendFilesTo(const std::string &clientName, const std::vector<std::s
   });
   m_sendProgress.reset();
 
+  m_sentFilesTarget = target;
+  m_fileSendFromClipboard = false;
   if (!m_fileSend.start(
           dst->getStream(), m_events, offers, filesData,
-          [offers](bool success) {
+          [this, offers](bool success) {
+            m_sentFilesTarget.clear();
+            m_fileSendFromClipboard = false;
             if (success) {
               ipcSendToClient(
                   QStringLiteral("fileTransfer"), QStringLiteral("ok|%1").arg(offers.size())
@@ -2212,6 +2220,8 @@ bool Server::sendFilesTo(const std::string &clientName, const std::vector<std::s
           },
           [this](const deskflow::TransferProgressInfo &info) { m_sendProgress.report(info); }
       )) {
+    m_sentFilesTarget.clear();
+    m_fileSendFromClipboard = false;
     ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|could not start transfer"));
     return false;
   }
