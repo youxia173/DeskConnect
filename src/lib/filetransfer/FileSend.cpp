@@ -9,6 +9,7 @@
 #include "base/EventTypes.h"
 #include "base/IEventQueue.h"
 #include "base/Log.h"
+#include "base/Stopwatch.h"
 #include "deskflow/ProtocolTypes.h"
 #include "deskflow/ProtocolUtil.h"
 
@@ -22,8 +23,10 @@ namespace deskflow {
 
 namespace {
 constexpr qint64 kFileChunkSize = 64 * 1024;
-// When unlimited, send several chunks per tick so we are not capped near one chunk/timer.
-constexpr int kFullSpeedChunksPerPump = 64; // up to 4 MiB per turn
+// Full-speed turns run until this wall time or the safety chunk cap, then yield
+// so mouse/keyboard/keepalive can run. Not a throughput ceiling.
+constexpr double kFullSpeedTurnBudgetSec = 0.020;
+constexpr int kFullSpeedMaxChunksPerPump = 512; // safety: 32 MiB max per turn
 // newOneShotTimer requires duration > 0; keep a tiny yield even at full speed.
 constexpr double kMinPumpIntervalSec = 0.001;
 } // namespace
@@ -315,11 +318,16 @@ void FileSendSession::pump()
 
   try {
     const uint64_t limitBps = effectiveLimitBytesPerSec();
-    const int maxChunks = (limitBps == 0) ? kFullSpeedChunksPerPump : 1;
+    Stopwatch turn;
+    int chunksSent = 0;
 
-    for (int chunk = 0; chunk < maxChunks; ++chunk) {
-      if (!m_active || m_stream == nullptr) {
-        return;
+    while (m_active && m_stream != nullptr) {
+      if (limitBps == 0) {
+        if (chunksSent >= kFullSpeedMaxChunksPerPump || turn.getTime() >= kFullSpeedTurnBudgetSec) {
+          break;
+        }
+      } else if (chunksSent >= 1) {
+        break;
       }
 
       if (!m_startedFile) {
@@ -356,6 +364,7 @@ void FileSendSession::pump()
       ProtocolUtil::writef(m_stream, kMsgDFileTransfer, static_cast<uint8_t>(ChunkType::DataChunk), &payload);
       m_sent += static_cast<uint64_t>(data.size());
       m_lastChunkBytes = static_cast<uint64_t>(data.size());
+      ++chunksSent;
       emitProgress(false);
 
       if (m_sent >= offer.size) {

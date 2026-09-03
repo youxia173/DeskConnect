@@ -184,14 +184,14 @@
             <item>
              <widget class="QLabel" name="lblFileTransferMaxSpeed">
               <property name="text">
-               <string>Max speed (MiB/s)</string>
+               <string>Max speed (MB/s)</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QSpinBox" name="sbFileTransferMaxSpeedMibs">
               <property name="toolTip">
-               <string>Target upload rate while speed limiting is enabled</string>
+               <string>Target upload rate in MB/s while speed limiting is enabled</string>
               </property>
               <property name="minimum">
                <number>1</number>

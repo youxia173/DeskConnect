@@ -310,7 +310,7 @@ QVariant Settings::defaultValue(const QString &key)
     return 100;
 
   if (key == FileTransfer::MaxSpeedMibs)
-    return 4; // ~4 MiB/s leaves headroom for input on the shared TCP link
+    return 4; // ~4 MB/s leaves headroom for input on the shared TCP link
 
   if (key == FileTransfer::ReceiveDir)
     return QString();

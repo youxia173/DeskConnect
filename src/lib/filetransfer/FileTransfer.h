@@ -56,6 +56,7 @@ bool isFileTransferEnabled();
 bool isTransferSpeedLimited();
 
 //! Target send rate in bytes/sec; 0 means unlimited (full speed).
+//! When limited, settings value is interpreted as MB/s (1024*1024 bytes each).
 uint64_t transferSpeedLimitBytesPerSec();
 
 //! Ensure receive directory exists; returns absolute path or empty on failure.

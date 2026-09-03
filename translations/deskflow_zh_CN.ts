@@ -1453,12 +1453,12 @@ Enabling this setting will disable the server config GUI.</source>
         <translation>仅对键鼠主机（服务器）生效。限制传输速度，让同一连接上的键鼠仍可正常使用。取消勾选即为全速传输。</translation>
     </message>
     <message>
-        <source>Max speed (MiB/s)</source>
-        <translation>最大速度 (MiB/s)</translation>
+        <source>Max speed (MB/s)</source>
+        <translation>最大速度 (MB/s)</translation>
     </message>
     <message>
-        <source>Target upload rate while speed limiting is enabled</source>
-        <translation>启用限速时的目标发送速率</translation>
+        <source>Target upload rate in MB/s while speed limiting is enabled</source>
+        <translation>启用限速时的目标发送速率（MB/s）</translation>
     </message>
     <message>
         <source>Select receive folder</source>

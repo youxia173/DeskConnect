@@ -134,7 +134,7 @@ public:
     inline static const auto MaxSizeMb = QStringLiteral("fileTransfer/maxSizeMb");
     //! When true, pace sends so mouse/keyboard stay responsive on the shared link.
     inline static const auto LimitSpeed = QStringLiteral("fileTransfer/limitSpeed");
-    //! Cap in MiB/s while LimitSpeed is enabled (ignored when unlimited).
+    //! Cap in MB/s while LimitSpeed is enabled (stored as 1024*1024 bytes/s units).
     inline static const auto MaxSpeedMibs = QStringLiteral("fileTransfer/maxSpeedMibs");
   };
 
