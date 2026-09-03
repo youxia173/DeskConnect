@@ -89,7 +89,9 @@ MainWindow::MainWindow()
 {
   ui->setupUi(this);
 
-  setWindowIcon(QIcon::fromTheme(kRevFqdnName));
+  setWindowIcon(QIcon::fromTheme(
+      kRevFqdnName, QIcon(QStringLiteral(":/icons/%1-%2/apps/64/%3.svg").arg(kAppId, iconMode(), kRevFqdnName))
+  ));
 
   addDockWidget(Qt::BottomDockWidgetArea, m_logDock);
 
@@ -745,7 +747,8 @@ void MainWindow::saveSettings() const
 
 void MainWindow::setTrayIcon()
 {
-  static const auto fallbackPath = QStringLiteral(":/icons/%1-%2/apps/64/%3");
+  // Resource paths must include .svg; kRevFqdnName is e.g. org.deskconnect.deskconnect
+  static const auto fallbackPath = QStringLiteral(":/icons/%1-%2/apps/64/%3.svg");
 
   QString themeIcon = kRevFqdnName;
   if (!Settings::value(Settings::Gui::SymbolicTrayIcon).toBool()) {
@@ -1038,7 +1041,9 @@ void MainWindow::changeEvent(QEvent *e)
   QMainWindow::changeEvent(e);
   if (e->type() == QEvent::PaletteChange) {
     updateIconTheme();
-    setWindowIcon(QIcon::fromTheme(kRevFqdnName));
+    setWindowIcon(QIcon::fromTheme(
+        kRevFqdnName, QIcon(QStringLiteral(":/icons/%1-%2/apps/64/%3.svg").arg(kAppId, iconMode(), kRevFqdnName))
+    ));
     setTrayIcon();
   } else if (e->type() == QEvent::LanguageChange) {
     ui->retranslateUi(this);

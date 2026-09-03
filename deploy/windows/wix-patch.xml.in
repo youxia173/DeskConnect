@@ -18,6 +18,7 @@
     </ServiceInstall>
     <ServiceControl Id="ServiceControl" Name="@CMAKE_PROJECT_PROPER_NAME@" Remove="uninstall" Start="install" Stop="both"/>
     <RemoveFile Id="RmOldLog" On="install" Name="deskflow-daemon.log"/>
+    <RemoveFile Id="RmOldLogDeskConnect" On="install" Name="deskconnect-daemon.log"/>
   </CPackWiXFragment>
 
   <CPackWiXFragment Id="CM_CP_deskflow_core.exe">
