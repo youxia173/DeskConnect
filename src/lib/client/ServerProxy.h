@@ -15,6 +15,7 @@
 #include "deskflow/KeyboardLayoutManager.h"
 #include "filetransfer/FileReceiveSession.h"
 #include "filetransfer/FileSend.h"
+#include "filetransfer/TransferProgress.h"
 
 #include <vector>
 
@@ -144,6 +145,8 @@ private:
   deskflow::KeyboardLayoutManager m_layoutManager;
   deskflow::FileReceiveSession m_fileReceive;
   deskflow::FileSendSession m_fileSend;
+  deskflow::TransferProgressReporter m_sendProgress;
+  deskflow::TransferProgressReporter m_recvProgress;
   std::vector<std::string> m_pendingOfferNames;
   std::vector<std::string> m_cachedReceivedPaths;
   bool m_pullWaiting = false;

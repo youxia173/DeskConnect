@@ -13,15 +13,17 @@
 #include "deskflow/ProtocolUtil.h"
 
 #include <QString>
+#include <QThread>
 
 #include <algorithm>
+#include <cmath>
 
 namespace deskflow {
 
 namespace {
 constexpr qint64 kFileChunkSize = 64 * 1024;
-// Yield between chunks so keepalives and input keep flowing.
-constexpr double kPumpIntervalSec = 0.0;
+// newOneShotTimer requires duration > 0; keep a tiny yield even at full speed.
+constexpr double kMinPumpIntervalSec = 0.001;
 } // namespace
 
 FileSendSession::~FileSendSession()
@@ -61,7 +63,11 @@ void FileSendSession::cancel()
   m_offers.clear();
   m_index = 0;
   m_sent = 0;
+  m_completedBytes = 0;
+  m_totalBytes = 0;
+  m_lastChunkBytes = 0;
   m_fingerprint.clear();
+  m_onProgress = {};
   if (wasActive) {
     invokeDone(false);
   } else {
@@ -71,7 +77,7 @@ void FileSendSession::cancel()
 
 bool FileSendSession::start(
     IStream *stream, IEventQueue *events, const std::vector<FileOffer> &offers, std::string fingerprint,
-    DoneCallback onDone
+    DoneCallback onDone, ProgressCallback onProgress
 )
 {
   if (stream == nullptr || events == nullptr || offers.empty() || !isFileTransferEnabled()) {
@@ -105,10 +111,14 @@ bool FileSendSession::start(
     }
   }
   m_onDone = {};
+  m_onProgress = {};
   m_startedFile = false;
   m_offers.clear();
   m_index = 0;
   m_sent = 0;
+  m_completedBytes = 0;
+  m_totalBytes = 0;
+  m_lastChunkBytes = 0;
   m_fingerprint.clear();
 
   m_stream = stream;
@@ -116,14 +126,26 @@ bool FileSendSession::start(
   m_offers = offers;
   m_fingerprint = std::move(fingerprint);
   m_onDone = std::move(onDone);
+  m_onProgress = std::move(onProgress);
   m_index = 0;
   m_sent = 0;
+  m_completedBytes = 0;
+  m_totalBytes = total;
   m_startedFile = false;
   m_active = true;
 
   const std::string drag = encodeDragInfo(m_offers);
   ProtocolUtil::writef(m_stream, kMsgDDragInfo, static_cast<uint16_t>(m_offers.size()), &drag);
-  LOG_INFO("sending %zu clipboard file(s) asynchronously", m_offers.size());
+  const uint64_t limitBps = transferSpeedLimitBytesPerSec();
+  if (limitBps > 0) {
+    LOG_INFO(
+        "sending %zu clipboard file(s) asynchronously (limited to %llu KiB/s)", m_offers.size(),
+        static_cast<unsigned long long>(limitBps / 1024ull)
+    );
+  } else {
+    LOG_INFO("sending %zu clipboard file(s) asynchronously (full speed)", m_offers.size());
+  }
+  emitProgress(true);
 
   schedulePump();
   return true;
@@ -135,7 +157,18 @@ void FileSendSession::schedulePump()
     return;
   }
   clearTimer();
-  m_timer = m_events->newOneShotTimer(kPumpIntervalSec, nullptr);
+
+  double interval = kMinPumpIntervalSec;
+  const uint64_t limitBps = transferSpeedLimitBytesPerSec();
+  if (limitBps > 0) {
+    const uint64_t bytes = m_lastChunkBytes > 0 ? m_lastChunkBytes : static_cast<uint64_t>(kFileChunkSize);
+    interval = static_cast<double>(bytes) / static_cast<double>(limitBps);
+    if (interval < kMinPumpIntervalSec) {
+      interval = kMinPumpIntervalSec;
+    }
+  }
+
+  m_timer = m_events->newOneShotTimer(interval, nullptr);
   m_events->addHandler(EventTypes::Timer, m_timer, [this](const auto &) { pump(); });
 }
 
@@ -157,6 +190,7 @@ bool FileSendSession::openCurrentFile()
   LOG_INFO(
       "sending file \"%s\" (%llu bytes)", offer.name.c_str(), static_cast<unsigned long long>(offer.size)
   );
+  emitProgress(true);
   return true;
 }
 
@@ -167,14 +201,20 @@ void FileSendSession::finishCurrentFile()
   if (m_file.isOpen()) {
     m_file.close();
   }
+  if (m_index < m_offers.size()) {
+    m_completedBytes += m_offers[m_index].size;
+  }
   m_startedFile = false;
   ++m_index;
   m_sent = 0;
+  m_lastChunkBytes = 0;
+  emitProgress(true);
 }
 
 void FileSendSession::completeOk()
 {
   LOG_INFO("clipboard file transfer send complete (%zu file(s))", m_offers.size());
+  emitProgress(true);
   const auto fp = m_fingerprint;
   clearTimer();
   if (m_file.isOpen()) {
@@ -187,6 +227,10 @@ void FileSendSession::completeOk()
   m_offers.clear();
   m_index = 0;
   m_sent = 0;
+  m_completedBytes = 0;
+  m_totalBytes = 0;
+  m_lastChunkBytes = 0;
+  m_onProgress = {};
   m_fingerprint = fp;
   invokeDone(true);
 }
@@ -205,8 +249,34 @@ void FileSendSession::fail(const char *reason)
   m_offers.clear();
   m_index = 0;
   m_sent = 0;
+  m_completedBytes = 0;
+  m_totalBytes = 0;
+  m_lastChunkBytes = 0;
+  m_onProgress = {};
   m_fingerprint.clear();
   invokeDone(false);
+}
+
+uint64_t FileSendSession::sessionBytesDone() const
+{
+  return m_completedBytes + m_sent;
+}
+
+void FileSendSession::emitProgress(bool force)
+{
+  if (!m_onProgress || m_offers.empty()) {
+    return;
+  }
+  TransferProgressInfo info;
+  info.sending = true;
+  info.fileCount = m_offers.size();
+  info.fileIndex = std::min(m_index, m_offers.size() - 1);
+  info.name = m_offers[info.fileIndex].name;
+  info.bytesDone = sessionBytesDone();
+  info.bytesTotal = m_totalBytes;
+  // force is reserved for call-site throttling helpers; always notify here.
+  (void)force;
+  m_onProgress(info);
 }
 
 void FileSendSession::pump()
@@ -246,6 +316,8 @@ void FileSendSession::pump()
     std::string payload(chunk.constData(), static_cast<size_t>(chunk.size()));
     ProtocolUtil::writef(m_stream, kMsgDFileTransfer, static_cast<uint8_t>(ChunkType::DataChunk), &payload);
     m_sent += static_cast<uint64_t>(chunk.size());
+    m_lastChunkBytes = static_cast<uint64_t>(chunk.size());
+    emitProgress(false);
 
     if (m_sent >= offer.size) {
       finishCurrentFile();
@@ -280,6 +352,8 @@ bool writeFileOffersToStream(IStream *stream, const std::vector<FileOffer> &offe
   const std::string drag = encodeDragInfo(offers);
   ProtocolUtil::writef(stream, kMsgDDragInfo, static_cast<uint16_t>(offers.size()), &drag);
 
+  const uint64_t limitBps = transferSpeedLimitBytesPerSec();
+
   for (const auto &offer : offers) {
     QFile file(QString::fromStdString(offer.localPath));
     if (!file.open(QIODevice::ReadOnly)) {
@@ -300,6 +374,13 @@ bool writeFileOffersToStream(IStream *stream, const std::vector<FileOffer> &offe
       std::string payload(chunk.constData(), static_cast<size_t>(chunk.size()));
       ProtocolUtil::writef(stream, kMsgDFileTransfer, static_cast<uint8_t>(ChunkType::DataChunk), &payload);
       sent += static_cast<uint64_t>(chunk.size());
+      if (limitBps > 0 && chunk.size() > 0) {
+        const double seconds = static_cast<double>(chunk.size()) / static_cast<double>(limitBps);
+        const int ms = static_cast<int>(std::ceil(seconds * 1000.0));
+        if (ms > 0) {
+          QThread::msleep(static_cast<unsigned long>(ms));
+        }
+      }
     }
 
     std::string empty;

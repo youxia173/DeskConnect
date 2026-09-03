@@ -10,6 +10,8 @@
 
 #include <QString>
 
+#include <algorithm>
+
 namespace deskflow {
 
 void FileReceiveSession::reset()
@@ -17,6 +19,7 @@ void FileReceiveSession::reset()
   closeCurrent(false);
   m_active = false;
   m_names.clear();
+  m_expectedSizes.clear();
   m_index = 0;
   m_expectedSize = 0;
   m_written = 0;
@@ -25,9 +28,12 @@ void FileReceiveSession::reset()
   m_receiveDir.clear();
   m_currentPath.clear();
   m_receivedPaths.clear();
+  m_onProgress = {};
 }
 
-bool FileReceiveSession::begin(const std::vector<std::string> &names, uint64_t maxTotalBytes)
+bool FileReceiveSession::begin(
+    const std::vector<std::string> &names, uint64_t maxTotalBytes, ProgressCallback onProgress
+)
 {
   reset();
   if (names.empty()) {
@@ -38,9 +44,12 @@ bool FileReceiveSession::begin(const std::vector<std::string> &names, uint64_t m
     return false;
   }
   m_names = names;
+  m_expectedSizes.assign(names.size(), 0);
   m_maxTotalBytes = maxTotalBytes;
+  m_onProgress = std::move(onProgress);
   m_active = true;
   LOG_INFO("receiving %zu file(s) via clipboard transfer", m_names.size());
+  emitProgress();
   return true;
 }
 
@@ -70,10 +79,12 @@ bool FileReceiveSession::openNextFile(uint64_t expectedSize)
   }
 
   m_expectedSize = expectedSize;
+  m_expectedSizes[m_index] = expectedSize;
   m_written = 0;
   LOG_INFO(
       "receiving file \"%s\" (%llu bytes)", m_names[m_index].c_str(), static_cast<unsigned long long>(expectedSize)
   );
+  emitProgress();
   return true;
 }
 
@@ -94,6 +105,40 @@ void FileReceiveSession::closeCurrent(bool success)
   }
   m_expectedSize = 0;
   m_written = 0;
+}
+
+void FileReceiveSession::emitProgress()
+{
+  if (!m_onProgress || m_names.empty()) {
+    return;
+  }
+
+  TransferProgressInfo info;
+  info.sending = false;
+  info.fileCount = m_names.size();
+  info.fileIndex = std::min(m_index, m_names.size() - 1);
+  info.name = m_names[info.fileIndex];
+  info.bytesDone = m_totalWritten + m_written;
+
+  uint64_t knownTotal = 0;
+  size_t knownCount = 0;
+  for (uint64_t size : m_expectedSizes) {
+    if (size > 0) {
+      knownTotal += size;
+      ++knownCount;
+    }
+  }
+  if (knownCount == m_names.size()) {
+    info.bytesTotal = knownTotal;
+  } else if (knownCount > 0) {
+    // Estimate remaining unknown files from the average of known sizes.
+    const double avg = static_cast<double>(knownTotal) / static_cast<double>(knownCount);
+    info.bytesTotal = knownTotal + static_cast<uint64_t>(avg * static_cast<double>(m_names.size() - knownCount));
+  } else {
+    info.bytesTotal = 0;
+  }
+
+  m_onProgress(info);
 }
 
 TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data, uint64_t maxFileBytes)
@@ -141,6 +186,7 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
       return Error;
     }
     m_written += data.size();
+    emitProgress();
     return InProgress;
   }
 
@@ -161,10 +207,12 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
         return Error;
       }
       closeCurrent(true);
+      emitProgress();
     }
     if (m_index >= m_names.size()) {
       m_active = false;
       LOG_INFO("clipboard file transfer complete (%zu file(s))", m_receivedPaths.size());
+      emitProgress();
       return Finished;
     }
     return InProgress;

@@ -179,6 +179,73 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
+    <name>FileTransferProgressPanel</name>
+    <message>
+        <source>Sending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Receiving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 KB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Estimating…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 s left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1:%2 left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1:%2:%3 left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2/%3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 / %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%p%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>FingerprintDialog</name>
     <message>
         <source>Local Fingerprints</source>
@@ -649,6 +716,10 @@ Current Wi-Fi: %1</source>
     </message>
     <message>
         <source>Could not send files. Is DeskConnect running?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(starting…)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1349,6 +1420,22 @@ Enabling this setting will disable the server config GUI.</source>
     </message>
     <message>
         <source>File transfer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slow transfers so mouse and keyboard stay usable on the shared connection. Uncheck for maximum speed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Limit speed (keep mouse/keyboard responsive)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max speed (MiB/s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target upload rate while speed limiting is enabled</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

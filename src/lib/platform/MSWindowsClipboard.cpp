@@ -13,6 +13,7 @@
 #include "platform/MSWindowsClipboardFacade.h"
 #include "platform/MSWindowsClipboardFileConverter.h"
 #include "platform/MSWindowsClipboardHTMLConverter.h"
+#include "platform/MSWindowsClipboardPNGConverter.h"
 #include "platform/MSWindowsClipboardUTF16Converter.h"
 
 #include <shlobj.h>
@@ -32,7 +33,9 @@ MSWindowsClipboard::MSWindowsClipboard(HWND window)
   // add converters, most desired first
   m_converters.push_back(new MSWindowsClipboardFileConverter);
   m_converters.push_back(new MSWindowsClipboardUTF16Converter);
+  // Prefer CF_DIB when present; fall back to registered PNG (many apps only offer PNG).
   m_converters.push_back(new MSWindowsClipboardBitmapConverter);
+  m_converters.push_back(new MSWindowsClipboardPNGConverter);
   m_converters.push_back(new MSWindowsClipboardHTMLConverter);
 }
 
@@ -123,7 +126,10 @@ void MSWindowsClipboard::add(Format format, const std::string &data)
           }
         }
         isSucceeded = true;
-        break;
+        // Text/HTML only need one representation; Bitmap should publish both CF_DIB and PNG.
+        if (format != Format::Bitmap) {
+          break;
+        }
       } else {
         LOG_DEBUG("failed to convert clipboard data to platform format");
       }
@@ -189,34 +195,29 @@ bool MSWindowsClipboard::has(Format format) const
 
 std::string MSWindowsClipboard::get(Format format) const
 {
-  // find the converter for the first clipboard format we can handle
-  IMSWindowsClipboardConverter *converter = nullptr;
+  // Prefer the first converter whose Win32 format is actually present.
   for (ConverterList::const_iterator index = m_converters.begin(); index != m_converters.end(); ++index) {
-
-    converter = *index;
-    if (converter->getFormat() == format) {
-      break;
+    IMSWindowsClipboardConverter *converter = *index;
+    if (converter->getFormat() != format) {
+      continue;
     }
-    converter = nullptr;
+    if (!IsClipboardFormatAvailable(converter->getWin32Format())) {
+      continue;
+    }
+
+    HANDLE win32Data = GetClipboardData(converter->getWin32Format());
+    if (win32Data == nullptr) {
+      continue;
+    }
+
+    auto data = converter->toIClipboard(win32Data);
+    if (!data.empty()) {
+      return data;
+    }
   }
 
-  // if no converter then we don't recognize any formats
-  if (converter == nullptr) {
-    LOG_WARN("no converter for format %d", format);
-    return std::string();
-  }
-
-  // get a handle to the clipboard data
-  HANDLE win32Data = GetClipboardData(converter->getWin32Format());
-  if (win32Data == nullptr) {
-    // nb: can't cause this using integ tests; this is only caused when
-    // the selected converter returns an invalid format -- which you
-    // cannot cause using public functions.
-    return std::string();
-  }
-
-  // convert
-  return converter->toIClipboard(win32Data);
+  LOG_DEBUG("no usable converter data for format %d", format);
+  return std::string();
 }
 
 void MSWindowsClipboard::clearConverters()

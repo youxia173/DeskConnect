@@ -33,6 +33,7 @@ class QMenu;
 class QLocalServer;
 
 class DeskflowApplication;
+class FileTransferProgressPanel;
 class LogDock;
 class StatusBar;
 
@@ -198,6 +199,7 @@ private:
 
   LogDock *m_logDock;
   StatusBar *m_statusBar = nullptr;
+  FileTransferProgressPanel *m_fileTransferPanel = nullptr;
 
   // Window Menu
   QMenu *m_menuFile = nullptr;

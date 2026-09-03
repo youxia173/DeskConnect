@@ -85,6 +85,10 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
       ${QT_DEPENDS_DIR}
       $<TARGET_FILE_DIR:${target}>
+    # windeployqt --plugindir plugins/ needs qt.conf or SVG/tray icons stay blank
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${CMAKE_SOURCE_DIR}/deploy/windows/qt.conf"
+      "$<TARGET_FILE_DIR:${target}>/qt.conf"
   )
 
   install(

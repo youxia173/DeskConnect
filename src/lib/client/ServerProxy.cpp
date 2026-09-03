@@ -25,6 +25,7 @@
 #include "filetransfer/FileReceiveSession.h"
 #include "filetransfer/FileSend.h"
 #include "filetransfer/FileTransfer.h"
+#include "filetransfer/TransferProgress.h"
 #include "io/IStream.h"
 
 #include <QFileInfo>
@@ -950,6 +951,14 @@ void ServerProxy::sendFiles(const std::vector<std::string> &paths)
     return;
   }
 
+  m_sendProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
+    ipcSendToClient(
+        QStringLiteral("fileTransfer"),
+        QStringLiteral("progress|%1").arg(QString::fromStdString(deskflow::formatTransferProgressDetail(info, bps, eta)))
+    );
+  });
+  m_sendProgress.reset();
+
   if (!m_fileSend.start(
           m_stream, m_events, offers, filesData,
           [offers](bool success) {
@@ -958,7 +967,8 @@ void ServerProxy::sendFiles(const std::vector<std::string> &paths)
             } else {
               ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer failed"));
             }
-          }
+          },
+          [this](const deskflow::TransferProgressInfo &info) { m_sendProgress.report(info); }
       )) {
     ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|could not start transfer"));
     return;
@@ -1008,7 +1018,17 @@ void ServerProxy::dragInfoReceived()
   }
   LOG_INFO("drag info from server: %zu file(s)", names.size());
   if (!m_fileReceive.isActive()) {
-    m_fileReceive.begin(names, deskflow::maxTransferBytes());
+    m_recvProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
+      ipcSendToClient(
+          QStringLiteral("fileTransfer"),
+          QStringLiteral("progress|%1")
+              .arg(QString::fromStdString(deskflow::formatTransferProgressDetail(info, bps, eta)))
+      );
+    });
+    m_recvProgress.reset();
+    m_fileReceive.begin(names, deskflow::maxTransferBytes(), [this](const deskflow::TransferProgressInfo &info) {
+      m_recvProgress.report(info);
+    });
   }
 }
 
@@ -1025,7 +1045,18 @@ void ServerProxy::fileChunkReceived()
   }
   if (!m_fileReceive.isActive()) {
     if (!m_pendingOfferNames.empty()) {
-      m_fileReceive.begin(m_pendingOfferNames, deskflow::maxTransferBytes());
+      m_recvProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
+        ipcSendToClient(
+            QStringLiteral("fileTransfer"),
+            QStringLiteral("progress|%1")
+                .arg(QString::fromStdString(deskflow::formatTransferProgressDetail(info, bps, eta)))
+        );
+      });
+      m_recvProgress.reset();
+      m_fileReceive.begin(
+          m_pendingOfferNames, deskflow::maxTransferBytes(),
+          [this](const deskflow::TransferProgressInfo &info) { m_recvProgress.report(info); }
+      );
     } else {
       LOG_WARN("file chunk from server without drag info");
       return;

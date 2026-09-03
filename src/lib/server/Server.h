@@ -17,6 +17,7 @@
 #include "deskflow/MouseTypes.h"
 #include "filetransfer/FileReceiveSession.h"
 #include "filetransfer/FileSend.h"
+#include "filetransfer/TransferProgress.h"
 #include "server/Config.h"
 
 #include <climits>
@@ -487,5 +488,7 @@ private:
 
   deskflow::FileReceiveSession m_fileReceive;
   deskflow::FileSendSession m_fileSend;
+  deskflow::TransferProgressReporter m_sendProgress;
+  deskflow::TransferProgressReporter m_recvProgress;
   std::string m_sentFilesTarget;
 };

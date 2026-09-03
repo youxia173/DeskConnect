@@ -698,8 +698,17 @@ void CoreProcess::onCoreIpcMessageReceived(const QString &command, const QString
   } else if (command == "fileTransfer") {
     const auto parts = args.split(QLatin1Char('|'));
     const auto status = parts.value(0);
-    const auto detail = parts.mid(1).join(QLatin1Char('|'));
-    Q_EMIT fileTransferStatus(status, detail);
+    if (status == QLatin1String("progress")) {
+      // progress|send|name|fileIdx|fileCount|bytesDone|bytesTotal|bps|eta
+      const bool sending = parts.value(1) != QLatin1String("recv");
+      Q_EMIT fileTransferProgress(
+          sending, parts.value(2), parts.value(3).toInt(), parts.value(4).toInt(), parts.value(5).toLongLong(),
+          parts.value(6).toLongLong(), parts.value(7).toLongLong(), parts.value(8).toInt()
+      );
+    } else {
+      const auto detail = parts.mid(1).join(QLatin1Char('|'));
+      Q_EMIT fileTransferStatus(status, detail);
+    }
   } else if (command == "fileReceived") {
     const auto parts = args.split(QLatin1Char('|'));
     Q_EMIT filesReceived(parts.value(0).toInt(), parts.mid(1).join(QLatin1Char('|')));

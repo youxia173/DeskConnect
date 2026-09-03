@@ -22,6 +22,7 @@
 #include "deskflow/ipc/CoreIpc.h"
 #include "filetransfer/FileSend.h"
 #include "filetransfer/FileTransfer.h"
+#include "filetransfer/TransferProgress.h"
 #include "net/TCPSocket.h"
 #include "server/ClientListener.h"
 #include "server/ClientProxy.h"
@@ -1447,7 +1448,9 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
 
   std::string data = clipboard.m_clipboard.marshall();
   if (data.size() > m_maximumClipboardSize * 1024) {
-    LOG_WARN("not sending clipboard data, exceeds limit: %i KB", m_maximumClipboardSize);
+    LOG_WARN(
+        "not sending clipboard data, size %zu bytes exceeds limit %zu KB", data.size(), m_maximumClipboardSize
+    );
     return;
   }
 
@@ -2188,6 +2191,14 @@ bool Server::sendFilesTo(const std::string &clientName, const std::vector<std::s
   }
 
   const std::string target = getName(dst);
+  m_sendProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
+    ipcSendToClient(
+        QStringLiteral("fileTransfer"),
+        QStringLiteral("progress|%1").arg(QString::fromStdString(deskflow::formatTransferProgressDetail(info, bps, eta)))
+    );
+  });
+  m_sendProgress.reset();
+
   if (!m_fileSend.start(
           dst->getStream(), m_events, offers, filesData,
           [offers](bool success) {
@@ -2198,7 +2209,8 @@ bool Server::sendFilesTo(const std::string &clientName, const std::vector<std::s
             } else {
               ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer failed"));
             }
-          }
+          },
+          [this](const deskflow::TransferProgressInfo &info) { m_sendProgress.report(info); }
       )) {
     ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|could not start transfer"));
     return false;
@@ -2222,7 +2234,16 @@ void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::
     return;
   }
   LOG_INFO("drag info from \"%s\": %zu file(s)", getName(sender).c_str(), names.size());
-  m_fileReceive.begin(names, deskflow::maxTransferBytes());
+  m_recvProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
+    ipcSendToClient(
+        QStringLiteral("fileTransfer"),
+        QStringLiteral("progress|%1").arg(QString::fromStdString(deskflow::formatTransferProgressDetail(info, bps, eta)))
+    );
+  });
+  m_recvProgress.reset();
+  m_fileReceive.begin(names, deskflow::maxTransferBytes(), [this](const deskflow::TransferProgressInfo &info) {
+    m_recvProgress.report(info);
+  });
 }
 
 void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data)

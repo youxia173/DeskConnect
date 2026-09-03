@@ -201,6 +201,23 @@ bool isFileTransferEnabled()
   return Settings::value(Settings::FileTransfer::Enabled).toBool();
 }
 
+bool isTransferSpeedLimited()
+{
+  return Settings::value(Settings::FileTransfer::LimitSpeed).toBool();
+}
+
+uint64_t transferSpeedLimitBytesPerSec()
+{
+  if (!isTransferSpeedLimited()) {
+    return 0;
+  }
+  const auto mibs = Settings::value(Settings::FileTransfer::MaxSpeedMibs).toULongLong();
+  if (mibs == 0) {
+    return 0;
+  }
+  return mibs * 1024ull * 1024ull;
+}
+
 std::string ensureReceiveDirectory()
 {
   QString dir = Settings::value(Settings::FileTransfer::ReceiveDir).toString();

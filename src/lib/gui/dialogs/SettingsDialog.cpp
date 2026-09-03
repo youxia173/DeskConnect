@@ -104,6 +104,8 @@ void SettingsDialog::initConnections() const
 
   connect(ui->cbRunEnterCommand, &QCheckBox::toggled, ui->lineCommandEnter, &QLineEdit::setEnabled);
   connect(ui->cbRunExitCommand, &QCheckBox::toggled, ui->lineCommandExit, &QLineEdit::setEnabled);
+  connect(ui->cbFileTransferLimitSpeed, &QCheckBox::toggled, ui->sbFileTransferMaxSpeedMibs, &QSpinBox::setEnabled);
+  connect(ui->cbFileTransferLimitSpeed, &QCheckBox::toggled, ui->lblFileTransferMaxSpeed, &QLabel::setEnabled);
 
   connect(ui->groupSecurity, &QGroupBox::toggled, this, &SettingsDialog::updateTlsControlsEnabled);
   connect(ui->groupService, &QGroupBox::toggled, this, &SettingsDialog::updateControls);
@@ -145,6 +147,11 @@ void SettingsDialog::initConnections() const
   connect(ui->cbRunExitCommand, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->lineCommandEnter, &QLineEdit::textChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->lineCommandExit, &QLineEdit::textChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->groupFileTransfer, &QGroupBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->lineFileTransferDir, &QLineEdit::textChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->sbFileTransferMaxMb, &QSpinBox::valueChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->cbFileTransferLimitSpeed, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->sbFileTransferMaxSpeedMibs, &QSpinBox::valueChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(Settings::instance(), &Settings::settingsWritableChanged, this, &SettingsDialog::updateControls);
 }
 
@@ -258,6 +265,8 @@ void SettingsDialog::accept()
   Settings::setValue(Settings::FileTransfer::Enabled, ui->groupFileTransfer->isChecked());
   Settings::setValue(Settings::FileTransfer::ReceiveDir, ui->lineFileTransferDir->text());
   Settings::setValue(Settings::FileTransfer::MaxSizeMb, ui->sbFileTransferMaxMb->value());
+  Settings::setValue(Settings::FileTransfer::LimitSpeed, ui->cbFileTransferLimitSpeed->isChecked());
+  Settings::setValue(Settings::FileTransfer::MaxSpeedMibs, ui->sbFileTransferMaxSpeedMibs->value());
 
   Settings::ProcessMode mode;
   if (ui->groupService->isChecked())
@@ -285,6 +294,10 @@ void SettingsDialog::loadFromConfig()
   ui->groupFileTransfer->setChecked(Settings::value(Settings::FileTransfer::Enabled).toBool());
   ui->lineFileTransferDir->setText(Settings::value(Settings::FileTransfer::ReceiveDir).toString());
   ui->sbFileTransferMaxMb->setValue(Settings::value(Settings::FileTransfer::MaxSizeMb).toInt());
+  ui->cbFileTransferLimitSpeed->setChecked(Settings::value(Settings::FileTransfer::LimitSpeed).toBool());
+  ui->sbFileTransferMaxSpeedMibs->setValue(Settings::value(Settings::FileTransfer::MaxSpeedMibs).toInt());
+  ui->sbFileTransferMaxSpeedMibs->setEnabled(ui->cbFileTransferLimitSpeed->isChecked());
+  ui->lblFileTransferMaxSpeed->setEnabled(ui->cbFileTransferLimitSpeed->isChecked());
   ui->cbElevateDaemon->setChecked(Settings::value(Settings::Daemon::Elevate).toBool());
   ui->cbAutoUpdate->setChecked(Settings::value(Settings::Gui::AutoUpdateCheck).toBool());
   ui->cbGuiDebug->setChecked(Settings::value(Settings::Log::GuiDebug).toBool());
@@ -474,6 +487,8 @@ bool SettingsDialog::isModified() const
       (ui->groupFileTransfer->isChecked() != Settings::value(Settings::FileTransfer::Enabled).toBool()) ||
       (ui->lineFileTransferDir->text() != Settings::value(Settings::FileTransfer::ReceiveDir).toString()) ||
       (ui->sbFileTransferMaxMb->value() != Settings::value(Settings::FileTransfer::MaxSizeMb).toInt()) ||
+      (ui->cbFileTransferLimitSpeed->isChecked() != Settings::value(Settings::FileTransfer::LimitSpeed).toBool()) ||
+      (ui->sbFileTransferMaxSpeedMibs->value() != Settings::value(Settings::FileTransfer::MaxSpeedMibs).toInt()) ||
       (I18N::nativeTo639Name(ui->comboLanguage->currentText()) != Settings::value(Settings::Core::Language).toString());
 
   if (!ignoreInterface)
@@ -514,6 +529,10 @@ bool SettingsDialog::isDefault() const
       (ui->groupFileTransfer->isChecked() == Settings::defaultValue(Settings::FileTransfer::Enabled).toBool()) &&
       (ui->lineFileTransferDir->text() == Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString()) &&
       (ui->sbFileTransferMaxMb->value() == Settings::defaultValue(Settings::FileTransfer::MaxSizeMb).toInt()) &&
+      (ui->cbFileTransferLimitSpeed->isChecked() ==
+       Settings::defaultValue(Settings::FileTransfer::LimitSpeed).toBool()) &&
+      (ui->sbFileTransferMaxSpeedMibs->value() ==
+       Settings::defaultValue(Settings::FileTransfer::MaxSpeedMibs).toInt()) &&
       (I18N::nativeTo639Name(ui->comboLanguage->currentText()) ==
        Settings::defaultValue(Settings::Core::Language).toString())
   );
@@ -540,6 +559,10 @@ void SettingsDialog::resetToDefault()
   ui->groupFileTransfer->setChecked(Settings::defaultValue(Settings::FileTransfer::Enabled).toBool());
   ui->lineFileTransferDir->setText(Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString());
   ui->sbFileTransferMaxMb->setValue(Settings::defaultValue(Settings::FileTransfer::MaxSizeMb).toInt());
+  ui->cbFileTransferLimitSpeed->setChecked(Settings::defaultValue(Settings::FileTransfer::LimitSpeed).toBool());
+  ui->sbFileTransferMaxSpeedMibs->setValue(Settings::defaultValue(Settings::FileTransfer::MaxSpeedMibs).toInt());
+  ui->sbFileTransferMaxSpeedMibs->setEnabled(ui->cbFileTransferLimitSpeed->isChecked());
+  ui->lblFileTransferMaxSpeed->setEnabled(ui->cbFileTransferLimitSpeed->isChecked());
 
   const auto autoHide = Settings::defaultValue(Settings::Gui::Autohide).toBool();
   ui->rbCloseToTray->setChecked(autoHide);

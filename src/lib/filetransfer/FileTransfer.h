@@ -52,6 +52,12 @@ uint64_t maxTransferBytes();
 //! Whether file transfer is enabled in settings.
 bool isFileTransferEnabled();
 
+//! Whether send pacing is enabled (keeps mouse/keyboard responsive).
+bool isTransferSpeedLimited();
+
+//! Target send rate in bytes/sec; 0 means unlimited (full speed).
+uint64_t transferSpeedLimitBytesPerSec();
+
 //! Ensure receive directory exists; returns absolute path or empty on failure.
 std::string ensureReceiveDirectory();
 

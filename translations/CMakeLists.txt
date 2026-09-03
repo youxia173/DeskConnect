@@ -28,6 +28,17 @@ qt_create_translation(TRS ${CMAKE_SOURCE_DIR}/src ${${CMAKE_PROJECT_NAME}_TRS} O
 #ensure that the targets are built always
 add_custom_target(app_translations ALL DEPENDS ${TRS})
 
+# Copy .qm next to the GUI binary so developer runs pick up fresh translations.
+# install() alone only updates packages; windeployqt only ships Qt's own .qm files.
+if(WIN32 OR (UNIX AND NOT APPLE))
+  add_custom_command(
+    TARGET app_translations POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/translations"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TRS} "${CMAKE_BINARY_DIR}/bin/$<CONFIG>/translations"
+    COMMENT "Copying app translations beside binaries"
+  )
+endif()
+
 if (NOT BUILD_OSX_BUNDLE)
   # install our translations
   install(FILES ${TRS} DESTINATION ${CMAKE_INSTALL_I18N_DIR})

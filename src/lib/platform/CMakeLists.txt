@@ -23,6 +23,8 @@ endif()
 
 if(WIN32)
   set(PLATFORM_SOURCES
+    ClipboardImage.cpp
+    ClipboardImage.h
     IMSWindowsClipboardFacade.h
     MSWindowsClipboard.cpp
     MSWindowsClipboard.h
@@ -36,6 +38,8 @@ if(WIN32)
     MSWindowsClipboardFileConverter.h
     MSWindowsClipboardHTMLConverter.cpp
     MSWindowsClipboardHTMLConverter.h
+    MSWindowsClipboardPNGConverter.cpp
+    MSWindowsClipboardPNGConverter.h
     MSWindowsClipboardUTF16Converter.cpp
     MSWindowsClipboardUTF16Converter.h
     MSWindowsDebugOutputter.cpp
@@ -115,6 +119,8 @@ elseif(UNIX)
   if (BUILD_X11_SUPPORT)
     configure_file(XWindowsConfig.h.in XWindowsConfig.h @ONLY)
     list(APPEND PLATFORM_SOURCES
+      ClipboardImage.cpp
+      ClipboardImage.h
       XWindowsClipboard.cpp
       XWindowsClipboard.h
       XWindowsClipboardAnyBitmapConverter.cpp
@@ -123,6 +129,8 @@ elseif(UNIX)
       XWindowsClipboardBMPConverter.h
       XWindowsClipboardHTMLConverter.cpp
       XWindowsClipboardHTMLConverter.h
+      XWindowsClipboardPNGConverter.cpp
+      XWindowsClipboardPNGConverter.h
       XWindowsClipboardTextConverter.cpp
       XWindowsClipboardTextConverter.h
       XWindowsClipboardUCS2Converter.cpp
@@ -178,6 +186,10 @@ endif()
 add_library(platform STATIC ${PLATFORM_SOURCES})
 
 target_link_libraries(platform PUBLIC client ${libs})
+
+if(WIN32)
+  target_link_libraries(platform PRIVATE Qt6::Gui)
+endif()
 
 if(UNIX)
   target_link_libraries(platform PRIVATE net app filetransfer)

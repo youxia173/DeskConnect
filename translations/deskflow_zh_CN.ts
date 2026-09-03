@@ -175,6 +175,73 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
+    <name>FileTransferProgressPanel</name>
+    <message>
+        <source>Sending</source>
+        <translation>发送</translation>
+    </message>
+    <message>
+        <source>Receiving</source>
+        <translation>接收</translation>
+    </message>
+    <message>
+        <source>%1 GB</source>
+        <translation>%1 GB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation>%1 MB</translation>
+    </message>
+    <message>
+        <source>%1 KB</source>
+        <translation>%1 KB</translation>
+    </message>
+    <message>
+        <source>%1 B</source>
+        <translation>%1 B</translation>
+    </message>
+    <message>
+        <source>Estimating…</source>
+        <translation>正在估算…</translation>
+    </message>
+    <message>
+        <source>%1 s left</source>
+        <translation>剩余 %1 秒</translation>
+    </message>
+    <message>
+        <source>%1:%2 left</source>
+        <translation>剩余 %1:%2</translation>
+    </message>
+    <message>
+        <source>%1:%2:%3 left</source>
+        <translation>剩余 %1:%2:%3</translation>
+    </message>
+    <message>
+        <source>%1 (%2/%3)</source>
+        <translation>%1（%2/%3）</translation>
+    </message>
+    <message>
+        <source>%1 / %2</source>
+        <translation>%1 / %2</translation>
+    </message>
+    <message>
+        <source>%p%</source>
+        <translation>%p%</translation>
+    </message>
+    <message>
+        <source>%1/s</source>
+        <translation>%1/s</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>完成</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>失败</translation>
+    </message>
+</context>
+<context>
     <name>FingerprintDialog</name>
     <message>
         <source>Local Fingerprints</source>
@@ -648,6 +715,10 @@ Current Wi-Fi: %1</source>
     <message>
         <source>Could not send files. Is DeskConnect running?</source>
         <translation>无法发送文件。DeskConnect 是否正在运行？</translation>
+    </message>
+    <message>
+        <source>(starting…)</source>
+        <translation>（开始中…）</translation>
     </message>
 </context>
 <context>
@@ -1348,6 +1419,22 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Max size (MB)</source>
         <translation>最大大小 (MB)</translation>
+    </message>
+    <message>
+        <source>Limit speed (keep mouse/keyboard responsive)</source>
+        <translation>限制速度（保证键鼠可操控）</translation>
+    </message>
+    <message>
+        <source>Slow transfers so mouse and keyboard stay usable on the shared connection. Uncheck for maximum speed.</source>
+        <translation>限制传输速度，让同一连接上的键鼠仍可正常使用。取消勾选即为全速传输。</translation>
+    </message>
+    <message>
+        <source>Max speed (MiB/s)</source>
+        <translation>最大速度 (MiB/s)</translation>
+    </message>
+    <message>
+        <source>Target upload rate while speed limiting is enabled</source>
+        <translation>启用限速时的目标发送速率</translation>
     </message>
     <message>
         <source>Select receive folder</source>

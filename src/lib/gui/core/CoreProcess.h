@@ -91,6 +91,10 @@ Q_SIGNALS:
   void daemonIpcClientConnectionFailed();
   void connectedClientsChanged(const QStringList &clients);
   void fileTransferStatus(const QString &status, const QString &detail);
+  void fileTransferProgress(
+      bool sending, const QString &fileName, int fileIndex, int fileCount, qint64 bytesDone, qint64 bytesTotal,
+      qint64 bytesPerSec, int etaSeconds
+  );
   void filesReceived(int count, const QString &directory);
   void securityLevelChanged(QString securityLevel);
   void unrecognisedClient(const QString &clientName);

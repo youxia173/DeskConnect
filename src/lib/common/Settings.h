@@ -132,6 +132,10 @@ public:
     inline static const auto Enabled = QStringLiteral("fileTransfer/enabled");
     inline static const auto ReceiveDir = QStringLiteral("fileTransfer/receiveDir");
     inline static const auto MaxSizeMb = QStringLiteral("fileTransfer/maxSizeMb");
+    //! When true, pace sends so mouse/keyboard stay responsive on the shared link.
+    inline static const auto LimitSpeed = QStringLiteral("fileTransfer/limitSpeed");
+    //! Cap in MiB/s while LimitSpeed is enabled (ignored when unlimited).
+    inline static const auto MaxSpeedMibs = QStringLiteral("fileTransfer/maxSpeedMibs");
   };
 
   struct Screen
@@ -334,6 +338,8 @@ private:
     , FileTransfer::Enabled
     , FileTransfer::ReceiveDir
     , FileTransfer::MaxSizeMb
+    , FileTransfer::LimitSpeed
+    , FileTransfer::MaxSpeedMibs
   };
 
   // When checking the default values this list contains the ones that default to false.
@@ -376,6 +382,7 @@ private:
     , Server::EnableClipboard
     , Server::Win32KeepForeground
     , FileTransfer::Enabled
+    , FileTransfer::LimitSpeed
   };
 
   // Settings saved in our State file

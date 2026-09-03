@@ -16,6 +16,7 @@
 #include "dialogs/AboutDialog.h"
 #include "dialogs/ClientConfigDialog.h"
 #include "dialogs/FingerprintDialog.h"
+#include "widgets/FileTransferProgressPanel.h"
 #include "dialogs/HelpDialog.h"
 #include "dialogs/ServerConfigDialog.h"
 #include "dialogs/SettingsDialog.h"
@@ -33,6 +34,7 @@
 #include "net/FingerprintDatabase.h"
 #include "widgets/StatusBar.h"
 
+#include <QApplication>
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
@@ -40,6 +42,7 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QLineEdit>
+#include <QVBoxLayout>
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QMap>
@@ -91,9 +94,21 @@ MainWindow::MainWindow()
 {
   ui->setupUi(this);
 
-  setWindowIcon(QIcon::fromTheme(
-      kRevFqdnName, QIcon(QStringLiteral(":/icons/%1-%2/apps/64/%3.svg").arg(kAppId, iconMode(), kRevFqdnName))
-  ));
+  m_fileTransferPanel = new FileTransferProgressPanel(ui->topLevelWidget);
+  if (auto *rootLayout = qobject_cast<QVBoxLayout *>(ui->topLevelWidget->layout())) {
+    rootLayout->insertWidget(rootLayout->count(), m_fileTransferPanel);
+  }
+
+  {
+    // Same as tray: Windows SVG assets can paint blank; use the app .ico.
+    if (deskflow::platform::isWindows()) {
+      setWindowIcon(QIcon(QStringLiteral(":/deskflow.ico")));
+    } else {
+      setWindowIcon(QIcon::fromTheme(
+          kRevFqdnName, QIcon(QStringLiteral(":/icons/%1-%2/apps/64/%3.svg").arg(kAppId, iconMode(), kRevFqdnName))
+      ));
+    }
+  }
 
   addDockWidget(Qt::BottomDockWidgetArea, m_logDock);
 
@@ -286,18 +301,30 @@ void MainWindow::connectSlots()
   connect(m_actionStopCore, &QAction::triggered, this, &MainWindow::stopCore);
   connect(m_actionShowHelp, &QAction::triggered, this, &MainWindow::showHelpViewer);
   connect(m_actionSendFiles, &QAction::triggered, this, &MainWindow::sendFiles);
+  connect(&m_coreProcess, &CoreProcess::fileTransferProgress, this,
+          [this](
+              bool sending, const QString &fileName, int fileIndex, int fileCount, qint64 bytesDone, qint64 bytesTotal,
+              qint64 bytesPerSec, int etaSeconds
+          ) {
+            m_fileTransferPanel->updateProgress(
+                sending, fileName, fileIndex, fileCount, bytesDone, bytesTotal, bytesPerSec, etaSeconds
+            );
+          });
   connect(&m_coreProcess, &CoreProcess::fileTransferStatus, this, [this](const QString &status, const QString &detail) {
     if (status == QLatin1String("sending")) {
       const auto msg = tr("Sending %1 file(s)…").arg(detail);
       m_statusBar->showMessage(msg, 4000);
       m_trayIcon->showMessage(kAppName, msg, QSystemTrayIcon::Information, 3000);
+      m_fileTransferPanel->updateProgress(true, tr("(starting…)"), 0, detail.toInt(), 0, 0, 0, -1);
     } else if (status == QLatin1String("ok")) {
       const auto msg = tr("Sent %1 file(s)").arg(detail);
       m_statusBar->showMessage(msg, 5000);
       m_trayIcon->showMessage(kAppName, msg, QSystemTrayIcon::Information, 4000);
+      m_fileTransferPanel->transferFinished(true, msg);
     } else if (status == QLatin1String("error")) {
       const auto msg = tr("File transfer failed: %1").arg(detail);
       m_statusBar->showMessage(msg, 8000);
+      m_fileTransferPanel->transferFinished(false, msg);
       QMessageBox::warning(this, kAppName, msg);
     }
   });
@@ -305,6 +332,7 @@ void MainWindow::connectSlots()
     const auto msg = tr("Received %1 file(s) in %2").arg(count).arg(directory);
     m_statusBar->showMessage(msg, 8000);
     m_trayIcon->showMessage(kAppName, msg, QSystemTrayIcon::Information, 5000);
+    m_fileTransferPanel->transferFinished(true, msg);
   });
 
   // Mac os tray will only show a menu
@@ -784,32 +812,31 @@ void MainWindow::setTrayIcon()
 {
   // Resource paths must include .svg; kRevFqdnName is e.g. org.deskconnect.deskconnect
   static const auto fallbackPath = QStringLiteral(":/icons/%1-%2/apps/64/%3.svg");
+  static const auto winIcoPath = QStringLiteral(":/deskflow.ico");
+
+  // Windows tray is unreliable with our SVG assets (PNG-in-SVG often paints blank once
+  // the SVG plugin loads). Always use the app .ico there so close-to-tray stays visible.
+  if (deskflow::platform::isWindows()) {
+    m_trayIcon->setIcon(QIcon(winIcoPath));
+    return;
+  }
+
+  auto applyTrayIcon = [this](QIcon icon) { m_trayIcon->setIcon(icon); };
 
   QString themeIcon = kRevFqdnName;
   if (!Settings::value(Settings::Gui::SymbolicTrayIcon).toBool()) {
     if (deskflow::platform::isMac())
-      m_trayIcon->setIcon(QIcon::fromTheme(themeIcon));
+      applyTrayIcon(QIcon::fromTheme(themeIcon));
     else
-      m_trayIcon->setIcon(QIcon(fallbackPath.arg(kAppId, QStringLiteral("dark"), themeIcon)));
+      applyTrayIcon(QIcon(fallbackPath.arg(kAppId, QStringLiteral("dark"), themeIcon)));
     return;
   }
 
   themeIcon.append(QStringLiteral("-symbolic"));
 
-  if (deskflow::platform::isWindows()) {
-    QSettings settings(
-        QStringLiteral("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"),
-        QSettings::NativeFormat
-    );
-    const QString theme = settings.value(QStringLiteral("SystemUsesLightTheme"), 1).toBool() ? QStringLiteral("light")
-                                                                                             : QStringLiteral("dark");
-    m_trayIcon->setIcon(QIcon(fallbackPath.arg(kAppId, theme, themeIcon)));
-    return;
-  }
-
   auto icon = QIcon::fromTheme(themeIcon, QIcon(fallbackPath.arg(kAppId, iconMode(), themeIcon)));
   icon.setIsMask(true);
-  m_trayIcon->setIcon(icon);
+  applyTrayIcon(icon);
 }
 
 void MainWindow::handleLogLine(const QString &line)
@@ -949,7 +976,12 @@ bool MainWindow::maybeHideToTray()
     Settings::setValue(Settings::Gui::CloseReminder, false);
   }
   Settings::setValue(Settings::Gui::WindowGeometry, geometry());
+  qApp->setQuitOnLastWindowClosed(false);
   qDebug() << "hiding to tray";
+  setTrayIcon();
+  if (!m_trayIcon->isVisible()) {
+    m_trayIcon->show();
+  }
   hide();
   return true;
 }
@@ -1078,9 +1110,13 @@ void MainWindow::changeEvent(QEvent *e)
   QMainWindow::changeEvent(e);
   if (e->type() == QEvent::PaletteChange) {
     updateIconTheme();
-    setWindowIcon(QIcon::fromTheme(
-        kRevFqdnName, QIcon(QStringLiteral(":/icons/%1-%2/apps/64/%3.svg").arg(kAppId, iconMode(), kRevFqdnName))
-    ));
+    if (deskflow::platform::isWindows()) {
+      setWindowIcon(QIcon(QStringLiteral(":/deskflow.ico")));
+    } else {
+      setWindowIcon(QIcon::fromTheme(
+          kRevFqdnName, QIcon(QStringLiteral(":/icons/%1-%2/apps/64/%3.svg").arg(kAppId, iconMode(), kRevFqdnName))
+      ));
+    }
     setTrayIcon();
   } else if (e->type() == QEvent::LanguageChange) {
     ui->retranslateUi(this);

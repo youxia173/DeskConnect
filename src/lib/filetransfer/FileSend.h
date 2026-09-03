@@ -7,6 +7,7 @@
 #pragma once
 
 #include "filetransfer/FileTransfer.h"
+#include "filetransfer/TransferProgress.h"
 #include "io/IStream.h"
 
 #include <QFile>
@@ -30,6 +31,7 @@ class FileSendSession
 {
 public:
   using DoneCallback = std::function<void(bool success)>;
+  using ProgressCallback = std::function<void(const TransferProgressInfo &)>;
 
   FileSendSession() = default;
   FileSendSession(const FileSendSession &) = delete;
@@ -39,9 +41,10 @@ public:
   //! Begin sending. Cancels any in-progress send first.
   //! \p fingerprint identifies clipboard file payload (skip duplicate sends).
   //! \p onDone optional; invoked when the send finishes or fails/cancels.
+  //! \p onProgress optional; invoked as chunks are written (may be frequent).
   bool start(
       IStream *stream, IEventQueue *events, const std::vector<FileOffer> &offers, std::string fingerprint,
-      DoneCallback onDone = {}
+      DoneCallback onDone = {}, ProgressCallback onProgress = {}
   );
 
   void cancel();
@@ -63,6 +66,8 @@ private:
   void completeOk();
   void fail(const char *reason);
   void invokeDone(bool success);
+  void emitProgress(bool force = false);
+  uint64_t sessionBytesDone() const;
 
   IStream *m_stream = nullptr;
   IEventQueue *m_events = nullptr;
@@ -71,10 +76,14 @@ private:
   size_t m_index = 0;
   QFile m_file;
   uint64_t m_sent = 0;
+  uint64_t m_completedBytes = 0;
+  uint64_t m_totalBytes = 0;
+  uint64_t m_lastChunkBytes = 0;
   bool m_active = false;
   bool m_startedFile = false;
   std::string m_fingerprint;
   DoneCallback m_onDone;
+  ProgressCallback m_onProgress;
 };
 
 //! Legacy helper: start a throwaway session (prefer FileSendSession members).

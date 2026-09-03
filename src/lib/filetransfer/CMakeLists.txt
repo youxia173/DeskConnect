@@ -8,6 +8,8 @@ add_library(filetransfer STATIC
   FileReceiveSession.h
   FileSend.cpp
   FileSend.h
+  TransferProgress.cpp
+  TransferProgress.h
 )
 
 # ProtocolUtil lives in app; consumers (server/client/core) already link app.

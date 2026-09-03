@@ -304,10 +304,13 @@ QVariant Settings::defaultValue(const QString &key)
     return 250;
 
   if (key == Server::ClipboardSize)
-    return 3; // 3 MiB
+    return 32; // 32 MiB (screenshots as DIB often exceed the old 3 MiB default)
 
   if (key == FileTransfer::MaxSizeMb)
     return 100;
+
+  if (key == FileTransfer::MaxSpeedMibs)
+    return 4; // ~4 MiB/s leaves headroom for input on the shared TCP link
 
   if (key == FileTransfer::ReceiveDir)
     return QString();
