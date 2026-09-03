@@ -81,7 +81,15 @@ void XWindowsEventQueueBuffer::waitForEvent(double dtimeout)
   pfds[0].events = POLLIN;
   pfds[1].fd = m_pipefd[0];
   pfds[1].events = POLLIN;
-  int timeout = (dtimeout < 0.0) ? -1 : static_cast<int>(1000.0 * dtimeout);
+  // Round short timeouts up to 1ms so we never busy-spin, but never force a
+  // 25ms wait when the next timer is due sooner (file-transfer pumps).
+  int timeout = -1;
+  if (dtimeout >= 0.0) {
+    timeout = static_cast<int>(1000.0 * dtimeout + 0.5);
+    if (timeout < 1) {
+      timeout = 1;
+    }
+  }
   int remaining = timeout;
   int retval = 0;
 
@@ -99,9 +107,15 @@ void XWindowsEventQueueBuffer::waitForEvent(double dtimeout)
   static const int s_timeoutDelay = 25;
 
   while (((dtimeout < 0.0) || (remaining > 0)) && getPendingCountLocked() == 0 && retval == 0) {
+    int slice = s_timeoutDelay;
+    if (remaining >= 0) {
+      slice = remaining < s_timeoutDelay ? remaining : s_timeoutDelay;
+      if (slice <= 0) {
+        break;
+      }
+    }
 
-    retval = poll(pfds, 2, s_timeoutDelay); // 16ms = 60hz, but we make it > to
-                                            // play nicely with the cpu
+    retval = poll(pfds, 2, slice);
     if (pfds[1].revents & POLLIN) {
       ssize_t read_response = read(m_pipefd[0], buf, 15);
 
@@ -110,7 +124,9 @@ void XWindowsEventQueueBuffer::waitForEvent(double dtimeout)
         // todo: handle read response
       }
     }
-    remaining -= s_timeoutDelay;
+    if (remaining >= 0) {
+      remaining -= slice;
+    }
   }
 
   {

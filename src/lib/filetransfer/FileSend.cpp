@@ -22,6 +22,8 @@ namespace deskflow {
 
 namespace {
 constexpr qint64 kFileChunkSize = 64 * 1024;
+// When unlimited, send several chunks per tick so we are not capped near one chunk/timer.
+constexpr int kFullSpeedChunksPerPump = 64; // up to 4 MiB per turn
 // newOneShotTimer requires duration > 0; keep a tiny yield even at full speed.
 constexpr double kMinPumpIntervalSec = 0.001;
 } // namespace
@@ -312,42 +314,61 @@ void FileSendSession::pump()
   }
 
   try {
-    if (!m_startedFile) {
-      if (m_index >= m_offers.size()) {
-        completeOk();
+    const uint64_t limitBps = effectiveLimitBytesPerSec();
+    const int maxChunks = (limitBps == 0) ? kFullSpeedChunksPerPump : 1;
+
+    for (int chunk = 0; chunk < maxChunks; ++chunk) {
+      if (!m_active || m_stream == nullptr) {
         return;
       }
-      if (!openCurrentFile()) {
-        fail("could not open next file");
+
+      if (!m_startedFile) {
+        if (m_index >= m_offers.size()) {
+          completeOk();
+          return;
+        }
+        if (!openCurrentFile()) {
+          fail("could not open next file");
+          return;
+        }
+      }
+
+      const auto &offer = m_offers[m_index];
+      if (m_sent >= offer.size) {
+        finishCurrentFile();
+        // Continue into the next file within this burst when unlimited.
+        if (limitBps != 0) {
+          schedulePump();
+          return;
+        }
+        continue;
+      }
+
+      const qint64 toRead = static_cast<qint64>(std::min<uint64_t>(
+          static_cast<uint64_t>(kFileChunkSize), offer.size - m_sent
+      ));
+      const QByteArray data = m_file.read(toRead);
+      if (data.isEmpty() && m_sent < offer.size) {
+        fail("unexpected EOF");
         return;
+      }
+      std::string payload(data.constData(), static_cast<size_t>(data.size()));
+      ProtocolUtil::writef(m_stream, kMsgDFileTransfer, static_cast<uint8_t>(ChunkType::DataChunk), &payload);
+      m_sent += static_cast<uint64_t>(data.size());
+      m_lastChunkBytes = static_cast<uint64_t>(data.size());
+      emitProgress(false);
+
+      if (m_sent >= offer.size) {
+        finishCurrentFile();
+        if (limitBps != 0) {
+          break;
+        }
       }
     }
 
-    const auto &offer = m_offers[m_index];
-    if (m_sent >= offer.size) {
-      finishCurrentFile();
+    if (m_active) {
       schedulePump();
-      return;
     }
-
-    const qint64 toRead = static_cast<qint64>(std::min<uint64_t>(
-        static_cast<uint64_t>(kFileChunkSize), offer.size - m_sent
-    ));
-    const QByteArray chunk = m_file.read(toRead);
-    if (chunk.isEmpty() && m_sent < offer.size) {
-      fail("unexpected EOF");
-      return;
-    }
-    std::string payload(chunk.constData(), static_cast<size_t>(chunk.size()));
-    ProtocolUtil::writef(m_stream, kMsgDFileTransfer, static_cast<uint8_t>(ChunkType::DataChunk), &payload);
-    m_sent += static_cast<uint64_t>(chunk.size());
-    m_lastChunkBytes = static_cast<uint64_t>(chunk.size());
-    emitProgress(false);
-
-    if (m_sent >= offer.size) {
-      finishCurrentFile();
-    }
-    schedulePump();
   } catch (...) {
     fail("write failed");
   }
