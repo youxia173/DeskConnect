@@ -127,6 +127,13 @@ public:
     inline static const auto XdpRestoreToken = QStringLiteral("server/xdpRestoreToken");
   };
 
+  struct FileTransfer
+  {
+    inline static const auto Enabled = QStringLiteral("fileTransfer/enabled");
+    inline static const auto ReceiveDir = QStringLiteral("fileTransfer/receiveDir");
+    inline static const auto MaxSizeMb = QStringLiteral("fileTransfer/maxSizeMb");
+  };
+
   struct Screen
   {
     inline static const auto Aliases = QStringLiteral("screen_%1/aliases");
@@ -323,6 +330,9 @@ private:
     , Server::SwitchDelay
     , Server::SwitchDoubleTap
     , Server::Win32KeepForeground
+    , FileTransfer::Enabled
+    , FileTransfer::ReceiveDir
+    , FileTransfer::MaxSizeMb
   };
 
   // When checking the default values this list contains the ones that default to false.
@@ -363,6 +373,7 @@ private:
     , Security::CheckPeers
     , Server::EnableClipboard
     , Server::Win32KeepForeground
+    , FileTransfer::Enabled
   };
 
   // Settings saved in our State file

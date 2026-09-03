@@ -250,6 +250,12 @@ QVariant Settings::defaultValue(const QString &key)
   if (key == Server::ClipboardSize)
     return 3; // 3 MiB
 
+  if (key == FileTransfer::MaxSizeMb)
+    return 100;
+
+  if (key == FileTransfer::ReceiveDir)
+    return QString();
+
   return QVariant();
 }
 

@@ -40,7 +40,7 @@ add_library(server STATIC
   Server.h
 )
 
-target_link_libraries(server PUBLIC common)
+target_link_libraries(server PUBLIC common filetransfer)
 
 if(UNIX)
   target_link_libraries(server PUBLIC app)

@@ -7,6 +7,7 @@
 #include "platform/PortalClipboard.h"
 
 #include "base/Log.h"
+#include "filetransfer/FileTransfer.h"
 #include "platform/EiClipboard.h"
 
 #include <cstring>
@@ -105,6 +106,11 @@ QByteArray PortalClipboard::encodeFormat(IClipboard::Format format, const QByteA
   if (data.isEmpty())
     return {};
 
+  if (format == IClipboard::Format::Files) {
+    const auto uriList = deskflow::uriListFromClipboardData(data.toStdString());
+    return QByteArray::fromStdString(uriList);
+  }
+
   if (format == IClipboard::Format::Bitmap) {
     const auto bmpFile = dibToBmp(data);
     if (bmpFile.isEmpty()) {
@@ -135,6 +141,11 @@ QByteArray PortalClipboard::decodeFormat(IClipboard::Format format, const QByteA
 {
   if (bytes.isEmpty())
     return {};
+
+  if (format == IClipboard::Format::Files) {
+    const auto paths = deskflow::clipboardDataFromUriList(bytes.toStdString());
+    return QByteArray::fromStdString(paths);
+  }
 
   if (format == IClipboard::Format::Bitmap) {
     QImage image;
@@ -300,9 +311,11 @@ bool PortalClipboard::readSelectionIntoCache(
       continue;
     }
 
-    if (entry.format != IClipboard::Format::Bitmap) {
+    if (entry.format != IClipboard::Format::Bitmap && entry.format != IClipboard::Format::Files) {
       while (bytes.endsWith('\0'))
         bytes.chop(1);
+      bytes.replace("\r\n", "\n");
+    } else if (entry.format == IClipboard::Format::Files) {
       bytes.replace("\r\n", "\n");
     }
 

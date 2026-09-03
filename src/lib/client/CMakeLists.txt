@@ -10,4 +10,4 @@ add_library(client STATIC
   ServerProxy.h
 )
 
-target_link_libraries(client PUBLIC common)
+target_link_libraries(client PUBLIC common filetransfer)

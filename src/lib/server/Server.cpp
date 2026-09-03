@@ -19,6 +19,8 @@
 #include "deskflow/Screen.h"
 #include "deskflow/StreamChunker.h"
 #include "deskflow/ipc/CoreIpc.h"
+#include "filetransfer/FileSend.h"
+#include "filetransfer/FileTransfer.h"
 #include "net/TCPSocket.h"
 #include "server/ClientListener.h"
 #include "server/ClientProxy.h"
@@ -487,6 +489,11 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
         }
         m_active->setClipboard(id, &m_clipboards[id].m_clipboard);
       }
+    }
+
+    // Clipboard file transfer: primary → secondary when entering a remote screen.
+    if (m_active != m_primaryClient) {
+      sendClipboardFilesTo(m_active);
     }
 
     auto *info = new Server::SwitchToScreenInfo(m_active->getName());
@@ -2047,4 +2054,83 @@ void Server::forceLeaveClient(const BaseClientProxy *client)
 
   // tell primary client about the active sides
   m_primaryClient->reconfigure(getActivePrimarySides());
+}
+
+void Server::sendClipboardFilesTo(BaseClientProxy *dst)
+{
+  if (dst == nullptr || dst == m_primaryClient || dst->getStream() == nullptr) {
+    return;
+  }
+  if (!deskflow::isFileTransferEnabled()) {
+    return;
+  }
+
+  Clipboard clipboard;
+  if (!m_primaryClient->getClipboard(kClipboardClipboard, &clipboard)) {
+    return;
+  }
+  if (!clipboard.has(IClipboard::Format::Files)) {
+    return;
+  }
+
+  const auto offers = deskflow::fileOffersFromClipboardData(clipboard.get(IClipboard::Format::Files));
+  if (offers.empty()) {
+    return;
+  }
+
+  LOG_INFO("sending %zu clipboard file(s) to \"%s\"", offers.size(), getName(dst).c_str());
+  deskflow::writeFileOffersToStream(dst->getStream(), offers);
+}
+
+void Server::applyReceivedFiles(const std::vector<std::string> &paths)
+{
+  if (paths.empty() || m_primaryClient == nullptr) {
+    return;
+  }
+
+  Clipboard clipboard;
+  if (!clipboard.open(0)) {
+    return;
+  }
+  clipboard.empty();
+  clipboard.add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
+  clipboard.close();
+  m_primaryClient->setClipboard(kClipboardClipboard, &clipboard);
+  LOG_INFO("clipboard ready with %zu received file(s) — paste to place them", paths.size());
+}
+
+void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::string &info)
+{
+  if (!deskflow::isFileTransferEnabled()) {
+    return;
+  }
+  auto names = deskflow::decodeDragInfo(info);
+  if (names.size() != fileCount && fileCount != 0) {
+    LOG_WARN("drag info count mismatch: header=%u decoded=%zu", fileCount, names.size());
+  }
+  if (names.empty()) {
+    return;
+  }
+  LOG_INFO("drag info from \"%s\": %zu file(s)", getName(sender).c_str(), names.size());
+  m_fileReceive.begin(names, deskflow::maxTransferBytes());
+}
+
+void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data)
+{
+  if (!deskflow::isFileTransferEnabled()) {
+    return;
+  }
+  if (!m_fileReceive.isActive()) {
+    LOG_WARN("file chunk from \"%s\" without drag info", getName(sender).c_str());
+    return;
+  }
+
+  const auto state = m_fileReceive.onChunk(mark, data, deskflow::maxTransferBytes());
+  if (state == TransferState::Finished) {
+    applyReceivedFiles(m_fileReceive.receivedPaths());
+    m_fileReceive.reset();
+  } else if (state == TransferState::Error) {
+    LOG_ERR("file transfer from \"%s\" failed", getName(sender).c_str());
+    m_fileReceive.reset();
+  }
 }

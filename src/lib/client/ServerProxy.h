@@ -13,6 +13,7 @@
 #include "deskflow/ClipboardTypes.h"
 #include "deskflow/KeyTypes.h"
 #include "deskflow/KeyboardLayoutManager.h"
+#include "filetransfer/FileReceiveSession.h"
 
 class Client;
 class ClientInfo;
@@ -49,6 +50,8 @@ public:
   void onInfoChanged();
   bool onGrabClipboard(ClipboardID);
   void onClipboardChanged(ClipboardID, const IClipboard *);
+  void sendClipboardFiles();
+  void applyReceivedFiles(const std::vector<std::string> &paths);
 
   //@}
 
@@ -102,6 +105,8 @@ private:
   void secureInputNotification();
   void setServerLanguages();
   void setActiveServerLanguage(const std::string_view &language);
+  void dragInfoReceived();
+  void fileChunkReceived();
 
 private:
   using MessageParser = ConnectionResult (ServerProxy::*)(const uint8_t *);
@@ -132,4 +137,5 @@ private:
   ClipboardChunkAssemblyState m_clipboardChunkState;
   bool m_isUserNotifiedAboutLayoutSyncError = false;
   deskflow::KeyboardLayoutManager m_layoutManager;
+  deskflow::FileReceiveSession m_fileReceive;
 };

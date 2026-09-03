@@ -93,6 +93,10 @@ std::string IClipboard::marshall(const IClipboard *clipboard)
     uint32_t size = 4;
     uint32_t numFormats = 0;
     for (uint32_t format = 0; format != totalClipboardFormats; ++format) {
+      // Files are transferred via DFTR/DDRG, not the clipboard channel.
+      if (static_cast<IClipboard::Format>(format) == IClipboard::Format::Files) {
+        continue;
+      }
       if (clipboard->has(static_cast<IClipboard::Format>(format))) {
         ++numFormats;
         formatData[format] = clipboard->get(static_cast<IClipboard::Format>(format));
@@ -106,6 +110,9 @@ std::string IClipboard::marshall(const IClipboard *clipboard)
     // marshall the data
     writeUInt32(&data, numFormats);
     for (uint32_t format = 0; format != totalClipboardFormats; ++format) {
+      if (static_cast<IClipboard::Format>(format) == IClipboard::Format::Files) {
+        continue;
+      }
       if (clipboard->has(static_cast<IClipboard::Format>(format))) {
         writeUInt32(&data, format);
         writeUInt32(&data, (uint32_t)formatData[format].size());

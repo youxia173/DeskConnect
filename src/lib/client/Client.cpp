@@ -247,6 +247,11 @@ bool Client::leave()
     }
   }
 
+  // Clipboard file transfer: secondary → primary when leaving this screen.
+  if (m_server != nullptr) {
+    m_server->sendClipboardFiles();
+  }
+
   return true;
 }
 

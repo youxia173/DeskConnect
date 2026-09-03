@@ -15,6 +15,7 @@
 #include "deskflow/ClipboardTypes.h"
 #include "deskflow/KeyTypes.h"
 #include "deskflow/MouseTypes.h"
+#include "filetransfer/FileReceiveSession.h"
 #include "server/Config.h"
 
 #include <climits>
@@ -200,9 +201,17 @@ public:
   void sendConnectedClientsIpc() const;
   size_t getMaximumClipboardSizeBytes() const;
 
+  //! Handle DDRG from a secondary client
+  void onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::string &info);
+  //! Handle DFTR from a secondary client
+  void onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data);
+
   //@}
 
 private:
+  void sendClipboardFilesTo(BaseClientProxy *dst);
+  void applyReceivedFiles(const std::vector<std::string> &paths);
+
   // get canonical name of client
   std::string getName(const BaseClientProxy *) const;
 
@@ -468,4 +477,6 @@ private:
   bool m_defaultLockToScreenState = false;
   bool m_disableLockToScreen = false;
   bool m_enableClipboard = true;
+
+  deskflow::FileReceiveSession m_fileReceive;
 };

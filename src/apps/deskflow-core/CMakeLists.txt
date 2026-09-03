@@ -36,6 +36,7 @@ target_link_libraries(
   platform
   server
   app
+  filetransfer
   Qt6::Widgets
   ${libs})
 

@@ -45,12 +45,18 @@ public:
   \c kHTML is a text format encoded in UTF-8 and containing a valid
   HTML fragment (but not necessarily a complete HTML document).
   Newlines are LF.
+
+  \c Files is a local-only format: UTF-8 absolute paths separated by
+  NUL bytes (and typically terminated by an extra NUL). It is not
+  marshalled over the network clipboard channel; file contents use
+  the DFTR/DDRG transfer path instead.
   */
   enum class Format
   {
     Text,        //!< Text format, UTF-8, newline is LF
     HTML,        //!< HTML format, HTML fragment, UTF-8, newline is LF
     Bitmap,      //!< Bitmap format, BMP 24/32bpp, BI_RGB
+    Files,       //!< Local file paths, UTF-8, NUL-separated
     TotalFormats //!< The number of clipboard formats supported
   };
 

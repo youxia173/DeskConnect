@@ -47,8 +47,8 @@ private:
   mutable std::mutex m_mutex;
   bool m_owner = false;
   Time m_timeOwned = 0;
-  bool m_added[static_cast<int>(Format::TotalFormats)] = {false, false, false};
-  std::string m_data[static_cast<int>(Format::TotalFormats)] = {"", "", ""};
+  bool m_added[static_cast<int>(Format::TotalFormats)] = {};
+  std::string m_data[static_cast<int>(Format::TotalFormats)] = {};
 };
 
 } // namespace deskflow

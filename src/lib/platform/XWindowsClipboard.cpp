@@ -15,6 +15,7 @@
 #include "platform/XWindowsClipboardHTMLConverter.h"
 #include "platform/XWindowsClipboardTextConverter.h"
 #include "platform/XWindowsClipboardUCS2Converter.h"
+#include "platform/XWindowsClipboardURIListConverter.h"
 #include "platform/XWindowsClipboardUTF8Converter.h"
 #include "platform/XWindowsUtil.h"
 
@@ -60,6 +61,7 @@ XWindowsClipboard::XWindowsClipboard(Display *display, Window window, ClipboardI
   }
 
   // add converters, most desired first
+  m_converters.push_back(new XWindowsClipboardURIListConverter(m_display));
   m_converters.push_back(new XWindowsClipboardHTMLConverter(m_display, "text/html"));
   m_converters.push_back(new XWindowsClipboardHTMLConverter(m_display, "application/x-moz-nativehtml"));
   m_converters.push_back(new XWindowsClipboardBMPConverter(m_display));

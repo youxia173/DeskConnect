@@ -27,6 +27,7 @@ public:
 
   // Listed in preference order: richer formats first.
   static constexpr SupportedMime kSupportedMimes[] = {
+      {"text/uri-list", IClipboard::Format::Files},
       {"image/png", IClipboard::Format::Bitmap},
       {"text/plain;charset=utf-8", IClipboard::Format::Text},
       {"text/plain", IClipboard::Format::Text},

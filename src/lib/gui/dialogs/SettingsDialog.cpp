@@ -112,6 +112,7 @@ void SettingsDialog::initConnections() const
   connect(ui->comboTlsKeyLength, &QComboBox::currentIndexChanged, this, &SettingsDialog::updateRequestedKeySize);
   connect(ui->btnTlsCertPath, &QPushButton::clicked, this, &SettingsDialog::browseCertificatePath);
   connect(ui->btnBrowseLog, &QPushButton::clicked, this, &SettingsDialog::browseLogPath);
+  connect(ui->btnBrowseFileTransferDir, &QPushButton::clicked, this, &SettingsDialog::browseFileTransferDir);
   connect(ui->groupLogToFile, &QGroupBox::toggled, this, &SettingsDialog::setLogToFile);
   connect(ui->comboLogLevel, &QComboBox::currentIndexChanged, this, &SettingsDialog::logLevelChanged);
   connect(ui->comboLanguage, &QComboBox::currentTextChanged, this, [](const QString &lang) {
@@ -184,6 +185,15 @@ void SettingsDialog::browseLogPath()
   }
 }
 
+void SettingsDialog::browseFileTransferDir()
+{
+  const QString dir =
+      QFileDialog::getExistingDirectory(this, tr("Select receive folder"), ui->lineFileTransferDir->text());
+  if (!dir.isEmpty()) {
+    ui->lineFileTransferDir->setText(dir);
+  }
+}
+
 void SettingsDialog::setLogToFile(bool logToFile)
 {
   ui->widgetLogFilename->setEnabled(logToFile);
@@ -245,6 +255,9 @@ void SettingsDialog::accept()
   Settings::setValue(Settings::Core::EnableExitCommand, ui->cbRunExitCommand->isChecked());
   Settings::setValue(Settings::Core::ScreenEnterCommand, ui->lineCommandEnter->text());
   Settings::setValue(Settings::Core::ScreenExitCommand, ui->lineCommandExit->text());
+  Settings::setValue(Settings::FileTransfer::Enabled, ui->groupFileTransfer->isChecked());
+  Settings::setValue(Settings::FileTransfer::ReceiveDir, ui->lineFileTransferDir->text());
+  Settings::setValue(Settings::FileTransfer::MaxSizeMb, ui->sbFileTransferMaxMb->value());
 
   Settings::ProcessMode mode;
   if (ui->groupService->isChecked())
@@ -269,6 +282,9 @@ void SettingsDialog::loadFromConfig()
   ui->groupLogToFile->setChecked(Settings::value(Settings::Log::ToFile).toBool());
   ui->lineLogFilename->setText(Settings::value(Settings::Log::File).toString());
   ui->cbPreventSleep->setChecked(Settings::value(Settings::Core::PreventSleep).toBool());
+  ui->groupFileTransfer->setChecked(Settings::value(Settings::FileTransfer::Enabled).toBool());
+  ui->lineFileTransferDir->setText(Settings::value(Settings::FileTransfer::ReceiveDir).toString());
+  ui->sbFileTransferMaxMb->setValue(Settings::value(Settings::FileTransfer::MaxSizeMb).toInt());
   ui->cbElevateDaemon->setChecked(Settings::value(Settings::Daemon::Elevate).toBool());
   ui->cbAutoUpdate->setChecked(Settings::value(Settings::Gui::AutoUpdateCheck).toBool());
   ui->cbGuiDebug->setChecked(Settings::value(Settings::Log::GuiDebug).toBool());
@@ -455,6 +471,9 @@ bool SettingsDialog::isModified() const
       (ui->cbRunExitCommand->isChecked() != Settings::value(Settings::Core::EnableExitCommand).toBool()) ||
       (ui->lineCommandEnter->text() != Settings::value(Settings::Core::ScreenEnterCommand).toString()) ||
       (ui->lineCommandExit->text() != Settings::value(Settings::Core::ScreenExitCommand).toString()) ||
+      (ui->groupFileTransfer->isChecked() != Settings::value(Settings::FileTransfer::Enabled).toBool()) ||
+      (ui->lineFileTransferDir->text() != Settings::value(Settings::FileTransfer::ReceiveDir).toString()) ||
+      (ui->sbFileTransferMaxMb->value() != Settings::value(Settings::FileTransfer::MaxSizeMb).toInt()) ||
       (I18N::nativeTo639Name(ui->comboLanguage->currentText()) != Settings::value(Settings::Core::Language).toString());
 
   if (!ignoreInterface)
@@ -492,6 +511,9 @@ bool SettingsDialog::isDefault() const
       (ui->lineCommandExit->text() == Settings::defaultValue(Settings::Core::ScreenExitCommand).toString()) &&
       (ui->cbRunEnterCommand->isChecked() == Settings::defaultValue(Settings::Core::EnableEnterCommand).toBool()) &&
       (ui->cbRunExitCommand->isChecked() == Settings::defaultValue(Settings::Core::EnableExitCommand).toBool()) &&
+      (ui->groupFileTransfer->isChecked() == Settings::defaultValue(Settings::FileTransfer::Enabled).toBool()) &&
+      (ui->lineFileTransferDir->text() == Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString()) &&
+      (ui->sbFileTransferMaxMb->value() == Settings::defaultValue(Settings::FileTransfer::MaxSizeMb).toInt()) &&
       (I18N::nativeTo639Name(ui->comboLanguage->currentText()) ==
        Settings::defaultValue(Settings::Core::Language).toString())
   );
@@ -515,6 +537,9 @@ void SettingsDialog::resetToDefault()
   ui->cbRunExitCommand->setChecked(Settings::defaultValue(Settings::Core::EnableExitCommand).toBool());
   ui->lineCommandEnter->setText(Settings::defaultValue(Settings::Core::ScreenEnterCommand).toString());
   ui->lineCommandExit->setText(Settings::defaultValue(Settings::Core::ScreenExitCommand).toString());
+  ui->groupFileTransfer->setChecked(Settings::defaultValue(Settings::FileTransfer::Enabled).toBool());
+  ui->lineFileTransferDir->setText(Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString());
+  ui->sbFileTransferMaxMb->setValue(Settings::defaultValue(Settings::FileTransfer::MaxSizeMb).toInt());
 
   const auto autoHide = Settings::defaultValue(Settings::Gui::Autohide).toBool();
   ui->rbCloseToTray->setChecked(autoHide);

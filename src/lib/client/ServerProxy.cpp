@@ -19,6 +19,8 @@
 #include "deskflow/ProtocolUtil.h"
 #include "deskflow/StreamChunker.h"
 #include "deskflow/ipc/CoreIpc.h"
+#include "filetransfer/FileSend.h"
+#include "filetransfer/FileTransfer.h"
 #include "io/IStream.h"
 
 #include <cstring>
@@ -295,6 +297,14 @@ ServerProxy::ConnectionResult ServerProxy::parseMessage(const uint8_t *code)
 
   else if (memcmp(code, kMsgDClipboard, 4) == 0) {
     setClipboard();
+  }
+
+  else if (memcmp(code, kMsgDDragInfo, 4) == 0) {
+    dragInfoReceived();
+  }
+
+  else if (memcmp(code, kMsgDFileTransfer, 4) == 0) {
+    fileChunkReceived();
   }
 
   else if (memcmp(code, kMsgCResetOptions, 4) == 0) {
@@ -874,5 +884,90 @@ void ServerProxy::setActiveServerLanguage(const std::string_view &language)
     }
   } else {
     LOG_VERBOSE("active server layout is empty");
+  }
+}
+
+void ServerProxy::sendClipboardFiles()
+{
+  if (!deskflow::isFileTransferEnabled()) {
+    return;
+  }
+
+  Clipboard clipboard;
+  if (!m_client->getClipboard(kClipboardClipboard, &clipboard)) {
+    return;
+  }
+  if (!clipboard.has(IClipboard::Format::Files)) {
+    return;
+  }
+
+  const auto offers = deskflow::fileOffersFromClipboardData(clipboard.get(IClipboard::Format::Files));
+  if (offers.empty()) {
+    return;
+  }
+
+  LOG_INFO("sending %zu clipboard file(s) to server", offers.size());
+  deskflow::writeFileOffersToStream(m_stream, offers);
+}
+
+void ServerProxy::applyReceivedFiles(const std::vector<std::string> &paths)
+{
+  if (paths.empty()) {
+    return;
+  }
+
+  Clipboard clipboard;
+  if (!clipboard.open(0)) {
+    return;
+  }
+  clipboard.empty();
+  clipboard.add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
+  clipboard.close();
+  m_client->setClipboard(kClipboardClipboard, &clipboard);
+  LOG_INFO("clipboard ready with %zu received file(s) — paste to place them", paths.size());
+}
+
+void ServerProxy::dragInfoReceived()
+{
+  uint16_t fileCount = 0;
+  std::string info;
+  if (!ProtocolUtil::readf(m_stream, kMsgDDragInfo + 4, &fileCount, &info)) {
+    LOG_ERR("failed to read drag info from server");
+    return;
+  }
+  if (!deskflow::isFileTransferEnabled()) {
+    return;
+  }
+  auto names = deskflow::decodeDragInfo(info);
+  if (names.empty()) {
+    return;
+  }
+  LOG_INFO("drag info from server: %zu file(s)", names.size());
+  m_fileReceive.begin(names, deskflow::maxTransferBytes());
+}
+
+void ServerProxy::fileChunkReceived()
+{
+  uint8_t mark = 0;
+  std::string data;
+  if (!ProtocolUtil::readf(m_stream, kMsgDFileTransfer + 4, &mark, &data)) {
+    LOG_ERR("failed to read file transfer chunk from server");
+    return;
+  }
+  if (!deskflow::isFileTransferEnabled()) {
+    return;
+  }
+  if (!m_fileReceive.isActive()) {
+    LOG_WARN("file chunk from server without drag info");
+    return;
+  }
+
+  const auto state = m_fileReceive.onChunk(mark, data, deskflow::maxTransferBytes());
+  if (state == TransferState::Finished) {
+    applyReceivedFiles(m_fileReceive.receivedPaths());
+    m_fileReceive.reset();
+  } else if (state == TransferState::Error) {
+    LOG_ERR("file transfer from server failed");
+    m_fileReceive.reset();
   }
 }

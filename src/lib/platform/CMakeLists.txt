@@ -32,6 +32,8 @@ if(WIN32)
     MSWindowsClipboardBitmapConverter.h
     MSWindowsClipboardFacade.cpp
     MSWindowsClipboardFacade.h
+    MSWindowsClipboardFileConverter.cpp
+    MSWindowsClipboardFileConverter.h
     MSWindowsClipboardHTMLConverter.cpp
     MSWindowsClipboardHTMLConverter.h
     MSWindowsClipboardUTF16Converter.cpp
@@ -125,6 +127,8 @@ elseif(UNIX)
       XWindowsClipboardTextConverter.h
       XWindowsClipboardUCS2Converter.cpp
       XWindowsClipboardUCS2Converter.h
+      XWindowsClipboardURIListConverter.cpp
+      XWindowsClipboardURIListConverter.h
       XWindowsClipboardUTF8Converter.cpp
       XWindowsClipboardUTF8Converter.h
       XWindowsEventQueueBuffer.cpp
@@ -176,7 +180,7 @@ add_library(platform STATIC ${PLATFORM_SOURCES})
 target_link_libraries(platform PUBLIC client ${libs})
 
 if(UNIX)
-  target_link_libraries(platform PRIVATE net app)
+  target_link_libraries(platform PRIVATE net app filetransfer)
 
   if(APPLE)
     find_library(COCOA_LIBRARY Cocoa)
