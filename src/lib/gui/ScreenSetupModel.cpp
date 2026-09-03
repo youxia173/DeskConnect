@@ -15,7 +15,7 @@
 #include <QIcon>
 #include <QMimeData>
 
-const QString ScreenSetupModel::m_MimeType = "application/x-deskflow-screen";
+const QString ScreenSetupModel::m_MimeType = "application/x-deskconnect-screen";
 
 ScreenSetupModel::ScreenSetupModel(ScreenList &screens, int numColumns, int numRows)
     : QAbstractTableModel(nullptr),

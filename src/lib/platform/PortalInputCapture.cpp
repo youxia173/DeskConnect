@@ -297,7 +297,9 @@ void PortalInputCapture::setupSession(XdpInputCaptureSession *session)
   XdpSession *parentSession = xdp_input_capture_session_get_session(session);
 
 #ifdef HAVE_LIBPORTAL_CLIPBOARD
-  if (!xdp_session_is_clipboard_enabled(parentSession) && m_portalVersion > 1) {
+  if (xdp_session_is_clipboard_enabled(parentSession)) {
+    LOG_INFO("portal clipboard enabled on input capture session");
+  } else if (m_portalVersion > 1) {
     // Restored sessions can pre-date clipboard support, leaving the channel
     // disabled even though we requested it. Drop the saved token and recreate
     // the session from scratch so the user gets a fresh permission dialog.
@@ -309,6 +311,16 @@ void PortalInputCapture::setupSession(XdpInputCaptureSession *session)
     m_session = nullptr;
     g_idle_add([](gpointer data) { return static_cast<PortalInputCapture *>(data)->initSession(); }, this);
     return;
+  } else {
+    // IC portal v1 starts the session inside CreateSession, so RequestClipboard
+    // cannot run before Start (required by the Clipboard portal). Ubuntu 24.04
+    // GNOME reports version 1 — Wayland clipboard sync needs a newer portal.
+    LOG_WARN(
+        "portal clipboard unavailable: input capture version %d cannot enable "
+        "clipboard (need CreateSession2 / portal v2+). On GNOME Wayland use "
+        "Xorg session, or upgrade xdg-desktop-portal",
+        m_portalVersion
+    );
   }
 #endif
 
@@ -352,6 +364,12 @@ void PortalInputCapture::handleInitSession(GObject *object, GAsyncResult *res)
   }
 
   m_session = session;
+
+#ifdef HAVE_LIBPORTAL_CLIPBOARD
+  // Input capture portal v1 uses this async create path and never reaches the
+  // session2 code that requests clipboard. Request it here so Wayland can sync.
+  xdp_session_request_clipboard(xdp_input_capture_session_get_session(session));
+#endif
 
   setupSession(session);
 }

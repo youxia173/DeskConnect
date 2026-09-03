@@ -197,8 +197,12 @@ void MainWindow::restoreWindow()
     move(screenGeometry.center() - rect().center());
   }
 
-  if (!Settings::value(Settings::Gui::LogExpanded).toBool())
-    setFixedSize(size());
+  if (!Settings::value(Settings::Gui::LogExpanded).toBool()) {
+    // Do not use setFixedSize(): on GNOME/Wayland it can make the window immovable.
+    setMinimumSize(sizeHint());
+    setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    adjustSize();
+  }
 }
 
 void MainWindow::setupControls()
@@ -331,12 +335,13 @@ void MainWindow::toggleLogVisible(bool visible)
     return;
   }
 
-  setFixedSize(16777215, 16777215);
+  // Clear any previous size lock so Wayland compositors still allow dragging.
+  setMinimumSize(0, 0);
+  setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
   Settings::setValue(Settings::Gui::LogExpanded, visible);
   if (visible) {
     if (m_logDock->isFloating()) {
       adjustSize();
-      setFixedSize(size());
     } else {
       QTimer::singleShot(15, this, [&] { resize(m_expandedSize); });
     }
@@ -348,7 +353,7 @@ void MainWindow::toggleLogVisible(bool visible)
     if (!m_logDock->isFloating()) {
       adjustSize();
     }
-    setFixedSize(size());
+    setMinimumSize(sizeHint());
   }
   Settings::setValue(Settings::Gui::WindowGeometry, geometry());
 }
@@ -649,8 +654,9 @@ void MainWindow::open()
   const auto kCriticalDialogDelay = 100;
   QTimer::singleShot(kCriticalDialogDelay, this, &messages::raiseCriticalDialog);
 
+  // Default: do not prompt or check for updates on first launch.
   if (!Settings::value(Settings::Gui::AutoUpdateCheck).isValid()) {
-    Settings::setValue(Settings::Gui::AutoUpdateCheck, messages::showUpdateCheckOption(this));
+    Settings::setValue(Settings::Gui::AutoUpdateCheck, false);
   }
 
   if (Settings::value(Settings::Gui::AutoUpdateCheck).toBool()) {

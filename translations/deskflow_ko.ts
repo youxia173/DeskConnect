@@ -1285,6 +1285,30 @@ Enabling this setting will disable the server config GUI.</source>
         <source>Launch at login</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Clipboard file transfer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Receive folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads/DeskConnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max size (MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select receive folder</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SettingsDialogButtonBox</name>

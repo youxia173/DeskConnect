@@ -11,13 +11,50 @@ install(
   DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
 )
 
-# Install our icon
-install(FILES ${MY_DIR}/org.deskflow.deskflow.png DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps/)
+# On Ubuntu/Debian, system Qt is often too old. After app targets install ELF
+# binaries into bindir, relocate them and put Qt-aware wrappers on PATH.
+if(UNIX AND NOT APPLE)
+  set(_dc_wrapper "${MY_DIR}/deskflow-wrapper.sh")
+  install(CODE [[
+    file(MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib/deskconnect")
+    foreach(_bin deskflow deskflow-core)
+      set(_src "${CMAKE_INSTALL_PREFIX}/bin/${_bin}")
+      set(_dst "${CMAKE_INSTALL_PREFIX}/lib/deskconnect/${_bin}")
+      if(EXISTS "${_src}")
+        file(READ "${_src}" _hdr LIMIT 4)
+        if(_hdr MATCHES "^\x7fELF")
+          file(RENAME "${_src}" "${_dst}")
+        endif()
+      endif()
+    endforeach()
+  ]])
+  install(PROGRAMS ${_dc_wrapper} DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME deskflow)
+  install(PROGRAMS ${_dc_wrapper} DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME deskflow-core)
+endif()
+
+# Install app icons (unique DeskConnect name to avoid Flatpak Deskflow icon clash)
+foreach(_size 48 64 128 256 512)
+  install(
+    FILES ${MY_DIR}/icons/hicolor/${_size}x${_size}/apps/org.deskconnect.deskconnect.png
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${_size}x${_size}/apps/
+  )
+endforeach()
+# Keep legacy filename for older desktop/metainfo references
+install(
+  FILES ${MY_DIR}/org.deskconnect.deskconnect.png
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps/
+  RENAME org.deskflow.deskflow.png
+)
 
 # Install our symbolic icon
 install(
-  FILES ${CMAKE_SOURCE_DIR}/src/apps/res/icons/deskflow-light/apps/64/org.deskflow.deskflow-symbolic.svg
+  FILES ${MY_DIR}/org.deskconnect.deskconnect-symbolic.svg
   DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/symbolic/apps/
+)
+install(
+  FILES ${MY_DIR}/org.deskconnect.deskconnect-symbolic.svg
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/symbolic/apps/
+  RENAME org.deskflow.deskflow-symbolic.svg
 )
 
 # Install our metainfo

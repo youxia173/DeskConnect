@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     return s_exitSuccess;
   }
 
-  const auto shmId = QStringLiteral("%1-gui").arg(kAppId);
+  const auto shmId = QStringLiteral("%1-gui").arg(kAppFileId);
   // Create a shared memory segment with a unique key
   // This is to prevent a new instance from running if one is already running
   QSharedMemory sharedMemory(shmId);

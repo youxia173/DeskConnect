@@ -224,6 +224,7 @@ private:
    * It does not remove any keys, only copies the old value to the new setings key
    */
   void upgradeSettings();
+  void migrateLegacyFileNames();
   void cleanSettings();
   void cleanStateSettings();
 
@@ -339,6 +340,7 @@ private:
   inline static const QStringList m_defaultFalseValues = {
       Gui::Autohide
     , Gui::AutoStartCore
+    , Gui::AutoUpdateCheck
     , Gui::LaunchAtLogin
     , Gui::ShownFirstConnectedMessage
     , Gui::ShownServerFirstStartMessage

@@ -9,6 +9,7 @@
 
 const auto kAppName = "@CMAKE_PROJECT_PROPER_NAME@";
 const auto kAppId = "@CMAKE_PROJECT_NAME@";
+const auto kAppFileId = "@CMAKE_PROJECT_FILE_ID@";
 const auto kAppDescription = "@CMAKE_PROJECT_DESCRIPTION@";
 const auto kDaemonBinName = "@CMAKE_PROJECT_NAME@-daemon";
 const auto kDaemonIpcName = "@CMAKE_PROJECT_NAME@-daemon";

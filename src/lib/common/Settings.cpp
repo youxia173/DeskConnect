@@ -12,6 +12,7 @@
 
 #include <QCoreApplication>
 #include <QFile>
+#include <QFileInfo>
 #include <QFileSystemWatcher>
 #include <QRect>
 #include <QRegularExpression>
@@ -40,6 +41,7 @@ void Settings::setSettingsFile(const QString &settingsFile)
   qInfo().noquote() << "settings file changed:" << instance()->m_settings->fileName();
 
   instance()->upgradeSettings();
+  instance()->migrateLegacyFileNames();
   instance()->cleanSettings();
   instance()->cleanStateSettings();
   instance()->setupComputerName();
@@ -96,6 +98,7 @@ Settings::Settings(QObject *parent) : QObject(parent), m_settingsWatcher{new QFi
   m_stateSettings = new QSettings(stateFile, QSettings::IniFormat, this);
 
   upgradeSettings();
+  migrateLegacyFileNames();
   cleanSettings();
   cleanStateSettings();
   setupComputerName();
@@ -118,6 +121,59 @@ void Settings::upgradeSettings()
       m_settings->setValue(newKey, m_settings->value(oldKey));
     }
   }
+}
+
+void Settings::migrateLegacyFileNames()
+{
+  // Older DeskConnect builds used the technical id "deskflow" for on-disk files.
+  static constexpr auto kLegacyFileId = "deskflow";
+  if (QString::fromUtf8(kAppFileId) == QLatin1String(kLegacyFileId))
+    return;
+
+  auto migrateFile = [](const QString &oldPath, const QString &newPath) {
+    if (oldPath == newPath || QFile::exists(newPath) || !QFile::exists(oldPath))
+      return;
+    QDir().mkpath(QFileInfo(newPath).absolutePath());
+    if (!QFile::rename(oldPath, newPath))
+      QFile::copy(oldPath, newPath);
+  };
+
+  auto rewriteSettingPath = [this](const QString &key, const QString &oldPath, const QString &newPath) {
+    if (!m_settings->contains(key))
+      return;
+    const auto current = m_settings->value(key).toString();
+    if (current == oldPath || current.endsWith(QStringLiteral("/%1").arg(QFileInfo(oldPath).fileName())))
+      m_settings->setValue(key, newPath);
+  };
+
+  const auto cfgPath = QFileInfo(m_settings->fileName()).absolutePath();
+  const auto tlsPath = QStringLiteral("%1/tls").arg(cfgPath);
+
+  const auto oldPem = QStringLiteral("%1/%2.pem").arg(tlsPath, kLegacyFileId);
+  const auto newPem = QStringLiteral("%1/%2.pem").arg(tlsPath, kAppFileId);
+  migrateFile(oldPem, newPem);
+  rewriteSettingPath(Security::Certificate, oldPem, newPem);
+
+  const auto oldServerConf = QStringLiteral("%1/%2-server.conf").arg(cfgPath, kLegacyFileId);
+  const auto newServerConf = QStringLiteral("%1/%2-server.conf").arg(cfgPath, kAppFileId);
+  migrateFile(oldServerConf, newServerConf);
+  rewriteSettingPath(Server::ExternalConfigFile, oldServerConf, newServerConf);
+
+  const auto oldDaemonLog = QStringLiteral("%1/%2-daemon.log").arg(cfgPath, kLegacyFileId);
+  const auto newDaemonLog = QStringLiteral("%1/%2-daemon.log").arg(cfgPath, kAppFileId);
+  migrateFile(oldDaemonLog, newDaemonLog);
+  rewriteSettingPath(Daemon::LogFile, oldDaemonLog, newDaemonLog);
+
+  const auto oldHomeLog = QStringLiteral("%1/%2.log").arg(QDir::homePath(), kLegacyFileId);
+  const auto newHomeLog = QStringLiteral("%1/%2.log").arg(QDir::homePath(), kAppFileId);
+  migrateFile(oldHomeLog, newHomeLog);
+  rewriteSettingPath(Log::File, oldHomeLog, newHomeLog);
+
+  const auto oldAutostart = QStringLiteral("%1/.config/autostart/%2.desktop").arg(QDir::homePath(), kLegacyFileId);
+  const auto newAutostart = QStringLiteral("%1/.config/autostart/%2.desktop").arg(QDir::homePath(), kAppFileId);
+  migrateFile(oldAutostart, newAutostart);
+
+  m_settings->sync();
 }
 
 void Settings::cleanSettings()
@@ -196,13 +252,13 @@ QVariant Settings::defaultValue(const QString &key)
     return true;
 
   if (key == Security::Certificate)
-    return QStringLiteral("%1/%2.pem").arg(Settings::tlsDir(), kAppId);
+    return QStringLiteral("%1/%2.pem").arg(Settings::tlsDir(), kAppFileId);
 
   if (key == Security::KeySize)
     return 2048;
 
   if (key == Log::File)
-    return QStringLiteral("%1/%2.log").arg(QDir::homePath(), kAppId);
+    return QStringLiteral("%1/%2.log").arg(QDir::homePath(), kAppFileId);
 
   if (key == Log::Level)
     return QVariant::fromValue(LogLevel::Level::Info).toString();
@@ -214,7 +270,7 @@ QVariant Settings::defaultValue(const QString &key)
     return kUrlUpdateCheck;
 
   if (key == Server::ExternalConfigFile)
-    return QStringLiteral("%1/%2-server.conf").arg(Settings::settingsPath(), kAppId);
+    return QStringLiteral("%1/%2-server.conf").arg(Settings::settingsPath(), kAppFileId);
 
   if (key == Core::Port)
     return 24800;
@@ -227,7 +283,7 @@ QVariant Settings::defaultValue(const QString &key)
   }
 
   if (key == Daemon::LogFile)
-    return QStringLiteral("%1/%2-daemon.log").arg(Settings::settingsPath(), kAppId);
+    return QStringLiteral("%1/%2-daemon.log").arg(Settings::settingsPath(), kAppFileId);
 
   if (key == Client::YScrollScale || key == Client::XScrollScale)
     return 1.0;

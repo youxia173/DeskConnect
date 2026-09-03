@@ -22,7 +22,7 @@ namespace {
 #if defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD) || defined(Q_OS_OPENBSD) || defined(Q_OS_NETBSD)
 QString linuxDesktopPath()
 {
-  return QStringLiteral("%1/.config/autostart/%2.desktop").arg(QDir::homePath(), kAppId);
+  return QStringLiteral("%1/.config/autostart/%2.desktop").arg(QDir::homePath(), kAppFileId);
 }
 #endif
 

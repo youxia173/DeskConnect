@@ -100,6 +100,9 @@ project(
 
 # Define Additional "PROJECT" vars for packaging and metadata
 set(CMAKE_PROJECT_PROPER_NAME "DeskConnect")
+# User-facing file stem (certs, logs, server conf). Keep CMAKE_PROJECT_NAME as
+# deskflow so binaries, IPC names, and translation files stay compatible.
+set(CMAKE_PROJECT_FILE_ID "deskconnect")
 set(CMAKE_PROJECT_VENDOR "${CMAKE_PROJECT_PROPER_NAME}")
 set(CMAKE_PROJECT_COPYRIGHT "(C) 2024-2026 ${CMAKE_PROJECT_VENDOR}")
 set(CMAKE_PROJECT_CONTACT "${CMAKE_PROJECT_PROPER_NAME}")
@@ -116,7 +119,7 @@ message(STATUS "Building ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}")
 # Set lib versions
 set(REQUIRED_OPENSSL_VERSION 3.0)
 set(REQUIRED_LIBEI_VERSION 1.3)
-set(REQUIRED_LIBPORTAL_VERSION 0.9.1)
+set(REQUIRED_LIBPORTAL_VERSION 0.10.0)
 set(REQUIRED_QT_VERSION 6.7.0)
 
 if (WIN32)
