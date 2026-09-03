@@ -1,0 +1,21 @@
+#!/bin/sh
+# Strip Cursor agent Co-authored-by trailers from commit messages.
+MSG_FILE="$1"
+[ -f "$MSG_FILE" ] || exit 0
+# portable in-place edit
+tmp="$(mktemp)"
+grep -viE '^[[:space:]]*Co-authored-by:[[:space:]]*Cursor[[:space:]]*<cursoragent@cursor\.com>[[:space:]]*$' \
+  "$MSG_FILE" > "$tmp" || true
+# Also drop a trailing blank line left behind after removing the trailer
+# Collapse excessive trailing blank lines to a single newline at EOF
+awk '
+  { lines[NR] = $0 }
+  END {
+    end = NR
+    while (end > 0 && lines[end] ~ /^[[:space:]]*$/) end--
+    for (i = 1; i <= end; i++) print lines[i]
+    if (end > 0) print ""
+  }
+' "$tmp" > "$MSG_FILE"
+rm -f "$tmp"
+exit 0

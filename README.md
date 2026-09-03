@@ -69,8 +69,11 @@ sudo ./install.sh
 | `kdeconnect-kde/` | KDE Connect 桌面端源码，供后续参考，未接入当前构建 |
 | `docs/` | 上游开发文档 |
 | `dist/` | 本地打包输出（不入库） |
+| `.githooks/` | Git 钩子（提交时自动去掉 Cursor co-author） |
 
 配置与 TLS 证书默认在 `~/.config/DeskConnect/`（证书文件为 `tls/deskconnect.pem`）。
+
+新克隆若要用仓库自带钩子，可执行：`git config core.hooksPath .githooks`（本机已安装到 `.git/hooks/`）。
 
 ## 编译
 
