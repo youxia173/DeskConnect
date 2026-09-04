@@ -18,6 +18,7 @@
 #include "platform/XWindowsClipboardUCS2Converter.h"
 #include "platform/XWindowsClipboardURIListConverter.h"
 #include "platform/XWindowsClipboardUTF8Converter.h"
+#include "platform/ClipboardImage.h"
 #include "platform/XWindowsUtil.h"
 
 #include <X11/Xatom.h>
@@ -63,8 +64,11 @@ XWindowsClipboard::XWindowsClipboard(Display *display, Window window, ClipboardI
 
   // add converters, most desired first
   m_converters.push_back(new XWindowsClipboardURIListConverter(m_display));
-  // Prefer PNG/BMP before HTML so image copies (e.g. QQ) resolve to Bitmap first.
-  m_converters.push_back(new XWindowsClipboardPNGConverter(m_display));
+  // Prefer common image MIME types before HTML (QQ often mislabels JPEG as PNG).
+  m_converters.push_back(new XWindowsClipboardPNGConverter(m_display, "image/png"));
+  m_converters.push_back(new XWindowsClipboardPNGConverter(m_display, "image/jpeg"));
+  m_converters.push_back(new XWindowsClipboardPNGConverter(m_display, "image/jpg"));
+  m_converters.push_back(new XWindowsClipboardPNGConverter(m_display, "image/webp"));
   m_converters.push_back(new XWindowsClipboardBMPConverter(m_display));
   m_converters.push_back(new XWindowsClipboardHTMLConverter(m_display, "text/html"));
   m_converters.push_back(new XWindowsClipboardHTMLConverter(m_display, "application/x-moz-nativehtml"));
@@ -524,14 +528,35 @@ void XWindowsClipboard::icccmFillCache()
       continue;
     }
 
-    // add to clipboard and note we've done it
-    m_data[formatID] = converter->toIClipboard(targetData);
+    // add to clipboard and note we've done it (skip failed conversions)
+    std::string converted = converter->toIClipboard(targetData);
+    if (converted.empty()) {
+      LOG_DEBUG(
+          "  converter produced no data for target %s (%zu raw bytes)",
+          XWindowsUtil::atomToString(m_display, target).c_str(), targetData.size()
+      );
+      continue;
+    }
+    m_data[formatID] = std::move(converted);
     m_added[formatID] = true;
     LOG(
         (CLOG_DEBUG "added format %d for target %s (%u %s)", formatID,
          XWindowsUtil::atomToString(m_display, target).c_str(), targetData.size(),
          targetData.size() == 1 ? "byte" : "bytes")
     );
+  }
+
+  // QQ chat images often advertise image/png but hand us undecodable bytes;
+  // fall back to a local file:// path embedded in text/html.
+  const auto bitmapId = static_cast<int>(IClipboard::Format::Bitmap);
+  const auto htmlId = static_cast<int>(IClipboard::Format::HTML);
+  if (!m_added[bitmapId] && m_added[htmlId]) {
+    auto dib = deskflow::ClipboardImage::dibFromHtml(m_data[htmlId]);
+    if (!dib.empty()) {
+      m_data[bitmapId] = std::move(dib);
+      m_added[bitmapId] = true;
+      LOG_DEBUG("added format %d from HTML local image path", bitmapId);
+    }
   }
 }
 
@@ -750,9 +775,28 @@ void XWindowsClipboard::motifFillCache()
     }
 
     // add to clipboard and note we've done it
-    m_data[formatID] = converter->toIClipboard(targetData);
+    std::string converted = converter->toIClipboard(targetData);
+    if (converted.empty()) {
+      LOG_DEBUG(
+          "  converter produced no data for target %s (%zu raw bytes)",
+          XWindowsUtil::atomToString(m_display, target).c_str(), targetData.size()
+      );
+      continue;
+    }
+    m_data[formatID] = std::move(converted);
     m_added[formatID] = true;
     LOG_DEBUG("added format %d for target %s", format, XWindowsUtil::atomToString(m_display, target).c_str());
+  }
+
+  const auto bitmapId = static_cast<int>(IClipboard::Format::Bitmap);
+  const auto htmlId = static_cast<int>(IClipboard::Format::HTML);
+  if (!m_added[bitmapId] && m_added[htmlId]) {
+    auto dib = deskflow::ClipboardImage::dibFromHtml(m_data[htmlId]);
+    if (!dib.empty()) {
+      m_data[bitmapId] = std::move(dib);
+      m_added[bitmapId] = true;
+      LOG_DEBUG("added format %d from HTML local image path", bitmapId);
+    }
   }
 }
 

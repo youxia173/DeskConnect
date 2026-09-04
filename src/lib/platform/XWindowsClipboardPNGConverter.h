@@ -12,7 +12,7 @@
 class XWindowsClipboardPNGConverter : public IXWindowsClipboardConverter
 {
 public:
-  explicit XWindowsClipboardPNGConverter(Display *display);
+  explicit XWindowsClipboardPNGConverter(Display *display, const char *name = "image/png");
   ~XWindowsClipboardPNGConverter() override = default;
 
   IClipboard::Format getFormat() const override;

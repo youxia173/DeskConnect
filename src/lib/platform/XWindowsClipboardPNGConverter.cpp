@@ -10,8 +10,8 @@
 
 #include "platform/XWindowsClipboardPNGConverter.h"
 
-XWindowsClipboardPNGConverter::XWindowsClipboardPNGConverter(Display *display)
-    : m_atom(XInternAtom(display, "image/png", False))
+XWindowsClipboardPNGConverter::XWindowsClipboardPNGConverter(Display *display, const char *name)
+    : m_atom(XInternAtom(display, name, False))
 {
 }
 

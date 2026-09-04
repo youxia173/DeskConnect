@@ -10,7 +10,10 @@
 
 #include <QBuffer>
 #include <QDataStream>
+#include <QFile>
 #include <QImage>
+#include <QRegularExpression>
+#include <QUrl>
 #include <QtEndian>
 
 #include <cstring>
@@ -21,6 +24,31 @@ namespace {
 constexpr int kBmpFileHeaderSize = 14;
 constexpr int kBmpSignatureSize = 2;
 constexpr quint32 kMinDibHeaderSize = 40;
+
+std::string qImageToDib(QImage image)
+{
+  if (image.isNull()) {
+    return {};
+  }
+
+  // Prefer 32bpp so alpha survives; fall back to 24bpp RGB.
+  if (image.hasAlphaChannel()) {
+    image = image.convertToFormat(QImage::Format_ARGB32);
+  } else {
+    image = image.convertToFormat(QImage::Format_RGB888);
+  }
+
+  QByteArray bmp;
+  QBuffer buf(&bmp);
+  buf.open(QIODevice::WriteOnly);
+  if (!image.save(&buf, "BMP")) {
+    LOG_WARN("failed to encode clipboard image as bmp");
+    return {};
+  }
+
+  const auto dib = ClipboardImage::bmpFileToDib(bmp);
+  return std::string(dib.constData(), static_cast<size_t>(dib.size()));
+}
 } // namespace
 
 QByteArray ClipboardImage::dibToBmpFile(const QByteArray &dib)
@@ -64,29 +92,80 @@ std::string ClipboardImage::pngToDib(const std::string &png)
     return {};
   }
 
+  const auto *bytes = reinterpret_cast<const uchar *>(png.data());
+  const int size = static_cast<int>(png.size());
+
   QImage image;
-  if (!image.loadFromData(reinterpret_cast<const uchar *>(png.data()), static_cast<int>(png.size()), "PNG")) {
-    LOG_DEBUG("clipboard png decode failed (%zu bytes)", png.size());
+  // Auto-detect first: QQ often labels JPEG/WebP as image/png.
+  if (!image.loadFromData(bytes, size) && !image.loadFromData(bytes, size, "PNG") &&
+      !image.loadFromData(bytes, size, "JPEG") && !image.loadFromData(bytes, size, "JPG") &&
+      !image.loadFromData(bytes, size, "WEBP") && !image.loadFromData(bytes, size, "GIF") &&
+      !image.loadFromData(bytes, size, "BMP")) {
+    LOG_DEBUG(
+        "clipboard image decode failed (%zu bytes, magic=%02x%02x%02x%02x)", png.size(),
+        size > 0 ? bytes[0] : 0, size > 1 ? bytes[1] : 0, size > 2 ? bytes[2] : 0, size > 3 ? bytes[3] : 0
+    );
     return {};
   }
 
-  // Prefer 32bpp so alpha survives; fall back to 24bpp RGB.
-  if (image.hasAlphaChannel()) {
-    image = image.convertToFormat(QImage::Format_ARGB32);
-  } else {
-    image = image.convertToFormat(QImage::Format_RGB888);
-  }
+  return qImageToDib(image);
+}
 
-  QByteArray bmp;
-  QBuffer buf(&bmp);
-  buf.open(QIODevice::WriteOnly);
-  if (!image.save(&buf, "BMP")) {
-    LOG_WARN("failed to encode clipboard image as bmp");
+std::string ClipboardImage::fileToDib(const std::string &path)
+{
+  if (path.empty()) {
+    return {};
+  }
+  QImage image(QString::fromStdString(path));
+  if (image.isNull()) {
+    LOG_DEBUG("clipboard image file load failed: %s", path.c_str());
+    return {};
+  }
+  LOG_DEBUG("loaded clipboard image from file (%s)", path.c_str());
+  return qImageToDib(image);
+}
+
+std::string ClipboardImage::dibFromHtml(const std::string &html)
+{
+  if (html.empty()) {
     return {};
   }
 
-  const auto dib = bmpFileToDib(bmp);
-  return std::string(dib.constData(), static_cast<size_t>(dib.size()));
+  const QString text = QString::fromUtf8(html.data(), static_cast<int>(html.size()));
+  static const QRegularExpression re(
+      QStringLiteral(R"((?:src|href)\s*=\s*["']([^"']+)["'])"), QRegularExpression::CaseInsensitiveOption
+  );
+
+  QRegularExpressionMatchIterator it = re.globalMatch(text);
+  while (it.hasNext()) {
+    const QString ref = it.next().captured(1).trimmed();
+    if (ref.isEmpty() || ref.startsWith(QLatin1String("data:"), Qt::CaseInsensitive)) {
+      continue;
+    }
+
+    QString path;
+    const QUrl url(ref);
+    if (url.isLocalFile()) {
+      path = url.toLocalFile();
+    } else if (ref.startsWith(QLatin1String("file:"), Qt::CaseInsensitive)) {
+      path = QUrl(ref).toLocalFile();
+    } else if (ref.startsWith(QLatin1Char('/'))) {
+      path = ref;
+    } else {
+      continue;
+    }
+
+    if (path.isEmpty() || !QFile::exists(path)) {
+      continue;
+    }
+
+    auto dib = fileToDib(path.toStdString());
+    if (!dib.empty()) {
+      return dib;
+    }
+  }
+
+  return {};
 }
 
 std::string ClipboardImage::dibToPng(const std::string &dib)

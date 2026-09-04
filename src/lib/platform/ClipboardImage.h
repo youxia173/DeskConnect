@@ -15,11 +15,17 @@ namespace deskflow {
 class ClipboardImage
 {
 public:
-  //! Convert PNG bytes to IClipboard::Format::Bitmap (DIB) bytes.
+  //! Convert image bytes (PNG/JPEG/etc.) to IClipboard::Format::Bitmap (DIB) bytes.
   static std::string pngToDib(const std::string &png);
 
   //! Convert IClipboard::Format::Bitmap (DIB) bytes to PNG bytes.
   static std::string dibToPng(const std::string &dib);
+
+  //! Load an image file from a local path into DIB bytes.
+  static std::string fileToDib(const std::string &path);
+
+  //! If HTML contains a local file:// (or path) img src, load it as DIB.
+  static std::string dibFromHtml(const std::string &html);
 
   static QByteArray dibToBmpFile(const QByteArray &dib);
   static QByteArray bmpFileToDib(const QByteArray &bmp);
