@@ -241,6 +241,12 @@ if [[ -d "$TR_SRC" ]]; then
   cp -a "$TR_SRC"/deskflow_*.qm "$OUT_DIR/share/deskflow/translations/" 2>/dev/null || true
 fi
 
+# ---- help docs (View Help uses ../share/doc/deskflow/HelpMain.md from bin/) ----
+mkdir -p "$OUT_DIR/share/doc/deskflow"
+if [[ -f "$ROOT/docs/HelpMain.md" ]]; then
+  cp -a "$ROOT/docs/"*.md "$OUT_DIR/share/doc/deskflow/" 2>/dev/null || true
+fi
+
 # ---- desktop + icons ----
 ICON_SRC="$ROOT/deploy/linux/org.deskconnect.deskconnect.png"
 [[ -f "$ICON_SRC" ]] || ICON_SRC="$ROOT/deploy/linux/icons/hicolor/512x512/apps/org.deskconnect.deskconnect.png"

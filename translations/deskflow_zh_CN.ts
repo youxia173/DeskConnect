@@ -8,18 +8,6 @@
         <translation>关于 DeskConnect</translation>
     </message>
     <message>
-        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Ubuntu&apos;; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://www.gnu.org/licenses/old-licenses/gpl-2.0.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;License: GNU GPL Version 2&lt;/a&gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Ubuntu&apos;; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://www.gnu.org/licenses/old-licenses/gpl-2.0.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;许可证：GNU GPL 版本 2&lt;/a&gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
         <source>Version: </source>
         <translation>版本： </translation>
     </message>
@@ -28,24 +16,24 @@ p, li { white-space: pre-wrap; }
         <translation>复制版本信息</translation>
     </message>
     <message>
+        <source>Author: 游侠173</source>
+        <translation>作者：游侠173</translation>
+    </message>
+    <message>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Ubuntu&apos;; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://github.com/deskflow/deskflow/graphs/contributors&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;Code Contributors&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;/head&gt;&lt;body&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;&quot;&gt;&lt;a href=&quot;https://www.gnu.org/licenses/old-licenses/gpl-2.0.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;License: GNU GPL Version 2&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Ubuntu&apos;; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://github.com/deskflow/deskflow/graphs/contributors&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;代码贡献者&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;/head&gt;&lt;body&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;&quot;&gt;&lt;a href=&quot;https://www.gnu.org/licenses/old-licenses/gpl-2.0.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;许可证：GNU GPL 版本 2&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Icons from &lt;a href=&quot;https://develop.kde.org/frameworks/breeze-icons/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;KDE Breeze&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;图标来源： &lt;a href=&quot;https://develop.kde.org/frameworks/breeze-icons/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;KDE Breeze&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-        <source>Important Developers</source>
-        <translation>主要开发者</translation>
+        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;/head&gt;&lt;body&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;&quot;&gt;&lt;a href=&quot;https://github.com/youxia173/DeskConnect&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;/head&gt;&lt;body&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;&quot;&gt;&lt;a href=&quot;https://github.com/youxia173/DeskConnect&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&amp;Close</source>
@@ -341,11 +329,34 @@ Do you want to connect to the server?
     <name>HelpDialog</name>
     <message>
         <source>%1 Help</source>
-        <translation type="unfinished">%1 帮助</translation>
+        <translation>%1 帮助</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">关闭</translation>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <source># DeskConnect Help\n\nShare one keyboard and mouse across multiple computers on your network.\n\n## Quick start\n\n1. On the computer with the keyboard and mouse, set mode to **Server** and click **Start**.\n2. On other computers, set mode to **Client**, enter the server hostname or IP, then click **Start**.\n3. Move the mouse past the screen edge to switch computers.\n\n## Tips\n\n- Use **Send files…** from the tray or File menu to transfer files.\n- Clipboard text and images sync when you switch screens (size limit is in settings).\n- Project page: https://github.com/youxia173/DeskConnect\n</source>
+        <translation type="vanished"># DeskConnect 帮助\n\n在局域网多台电脑之间共享一套键盘和鼠标。\n\n## 快速开始\n\n1. 在有键盘鼠标的电脑上，模式选 **服务器**，点击 **启动**。\n2. 在其他电脑上，模式选 **客户端**，填写服务器主机名或 IP，再点击 **启动**。\n3. 把鼠标移出屏幕边缘即可切换电脑。\n\n## 提示\n\n- 托盘或文件菜单里的 **发送文件…** 可传文件。\n- 切换屏幕时会同步剪贴板文字和图片（大小限制在设置里）。\n- 项目主页：https://github.com/youxia173/DeskConnect\n</translation>
+    </message>
+    <message>
+        <source># DeskConnect Help
+
+Share one keyboard and mouse across multiple computers on your network.
+
+## Quick start
+
+1. On the computer with the keyboard and mouse, set mode to **Server** and click **Start**.
+2. On other computers, set mode to **Client**, enter the server hostname or IP, then click **Start**.
+3. Move the mouse past the screen edge to switch computers.
+
+## Tips
+
+- Use **Send files…** from the tray or File menu to transfer files.
+- Clipboard text and images sync when you switch screens (size limit is in settings).
+- Project page: https://github.com/youxia173/DeskConnect
+</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1338,7 +1349,7 @@ Enabling this setting will disable the server config GUI.</source>
     </message>
     <message>
         <source>Cyber</source>
-        <translation>赛博色</translation>
+        <translation type="vanished">赛博色</translation>
     </message>
     <message>
         <source>TLS Certificate Regenerated</source>

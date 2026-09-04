@@ -7,12 +7,11 @@
 #include "HelpDialog.h"
 #include <common/Constants.h>
 
-#include <QDesktopServices>
 #include <QEvent>
+#include <QFile>
 #include <QPushButton>
 #include <QTextBrowser>
 #include <QVBoxLayout>
-#include <qfile.h>
 
 HelpDialog::HelpDialog(QWidget *parent, const QUrl &source)
     : QDialog(parent),
@@ -41,10 +40,21 @@ HelpDialog::HelpDialog(QWidget *parent, const QUrl &source)
   m_browser->setOpenExternalLinks(false);
   m_browser->setOpenLinks(false);
 
-  if (!source.isLocalFile()) {
-    QDesktopServices::openUrl(source);
-  } else {
+  if (source.isLocalFile() && QFile::exists(source.toLocalFile())) {
     m_browser->setSource(source);
+  } else {
+    m_browser->setMarkdown(tr(
+        "# DeskConnect Help\n\n"
+        "Share one keyboard and mouse across multiple computers on your network.\n\n"
+        "## Quick start\n\n"
+        "1. On the computer with the keyboard and mouse, set mode to **Server** and click **Start**.\n"
+        "2. On other computers, set mode to **Client**, enter the server hostname or IP, then click **Start**.\n"
+        "3. Move the mouse past the screen edge to switch computers.\n\n"
+        "## Tips\n\n"
+        "- Use **Send files…** from the tray or File menu to transfer files.\n"
+        "- Clipboard text and images sync when you switch screens (size limit is in settings).\n"
+        "- Project page: https://github.com/youxia173/DeskConnect\n"
+    ));
   }
 
   auto topLayout = new QHBoxLayout;
@@ -87,8 +97,8 @@ void HelpDialog::historyChanged()
 
 void HelpDialog::linkClicked(const QUrl &url)
 {
-  if (!url.isLocalFile())
-    QDesktopServices::openUrl(url);
-  else
+  // Stay inside the help dialog; do not open a system browser.
+  if (url.isLocalFile() || url.isRelative()) {
     m_browser->setSource(url);
+  }
 }

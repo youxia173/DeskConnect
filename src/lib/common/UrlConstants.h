@@ -13,11 +13,12 @@
 // notation (rdn), e.g. org.deskflow
 const auto kOrgDomain = QStringLiteral("deskflow.org");
 
+const auto kUrlGitHub = QStringLiteral("https://github.com/youxia173/DeskConnect");
 const auto kUrlSourceQuery = QStringLiteral("source=gui");
-const auto kUrlApp = QStringLiteral("https://%1").arg(kOrgDomain);
-const auto kUrlHelp = QStringLiteral("%1/help?%2").arg(kUrlApp, kUrlSourceQuery);
-const auto kUrlDownload = QStringLiteral("%1/download?%2").arg(kUrlApp, kUrlSourceQuery);
-const auto kUrlWiki = QStringLiteral("%1/wiki?%2").arg(kUrlApp, kUrlSourceQuery);
+const auto kUrlApp = kUrlGitHub;
+const auto kUrlHelp = kUrlGitHub;
+const auto kUrlDownload = QStringLiteral("%1/releases").arg(kUrlGitHub);
+const auto kUrlWiki = kUrlGitHub;
 const auto kUrlUpdateCheck = QStringLiteral("https://api.%1/version").arg(kOrgDomain);
 
 #if defined(Q_OS_LINUX)

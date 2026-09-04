@@ -92,7 +92,7 @@ project(
   deskflow
   VERSION "${DESKFLOW_VERSION_MAJOR}.${DESKFLOW_VERSION_MINOR}.${DESKFLOW_VERSION_PATCH}.${DESKFLOW_VERSION_TWEAK}"
   DESCRIPTION "DeskConnect keyboard and mouse sharing utility"
-  HOMEPAGE_URL "https://deskflow.org"
+  HOMEPAGE_URL "https://github.com/youxia173/DeskConnect"
   LANGUAGES C CXX
 )
 

@@ -9,6 +9,7 @@
 #pragma once
 
 #include <QDialog>
+#include <memory>
 
 namespace Ui {
 class AboutDialog;
@@ -24,51 +25,4 @@ public:
 private:
   std::unique_ptr<Ui::AboutDialog> ui;
   void copyVersionText() const;
-
-  inline static const auto s_awesomeDevs = QStringList{
-      // Chris is the ultimate creator, and the one who started it all in 2001.
-      QStringLiteral("Chris Schoeneman"),
-
-      // Richard and Adam developed CosmoSynergy, the 90's predecessor project.
-      QStringLiteral("Richard Lee"),
-      QStringLiteral("Adam Feder"),
-
-      // Nick continued the legacy in 2009 started by Chris.
-      QStringLiteral("Nick Bolton"),
-
-      // Volker wrote the first version of the GUI (QSynergy) in 2008.
-      QStringLiteral("Volker Lanz"),
-
-      // Re-ignited the project in 2008 and rebuilt the community.
-      QStringLiteral("Sorin Sbârnea"),
-
-      // Contributors of bug fixes in the early days.
-      QStringLiteral("Ryan Breen"),
-      QStringLiteral("Guido Poschta"),
-      QStringLiteral("Bertrand Landry Hetu"),
-      QStringLiteral("Tom Chadwick"),
-      QStringLiteral("Brent Priddy"),
-      QStringLiteral("Jason Axelson"),
-      QStringLiteral("Jake Petroules"),
-
-      // Implemented Wayland support (libei and libportal).
-      QStringLiteral("Peter Hutterer"),
-      QStringLiteral("Olivier Fourdan"),
-
-      // Symless employees (in order of joining).
-      QStringLiteral("Kyle Bloom"),
-      QStringLiteral("Daun Chung"),
-      QStringLiteral("Serhii Hadzhylov"),
-      QStringLiteral("Oleksandr Lysytsia"),
-      QStringLiteral("Olena Kutytska"),
-      QStringLiteral("Owen Phillips"),
-      QStringLiteral("Daniel Evenson"),
-
-      // Barrier & Input Leap maintainers
-      QStringLiteral("Povilas Kanapickas"),
-      QStringLiteral("Dom Rodriguez"),
-
-      // Deskflow maintainers
-      QStringLiteral("Chris Rizzitello"),
-  };
 };

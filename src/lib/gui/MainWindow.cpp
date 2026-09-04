@@ -1502,6 +1502,7 @@ void MainWindow::setHelpFilePath()
                << QStringLiteral("%1/../../docs/HelpMain.md").arg(appPath);
   } else {
     candidates << QStringLiteral("%1/../share/doc/%2/HelpMain.md").arg(appPath, kAppId)
+               << QStringLiteral("%1/../share/doc/deskconnect/HelpMain.md").arg(appPath)
                << QStringLiteral("%1/../docs/HelpMain.md").arg(appPath)
                << QStringLiteral("%1/../../docs/HelpMain.md").arg(appPath);
   }
@@ -1514,17 +1515,14 @@ void MainWindow::setHelpFilePath()
     }
   }
 
-  m_helpPath = kUrlWiki;
+  // Keep an empty URL; showHelpViewer falls back to built-in text (no browser).
+  m_helpPath = QUrl();
 }
 
 void MainWindow::showHelpViewer() const
 {
-  if (m_helpPath.isLocalFile()) {
-    HelpDialog dialogHelp(this->centralWidget(), m_helpPath);
-    dialogHelp.exec();
-  } else {
-    QDesktopServices::openUrl(m_helpPath);
-  }
+  HelpDialog dialogHelp(this->centralWidget(), m_helpPath);
+  dialogHelp.exec();
 }
 
 bool MainWindow::canRunCore() const
