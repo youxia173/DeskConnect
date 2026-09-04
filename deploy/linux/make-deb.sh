@@ -67,6 +67,9 @@ Maintainer: DeskConnect <youxia173@users.noreply.github.com>
 Homepage: https://github.com/youxia173/DeskConnect
 Depends: libc6, libgl1, libegl1, libx11-6, libxcb1, libxkbcommon0, libwayland-client0, libssl3, libdbus-1-3, libfontconfig1, libfreetype6, libglib2.0-0
 Recommends: libxcb-cursor0
+Conflicts: deskflow
+Replaces: deskflow
+Provides: deskflow
 Description: DeskConnect keyboard and mouse sharing utility
  DeskConnect is a Deskflow-based tool for sharing a keyboard and mouse
  across computers. This package bundles Qt 6.8 so it runs on Ubuntu 24.04
