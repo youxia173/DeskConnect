@@ -63,11 +63,11 @@ XWindowsClipboard::XWindowsClipboard(Display *display, Window window, ClipboardI
 
   // add converters, most desired first
   m_converters.push_back(new XWindowsClipboardURIListConverter(m_display));
-  m_converters.push_back(new XWindowsClipboardHTMLConverter(m_display, "text/html"));
-  m_converters.push_back(new XWindowsClipboardHTMLConverter(m_display, "application/x-moz-nativehtml"));
-  // Prefer PNG (what most apps offer); keep BMP as fallback.
+  // Prefer PNG/BMP before HTML so image copies (e.g. QQ) resolve to Bitmap first.
   m_converters.push_back(new XWindowsClipboardPNGConverter(m_display));
   m_converters.push_back(new XWindowsClipboardBMPConverter(m_display));
+  m_converters.push_back(new XWindowsClipboardHTMLConverter(m_display, "text/html"));
+  m_converters.push_back(new XWindowsClipboardHTMLConverter(m_display, "application/x-moz-nativehtml"));
   m_converters.push_back(new XWindowsClipboardUTF8Converter(m_display, "text/plain;charset=UTF-8", true));
   m_converters.push_back(new XWindowsClipboardUTF8Converter(m_display, "text/plain;charset=utf-8", true));
   m_converters.push_back(new XWindowsClipboardUTF8Converter(m_display, "UTF8_STRING"));

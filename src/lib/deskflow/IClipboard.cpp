@@ -36,6 +36,30 @@ void IClipboard::unmarshall(IClipboard *clipboard, const std::string_view &data,
     const uint32_t numFormats = readUInt32(index);
     index += 4;
 
+    // Apps like QQ put image/png plus HTML with local <img> paths. Prefer the
+    // bitmap so paste targets get a real image instead of broken HTML.
+    bool hasBitmap = false;
+    {
+      const char *scan = index;
+      for (uint32_t i = 0; i < numFormats; ++i) {
+        if (end - scan < 8) {
+          break;
+        }
+        auto format = static_cast<IClipboard::Format>(readUInt32(scan));
+        scan += 4;
+        uint32_t size = readUInt32(scan);
+        scan += 4;
+        if (size > static_cast<uint32_t>(end - scan)) {
+          break;
+        }
+        if (format == IClipboard::Format::Bitmap) {
+          hasBitmap = true;
+          break;
+        }
+        scan += size;
+      }
+    }
+
     // read each format
     for (uint32_t i = 0; i < numFormats; ++i) {
       // need 8 bytes for format id + payload size
@@ -61,7 +85,11 @@ void IClipboard::unmarshall(IClipboard *clipboard, const std::string_view &data,
       // or server supports more clipboard formats than the other
       // then one of them will get a format >= TotalFormats here.
       if (format < IClipboard::Format::TotalFormats) {
-        clipboard->add(format, std::string(index, size));
+        if (hasBitmap && format == IClipboard::Format::HTML) {
+          LOG_DEBUG("skipping HTML clipboard on unmarshall; bitmap present");
+        } else {
+          clipboard->add(format, std::string(index, size));
+        }
       }
       index += size;
     }
@@ -89,17 +117,25 @@ std::string IClipboard::marshall(const IClipboard *clipboard)
   // FIXME -- use current time
   if (clipboard->open(0)) {
 
+    const bool hasBitmap = clipboard->has(Format::Bitmap);
+
     // compute size of marshalled data
     uint32_t size = 4;
     uint32_t numFormats = 0;
     for (uint32_t format = 0; format != totalClipboardFormats; ++format) {
+      auto eFormat = static_cast<IClipboard::Format>(format);
       // Files are transferred via DFTR/DDRG, not the clipboard channel.
-      if (static_cast<IClipboard::Format>(format) == IClipboard::Format::Files) {
+      if (eFormat == IClipboard::Format::Files) {
         continue;
       }
-      if (clipboard->has(static_cast<IClipboard::Format>(format))) {
+      // Drop HTML when a bitmap is present (e.g. QQ chat image copy).
+      if (hasBitmap && eFormat == IClipboard::Format::HTML) {
+        LOG_DEBUG("skipping HTML clipboard on marshall; bitmap present");
+        continue;
+      }
+      if (clipboard->has(eFormat)) {
         ++numFormats;
-        formatData[format] = clipboard->get(static_cast<IClipboard::Format>(format));
+        formatData[format] = clipboard->get(eFormat);
         size += 4 + 4 + (uint32_t)formatData[format].size();
       }
     }
@@ -110,10 +146,14 @@ std::string IClipboard::marshall(const IClipboard *clipboard)
     // marshall the data
     writeUInt32(&data, numFormats);
     for (uint32_t format = 0; format != totalClipboardFormats; ++format) {
-      if (static_cast<IClipboard::Format>(format) == IClipboard::Format::Files) {
+      auto eFormat = static_cast<IClipboard::Format>(format);
+      if (eFormat == IClipboard::Format::Files) {
         continue;
       }
-      if (clipboard->has(static_cast<IClipboard::Format>(format))) {
+      if (hasBitmap && eFormat == IClipboard::Format::HTML) {
+        continue;
+      }
+      if (clipboard->has(eFormat)) {
         writeUInt32(&data, format);
         writeUInt32(&data, (uint32_t)formatData[format].size());
         data += formatData[format];
@@ -142,8 +182,13 @@ bool IClipboard::copy(IClipboard *dst, const IClipboard *src, Time time)
   if (src->open(time)) {
     if (dst->open(time)) {
       if (dst->empty()) {
+        const bool hasBitmap = src->has(Format::Bitmap);
         for (int32_t format = 0; format != static_cast<int>(Format::TotalFormats); ++format) {
           auto eFormat = (IClipboard::Format)format;
+          if (hasBitmap && eFormat == Format::HTML) {
+            LOG_DEBUG("skipping HTML clipboard on copy; bitmap present");
+            continue;
+          }
           if (src->has(eFormat)) {
             dst->add(eFormat, src->get(eFormat));
           }
