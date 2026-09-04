@@ -45,6 +45,10 @@ SettingsDialog::SettingsDialog(QWidget *parent, const ServerConfig &serverConfig
   ui->comboLanguage->addItems(I18N::detectedLanguages());
   ui->comboLanguage->setCurrentText(I18N::toNativeName(I18N::currentLanguage()));
 
+  ui->comboTheme->clear();
+  ui->comboTheme->addItem(tr("Light"), QStringLiteral("light"));
+  ui->comboTheme->addItem(tr("Dark"), QStringLiteral("dark"));
+
   updateText();
 
   ui->btnClearAllSettings->setIcon(QIcon::fromTheme(QStringLiteral("edit-clear-all")));
@@ -129,6 +133,7 @@ void SettingsDialog::initConnections() const
   connect(ui->comboInterface, &QComboBox::currentIndexChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->comboTlsKeyLength, &QComboBox::currentIndexChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->comboLanguage, &QComboBox::currentIndexChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->comboTheme, &QComboBox::currentIndexChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->rbAutoHide, &QRadioButton::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->cbPreventSleep, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->rbCloseToTray, &QRadioButton::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
@@ -255,6 +260,7 @@ void SettingsDialog::accept()
   Settings::setValue(Settings::Gui::SymbolicTrayIcon, ui->rbIconMono->isChecked());
   Settings::setValue(Settings::Security::CheckPeers, ui->cbRequireClientCert->isChecked());
   Settings::setValue(Settings::Core::Language, I18N::nativeTo639Name(ui->comboLanguage->currentText()));
+  Settings::setValue(Settings::Gui::Theme, ui->comboTheme->currentData().toString());
   Settings::setValue(Settings::Log::GuiDebug, ui->cbGuiDebug->isChecked());
   Settings::setValue(Settings::Gui::ShowVersionInTitle, ui->cbShowVersion->isChecked());
   Settings::setValue(Settings::Gui::LaunchAtLogin, ui->cbLaunchAtLogin->isChecked());
@@ -291,6 +297,11 @@ void SettingsDialog::loadFromConfig()
   ui->groupLogToFile->setChecked(Settings::value(Settings::Log::ToFile).toBool());
   ui->lineLogFilename->setText(Settings::value(Settings::Log::File).toString());
   ui->cbPreventSleep->setChecked(Settings::value(Settings::Core::PreventSleep).toBool());
+  {
+    const auto theme = Settings::value(Settings::Gui::Theme).toString();
+    const int themeIndex = ui->comboTheme->findData(theme);
+    ui->comboTheme->setCurrentIndex(themeIndex >= 0 ? themeIndex : 0);
+  }
   ui->groupFileTransfer->setChecked(Settings::value(Settings::FileTransfer::Enabled).toBool());
   ui->lineFileTransferDir->setText(Settings::value(Settings::FileTransfer::ReceiveDir).toString());
   ui->sbFileTransferMaxMb->setValue(Settings::value(Settings::FileTransfer::MaxSizeMb).toInt());
@@ -412,6 +423,7 @@ void SettingsDialog::updateControls()
   ui->comboLogLevel->setEnabled(writable);
   ui->groupLogToFile->setEnabled(writable);
   ui->comboLanguage->setEnabled(writable);
+  ui->comboTheme->setEnabled(writable);
   ui->cbShowVersion->setEnabled(writable);
   ui->cbGuiDebug->setEnabled(writable);
   ui->rbIconColorful->setEnabled(writable);
@@ -489,6 +501,7 @@ bool SettingsDialog::isModified() const
       (ui->sbFileTransferMaxMb->value() != Settings::value(Settings::FileTransfer::MaxSizeMb).toInt()) ||
       (ui->cbFileTransferLimitSpeed->isChecked() != Settings::value(Settings::FileTransfer::LimitSpeed).toBool()) ||
       (ui->sbFileTransferMaxSpeedMibs->value() != Settings::value(Settings::FileTransfer::MaxSpeedMibs).toInt()) ||
+      (ui->comboTheme->currentData().toString() != Settings::value(Settings::Gui::Theme).toString()) ||
       (I18N::nativeTo639Name(ui->comboLanguage->currentText()) != Settings::value(Settings::Core::Language).toString());
 
   if (!ignoreInterface)
@@ -533,6 +546,7 @@ bool SettingsDialog::isDefault() const
        Settings::defaultValue(Settings::FileTransfer::LimitSpeed).toBool()) &&
       (ui->sbFileTransferMaxSpeedMibs->value() ==
        Settings::defaultValue(Settings::FileTransfer::MaxSpeedMibs).toInt()) &&
+      (ui->comboTheme->currentData().toString() == Settings::defaultValue(Settings::Gui::Theme).toString()) &&
       (I18N::nativeTo639Name(ui->comboLanguage->currentText()) ==
        Settings::defaultValue(Settings::Core::Language).toString())
   );
@@ -590,6 +604,12 @@ void SettingsDialog::resetToDefault()
   const auto defaultLang = Settings::defaultValue(Settings::Core::Language).toString();
   ui->comboLanguage->setCurrentText(I18N::toNativeName(defaultLang));
   I18N::setLanguage(defaultLang);
+
+  {
+    const auto theme = Settings::defaultValue(Settings::Gui::Theme).toString();
+    const int themeIndex = ui->comboTheme->findData(theme);
+    ui->comboTheme->setCurrentIndex(themeIndex >= 0 ? themeIndex : 0);
+  }
 
   qDebug() << "reset to default values";
   updateControls();

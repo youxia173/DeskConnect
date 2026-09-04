@@ -274,7 +274,53 @@ bool MSWindowsScreen::canLeave()
     return false;
   }
 
+  // Primary only: while a fullscreen app owns the display, keep input on this PC.
+  if (m_isPrimary && Settings::value(Settings::Server::Win32DisableShareOnFullscreen).toBool() &&
+      isForegroundFullscreen()) {
+    LOG_DEBUG("unable to leave screen, foreground window is fullscreen");
+    return false;
+  }
+
   return true;
+}
+
+bool MSWindowsScreen::isForegroundFullscreen()
+{
+  HWND hwnd = GetForegroundWindow();
+  if (hwnd == nullptr || hwnd == GetDesktopWindow() || hwnd == GetShellWindow()) {
+    return false;
+  }
+  if (IsIconic(hwnd)) {
+    return false;
+  }
+
+  // Desktop refresh / click focuses Progman or WorkerW, which covers the whole
+  // monitor. Those are not real fullscreen apps - ignore them so sharing still works.
+  wchar_t className[256] = {};
+  if (GetClassNameW(hwnd, className, 256) > 0) {
+    if (wcscmp(className, L"Progman") == 0 || wcscmp(className, L"WorkerW") == 0 ||
+        wcscmp(className, L"Shell_TrayWnd") == 0 || wcscmp(className, L"Shell_SecondaryTrayWnd") == 0) {
+      return false;
+    }
+  }
+
+  RECT windowRect{};
+  if (!GetWindowRect(hwnd, &windowRect)) {
+    return false;
+  }
+
+  HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+  MONITORINFO monitorInfo{};
+  monitorInfo.cbSize = sizeof(monitorInfo);
+  if (!GetMonitorInfo(monitor, &monitorInfo)) {
+    return false;
+  }
+
+  // Cover the full monitor (not work area), with a little slack for borders.
+  constexpr LONG kSlack = 2;
+  const RECT &monitorRect = monitorInfo.rcMonitor;
+  return windowRect.left <= monitorRect.left + kSlack && windowRect.top <= monitorRect.top + kSlack &&
+         windowRect.right >= monitorRect.right - kSlack && windowRect.bottom >= monitorRect.bottom - kSlack;
 }
 
 void MSWindowsScreen::leave()

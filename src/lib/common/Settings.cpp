@@ -278,6 +278,9 @@ QVariant Settings::defaultValue(const QString &key)
   if (key == Core::Language)
     return QStringLiteral("zh_CN");
 
+  if (key == Gui::Theme)
+    return QStringLiteral("light");
+
   if (key == Core::ProcessMode) {
     return Settings::ProcessMode::Desktop;
   }
@@ -307,7 +310,7 @@ QVariant Settings::defaultValue(const QString &key)
     return 32; // 32 MiB (screenshots as DIB often exceed the old 3 MiB default)
 
   if (key == FileTransfer::MaxSizeMb)
-    return 100;
+    return 10240; // ~10 GiB default for large cross-PC copies
 
   if (key == FileTransfer::MaxSpeedMibs)
     return 4; // ~4 MB/s leaves headroom for input on the shared TCP link

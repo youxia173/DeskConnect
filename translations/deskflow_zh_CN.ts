@@ -701,8 +701,20 @@ Current Wi-Fi: %1</source>
         <translation>文件传输失败：%1</translation>
     </message>
     <message>
+        <source>File transfer failed: connection lost</source>
+        <translation>文件传输失败：连接中断</translation>
+    </message>
+    <message>
+        <source>Connection lost</source>
+        <translation>连接中断</translation>
+    </message>
+    <message>
         <source>Speed limit disabled for this transfer</source>
         <translation>本次传输已取消限速</translation>
+    </message>
+    <message>
+        <source>Waiting for client before full speed…</source>
+        <translation>正在等待客户端确认后再全速传输…</translation>
     </message>
     <message>
         <source>File transfer cancelled</source>
@@ -1145,6 +1157,14 @@ Current Wi-Fi: %1</source>
         <translation>不获取前台窗口焦点 (仅限 Windows)(&amp;F)</translation>
     </message>
     <message>
+        <source>Disable sharing while &amp;fullscreen (Windows only)</source>
+        <translation>全屏时禁用键鼠共享 (仅限 Windows)(&amp;U)</translation>
+    </message>
+    <message>
+        <source>While a fullscreen app is active on this computer, keep the mouse and keyboard here. Exit fullscreen to share again. Windows only.</source>
+        <translation>本机有全屏应用时，键鼠留在本机；退出全屏后可再跨机使用。仅 Windows。</translation>
+    </message>
+    <message>
         <source>Enable clipboard sharing</source>
         <translation>启用剪贴板共享</translation>
     </message>
@@ -1305,6 +1325,22 @@ Enabling this setting will disable the server config GUI.</source>
         <translation>语言</translation>
     </message>
     <message>
+        <source>Theme</source>
+        <translation>主题</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>浅色</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>深色</translation>
+    </message>
+    <message>
+        <source>Cyber</source>
+        <translation>赛博色</translation>
+    </message>
+    <message>
         <source>TLS Certificate Regenerated</source>
         <translation>TLS 证书已重新生成</translation>
     </message>
@@ -1443,6 +1479,10 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Max size (MB)</source>
         <translation>最大大小 (MB)</translation>
+    </message>
+    <message>
+        <source>Maximum total size per transfer. Example: 10240 ≈ 10 GB.</source>
+        <translation>单次传输总大小上限。例如：10240 ≈ 10 GB。</translation>
     </message>
     <message>
         <source>Limit speed on server (keep mouse/keyboard responsive)</source>

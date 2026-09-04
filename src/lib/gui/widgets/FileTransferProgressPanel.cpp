@@ -173,6 +173,12 @@ void FileTransferProgressPanel::updateProgress(
 
   if (!isVisible()) {
     show();
+    if (auto *win = window()) {
+      const int need = win->sizeHint().height();
+      if (win->height() < need) {
+        win->resize(win->width(), need);
+      }
+    }
   }
 }
 
@@ -187,5 +193,6 @@ void FileTransferProgressPanel::transferFinished(bool success, const QString &me
     m_sizeLabel->setText(message);
     m_sizeLabel->setToolTip(message);
   }
-  QTimer::singleShot(2000, this, &QWidget::hide);
+  // Hide quickly on failure so the form is usable again; success can linger briefly.
+  QTimer::singleShot(success ? 2000 : 800, this, &QWidget::hide);
 }

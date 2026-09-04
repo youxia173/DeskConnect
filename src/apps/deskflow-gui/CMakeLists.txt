@@ -89,6 +89,15 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       "${CMAKE_SOURCE_DIR}/deploy/windows/qt.conf"
       "$<TARGET_FILE_DIR:${target}>/qt.conf"
+    # Local help (View Help) next to the exe for portable / dev runs
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+      "$<TARGET_FILE_DIR:${target}>/docs"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${CMAKE_SOURCE_DIR}/docs/HelpMain.md"
+      "${CMAKE_SOURCE_DIR}/docs/Configuration.md"
+      "${CMAKE_SOURCE_DIR}/docs/Issues.md"
+      "${CMAKE_SOURCE_DIR}/docs/Security.md"
+      "$<TARGET_FILE_DIR:${target}>/docs"
   )
 
   install(

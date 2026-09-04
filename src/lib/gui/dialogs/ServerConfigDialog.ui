@@ -378,6 +378,19 @@
            </widget>
           </item>
           <item>
+           <widget class="QCheckBox" name="cbWin32DisableShareOnFullscreen">
+            <property name="toolTip">
+             <string>While a fullscreen app is active on this computer, keep the mouse and keyboard here. Exit fullscreen to share again. Windows only.</string>
+            </property>
+            <property name="text">
+             <string>Disable sharing while &amp;fullscreen (Windows only)</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <layout class="QHBoxLayout" name="layoutClipboard">
             <item>
              <widget class="QCheckBox" name="cbEnableClipboard">

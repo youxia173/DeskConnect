@@ -39,10 +39,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Fallback for when git can not be found
+# Fallback for when git can not be found / no version tag
 set(DESKFLOW_VERSION_MAJOR 1)
 set(DESKFLOW_VERSION_MINOR 26)
-set(DESKFLOW_VERSION_PATCH 0)
+set(DESKFLOW_VERSION_PATCH 2)
 set(DESKFLOW_VERSION_TWEAK 0)
 
 # Get the version from git if it's a git repository
@@ -74,8 +74,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
       set(DESKFLOW_VERSION_MINOR ${MINOR})
       set(DESKFLOW_VERSION_PATCH ${PATCH})
       set(DESKFLOW_VERSION_TWEAK ${TWEAK})
-    else()
-      set(DESKFLOW_VERSION_TWEAK "9999")
     endif()
     unset(GITREV)
   endif()
@@ -104,7 +102,7 @@ set(CMAKE_PROJECT_PROPER_NAME "DeskConnect")
 # deskflow so binaries, IPC names, and translation files stay compatible.
 set(CMAKE_PROJECT_FILE_ID "deskconnect")
 set(CMAKE_PROJECT_VENDOR "${CMAKE_PROJECT_PROPER_NAME}")
-set(CMAKE_PROJECT_COPYRIGHT "(C) 2024-2026 ${CMAKE_PROJECT_VENDOR}")
+set(CMAKE_PROJECT_COPYRIGHT "(C) 2026 ${CMAKE_PROJECT_VENDOR}")
 set(CMAKE_PROJECT_CONTACT "${CMAKE_PROJECT_PROPER_NAME}")
 set(CMAKE_PROJECT_REV_FQDN "org.deskconnect.deskconnect")
 

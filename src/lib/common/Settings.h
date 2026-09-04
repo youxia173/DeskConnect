@@ -90,6 +90,8 @@ public:
     inline static const auto ShownServerFirstStartMessage = QStringLiteral("gui/shownServerFirstStartMessage");
     inline static const auto ShowVersionInTitle = QStringLiteral("gui/showVersionInTitle");
     inline static const auto IgnoreMissingKeyboardLayouts = QStringLiteral("gui/ignoreMissingKeyboardLayouts");
+    //! UI theme: "light", "dark", or "cyber"
+    inline static const auto Theme = QStringLiteral("gui/theme");
   };
   struct Log
   {
@@ -124,6 +126,9 @@ public:
     inline static const auto SwitchDelay = QStringLiteral("server/switchDelay");
     inline static const auto SwitchDoubleTap = QStringLiteral("server/switchDoubleTap");
     inline static const auto Win32KeepForeground = QStringLiteral("server/win32KeepForeground");
+    //! Windows: block mouse/keyboard leave while a fullscreen app is active on the primary.
+    inline static const auto Win32DisableShareOnFullscreen =
+        QStringLiteral("server/win32DisableShareOnFullscreen");
     inline static const auto XdpRestoreToken = QStringLiteral("server/xdpRestoreToken");
   };
 
@@ -314,6 +319,7 @@ private:
     , Gui::ShownServerFirstStartMessage
     , Gui::ShowVersionInTitle
     , Gui::IgnoreMissingKeyboardLayouts
+    , Gui::Theme
     , Security::Certificate
     , Security::CheckPeers
     , Security::KeySize
@@ -335,6 +341,7 @@ private:
     , Server::SwitchDelay
     , Server::SwitchDoubleTap
     , Server::Win32KeepForeground
+    , Server::Win32DisableShareOnFullscreen
     , FileTransfer::Enabled
     , FileTransfer::ReceiveDir
     , FileTransfer::MaxSizeMb
@@ -350,7 +357,8 @@ private:
     , Gui::LaunchAtLogin
     , Gui::ShownFirstConnectedMessage
     , Gui::ShownServerFirstStartMessage
-    , Gui::ShowVersionInTitle
+    , Gui::LogExpanded
+    , Gui::SymbolicTrayIcon
     , Gui::IgnoreMissingKeyboardLayouts
     , Core::PreventSleep
     , Core::EnableEnterCommand
@@ -367,22 +375,22 @@ private:
     , Server::EnableSwitchDoubleTap
     , Server::ExternalConfig
     , Server::RelativeMouseMoves
+    , Server::Win32DisableShareOnFullscreen
   };
 
   // When checking the default values this list contains the ones that default to true.
   inline static const QStringList m_defaultTrueValues = {
       Core::UseHooks
     , Client::LanguageSync
+    , FileTransfer::LimitSpeed
     , Gui::CloseToTray
     , Gui::CloseReminder
-    , Gui::LogExpanded
-    , Gui::SymbolicTrayIcon
+    , Gui::ShowVersionInTitle
     , Security::TlsEnabled
     , Security::CheckPeers
     , Server::EnableClipboard
     , Server::Win32KeepForeground
     , FileTransfer::Enabled
-    , FileTransfer::LimitSpeed
   };
 
   // Settings saved in our State file

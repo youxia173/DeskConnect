@@ -244,6 +244,22 @@ p, li { white-space: pre-wrap; }
         <source>Failed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Full speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable speed limit for this transfer only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel this file transfer</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FingerprintDialog</name>
@@ -722,6 +738,26 @@ Current Wi-Fi: %1</source>
         <source>(starting…)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Speed limit disabled for this transfer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File transfer cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File transfer failed: connection lost</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connection lost</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for client before full speed…</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NewScreenWidget</name>
@@ -1197,6 +1233,14 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <source>Enable lock to computer at startup</source>
         <translation type="unfinished">Activar el bloqueo del ordenador al iniciar</translation>
     </message>
+    <message>
+        <source>While a fullscreen app is active on this computer, keep the mouse and keyboard here. Exit fullscreen to share again. Windows only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable sharing while &amp;fullscreen (Windows only)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -1425,19 +1469,39 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Slow transfers so mouse and keyboard stay usable on the shared connection. Uncheck for maximum speed.</source>
+        <source>Only applies on the server (keyboard/mouse host). Slow transfers so mouse and keyboard stay usable. Uncheck for maximum speed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Limit speed (keep mouse/keyboard responsive)</source>
+        <source>Limit speed on server (keep mouse/keyboard responsive)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Max speed (MiB/s)</source>
+        <source>Max speed (MB/s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Target upload rate while speed limiting is enabled</source>
+        <source>Target upload rate in MB/s while speed limiting is enabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximum total size per transfer. Example: 10240 ≈ 10 GB.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cyber</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

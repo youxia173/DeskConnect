@@ -160,6 +160,10 @@ struct ChunkType
   inline static const auto DataStart = 1; ///< Start of transfer (contains file size)
   inline static const auto DataChunk = 2; ///< Data chunk (contains file content)
   inline static const auto DataEnd = 3;   ///< End of transfer (transfer complete)
+  //! Server asks client to prepare before lifting the send speed limit.
+  inline static const auto FullSpeedReq = 4;
+  //! Client acknowledges FullSpeedReq; server may then unlock the limit.
+  inline static const auto FullSpeedAck = 5;
 };
 
 /**

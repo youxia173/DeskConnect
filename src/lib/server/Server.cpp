@@ -1938,6 +1938,14 @@ bool Server::removeClient(BaseClientProxy *client)
     m_fileSendFromClipboard = false;
   }
 
+  // Inbound receive has no per-client tag; drop it when any remote client leaves mid-transfer.
+  if (m_fileReceive.isActive()) {
+    LOG_WARN("cancelling inbound file transfer after client \"%s\" disconnected", getName(client).c_str());
+    m_fileReceive.reset();
+    m_recvProgress.reset();
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|connection lost"));
+  }
+
   // remove event handlers
   m_events->removeHandler(ScreenShapeChanged, client->getEventTarget());
   m_events->removeHandler(ClipboardGrabbed, client->getEventTarget());
@@ -2260,8 +2268,31 @@ void Server::setOutboundFileTransferFullSpeed()
     LOG_DEBUG("full-speed request ignored: no active outbound transfer");
     return;
   }
-  m_fileSend.setFullSpeedForSession();
-  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("fullSpeed|1"));
+  if (m_fileSend.isFullSpeedForSession()) {
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("fullSpeed|1"));
+    return;
+  }
+
+  // Ask the receiving client to acknowledge before unlocking the limit, so its
+  // event loop / socket buffers can catch up instead of being flooded immediately.
+  BaseClientProxy *dst = nullptr;
+  if (!m_sentFilesTarget.empty()) {
+    const auto index = m_clients.find(m_sentFilesTarget);
+    if (index != m_clients.end()) {
+      dst = index->second;
+    }
+  }
+  if (dst == nullptr) {
+    LOG_WARN("full-speed handshake: no target client, unlocking locally");
+    m_fileSend.setFullSpeedForSession();
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("fullSpeed|1"));
+    return;
+  }
+
+  std::string empty;
+  dst->fileChunkSending(static_cast<uint8_t>(ChunkType::FullSpeedReq), const_cast<char *>(""), 0);
+  LOG_INFO("requested full-speed ack from \"%s\"", getName(dst).c_str());
+  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("fullSpeed|waiting"));
 }
 
 void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::string &info)
@@ -2291,6 +2322,15 @@ void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::
 
 void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data)
 {
+  if (mark == ChunkType::FullSpeedAck) {
+    if (m_fileSend.isActive() && !m_fileSend.isFullSpeedForSession()) {
+      LOG_INFO("full-speed ack from \"%s\", unlocking send limit", getName(sender).c_str());
+      m_fileSend.setFullSpeedForSession();
+      ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("fullSpeed|1"));
+    }
+    return;
+  }
+
   if (!deskflow::isFileTransferEnabled()) {
     return;
   }
@@ -2306,5 +2346,7 @@ void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::strin
   } else if (state == TransferState::Error) {
     LOG_ERR("file transfer from \"%s\" failed", getName(sender).c_str());
     m_fileReceive.reset();
+    m_recvProgress.reset();
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer failed"));
   }
 }

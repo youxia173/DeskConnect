@@ -1,24 +1,44 @@
-Welcome to the Deskflow Help!
+# DeskConnect 帮助
 
-## Introduction
-* [Homepage](https://deskflow.org) - Project home page
-* [Code](https://github.com/deskflow/deskflow) - Read the code
+欢迎使用 DeskConnect（基于 Deskflow 的键鼠共享工具）。
 
-## User Guides
-* [Configuration] - Configuration files
-* [Raising Issues] - What to do if you have found an issue.
-* [Security Policy] - Our policy around security related topics
+## 简介
 
-## Getting help online
+DeskConnect 让一台电脑的键盘和鼠标控制同一局域网内的其他电脑，并支持剪贴板与文件传输。
 
-* View the [Wiki](https://github.com/deskflow/deskflow/wiki) Online resource
+- 一端作为**服务器**（接键盘鼠标的主机）
+- 其他机器作为**客户端**并连接到服务器
 
-### Chat with us
-* Main discussion on Matrix: [`#deskflow:matrix.org`](https://matrix.to/#/#deskflow:matrix.org) ([Matrix clients](https://matrix.org/ecosystem/clients/))
-* Discussion also happens on IRC: `#deskflow` or `#deskflow-dev` on [Libera Chat](https://libera.chat/)
-* Start a [new discussion](https://github.com/deskflow/deskflow/discussions) on our GitHub project.
+## 快速开始
 
-[Configuration]:Configuration.md
-[Raising Issues]:Issues.md
-[Security Policy]:Security.md
+1. 在主机上选择「使用此计算机的键盘和鼠标」，配置屏幕布局后点击启动。
+2. 在另一台电脑上选择「使用另一台计算机的鼠标和键盘」，填写主机 IP 或名称后连接。
+3. 将鼠标移到屏幕边缘即可切换到另一台电脑。
 
+## 常用功能
+
+### 文件传输
+
+- 菜单「文件 → 发送文件」可向已连接的客户端发送文件。
+- 设置里可配置接收目录、单次最大大小（单位 MB，例如 10240 ≈ 10 GB）。
+- 服务器默认开启限速以保持键鼠流畅；传输中可点「本次不限速」（会先等待对方确认）。
+
+### Windows 全屏
+
+服务器配置中可勾选「全屏时禁用键鼠共享」（默认关闭）：开启后，本机全屏游戏/视频时鼠标不会滑到另一台。
+
+### 主题
+
+设置 → 主题：浅色 / 深色（标题栏随软件主题，不跟系统）。
+
+### 日志
+
+「视图」菜单可打开或关闭日志面板（默认关闭）。
+
+## 更多说明
+
+- [配置说明](Configuration.md)
+- [问题反馈](Issues.md)
+- [安全策略](Security.md)
+
+上游项目：[Deskflow](https://deskflow.org)

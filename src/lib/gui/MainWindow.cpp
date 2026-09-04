@@ -39,6 +39,8 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QDesktopServices>
+#include <QDir>
+#include <QFile>
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QLineEdit>
@@ -330,8 +332,12 @@ void MainWindow::connectSlots()
       );
       m_fileTransferPanel->updateProgress(true, tr("(starting…)"), 0, detail.toInt(), 0, 0, 0, -1);
     } else if (status == QLatin1String("fullSpeed")) {
-      m_fileTransferPanel->setFullSpeedEnabled(false);
-      m_statusBar->showMessage(tr("Speed limit disabled for this transfer"), 4000);
+      if (detail == QLatin1String("waiting")) {
+        m_statusBar->showMessage(tr("Waiting for client before full speed…"), 4000);
+      } else {
+        m_fileTransferPanel->setFullSpeedEnabled(false);
+        m_statusBar->showMessage(tr("Speed limit disabled for this transfer"), 4000);
+      }
     } else if (status == QLatin1String("ok")) {
       const auto msg = tr("Sent %1 file(s)").arg(detail);
       m_statusBar->showMessage(msg, 5000);
@@ -341,6 +347,10 @@ void MainWindow::connectSlots()
       if (detail == QLatin1String("transfer cancelled")) {
         const auto msg = tr("File transfer cancelled");
         m_statusBar->showMessage(msg, 5000);
+        m_fileTransferPanel->transferFinished(false, msg);
+      } else if (detail == QLatin1String("connection lost")) {
+        const auto msg = tr("File transfer failed: connection lost");
+        m_statusBar->showMessage(msg, 8000);
         m_fileTransferPanel->transferFinished(false, msg);
       } else {
         const auto msg = tr("File transfer failed: %1").arg(detail);
@@ -439,6 +449,17 @@ void MainWindow::toggleLogVisible(bool visible)
 
 void MainWindow::settingsChanged(const QString &key)
 {
+  if (key == Settings::Gui::Theme) {
+    applyAppTheme();
+#ifdef Q_OS_WIN
+    setWindowIcon(QIcon(QStringLiteral(":/deskflow.ico")));
+#else
+    setWindowIcon(QIcon::fromTheme(QStringLiteral("%1-%2").arg(kAppId, iconMode())));
+#endif
+    setTrayIcon();
+    return;
+  }
+
   if (key == Settings::FileTransfer::Enabled) {
     updateSendFilesAction();
   }
@@ -1102,6 +1123,10 @@ void MainWindow::coreConnectionStateChanged(ConnectionState state)
   // when the correct TLS version string is detected.
   if (state != ConnectionState::Connected) {
     secureSocket(false);
+    // Mid-transfer disconnect leaves the progress strip stuck and crushing the form.
+    if (m_fileTransferPanel != nullptr && m_fileTransferPanel->isVisible()) {
+      m_fileTransferPanel->transferFinished(false, tr("Connection lost"));
+    }
   } else {
     rememberSuccessfulHost();
     if (isVisible()) {
@@ -1465,24 +1490,31 @@ void MainWindow::updateTimeoutDelay(int newDelay)
 void MainWindow::setHelpFilePath()
 {
   const QString appPath = QCoreApplication::applicationDirPath();
-  auto buildPath = QString("%1/../docs/HelpMain.md").arg(appPath);
-  auto installPath = QString("%1/../share/doc/%2/HelpMain.md").arg(appPath, kAppId);
+  QStringList candidates;
+
   if (deskflow::platform::isMac()) {
-    installPath = QString("%1/../Resources/docs/HelpMain.md").arg(appPath);
-    buildPath = QString("%1/../../../../docs/HelpMain.md").arg(appPath);
+    candidates << QStringLiteral("%1/../Resources/docs/HelpMain.md").arg(appPath)
+               << QStringLiteral("%1/../../../../docs/HelpMain.md").arg(appPath);
   } else if (deskflow::platform::isWindows()) {
-    installPath = QString("%1/docs/HelpMain.md").arg(appPath);
+    // Portable / beside exe, then MSVC multi-config build tree, then install layout.
+    candidates << QStringLiteral("%1/docs/HelpMain.md").arg(appPath)
+               << QStringLiteral("%1/../docs/HelpMain.md").arg(appPath)
+               << QStringLiteral("%1/../../docs/HelpMain.md").arg(appPath);
+  } else {
+    candidates << QStringLiteral("%1/../share/doc/%2/HelpMain.md").arg(appPath, kAppId)
+               << QStringLiteral("%1/../docs/HelpMain.md").arg(appPath)
+               << QStringLiteral("%1/../../docs/HelpMain.md").arg(appPath);
   }
 
-  buildPath = QDir::cleanPath(buildPath);
-  installPath = QDir::cleanPath(installPath);
+  for (const auto &raw : candidates) {
+    const QString path = QDir::cleanPath(raw);
+    if (QFile::exists(path)) {
+      m_helpPath = QUrl::fromLocalFile(path);
+      return;
+    }
+  }
 
-  if (QFile::exists(installPath))
-    m_helpPath = QUrl::fromLocalFile(installPath);
-  else if (QFile::exists(buildPath))
-    m_helpPath = QUrl::fromLocalFile(buildPath);
-  else
-    m_helpPath = kUrlWiki;
+  m_helpPath = kUrlWiki;
 }
 
 void MainWindow::showHelpViewer() const

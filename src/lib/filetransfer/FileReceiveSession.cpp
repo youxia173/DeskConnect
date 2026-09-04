@@ -219,8 +219,9 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
   }
 
   LOG_ERR("file transfer: unknown mark %u", mark);
-  reset();
-  return Error;
+  // Control marks (e.g. full-speed handshake) are handled by the proxy/server.
+  // Ignore unknown marks so a peer with newer protocol does not abort the file.
+  return InProgress;
 }
 
 } // namespace deskflow

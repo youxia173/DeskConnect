@@ -24,9 +24,10 @@ namespace deskflow {
 namespace {
 constexpr qint64 kFileChunkSize = 64 * 1024;
 // Full-speed turns run until this wall time or the safety chunk cap, then yield
-// so mouse/keyboard/keepalive can run. Not a throughput ceiling.
-constexpr double kFullSpeedTurnBudgetSec = 0.020;
-constexpr int kFullSpeedMaxChunksPerPump = 512; // safety: 32 MiB max per turn
+// so mouse/keyboard/keepalive can run. Keep bursts modest: multi-GB full-speed
+// floods can drop the TLS session ("error writing to client").
+constexpr double kFullSpeedTurnBudgetSec = 0.008;
+constexpr int kFullSpeedMaxChunksPerPump = 64; // safety: 4 MiB max per turn
 // newOneShotTimer requires duration > 0; keep a tiny yield even at full speed.
 constexpr double kMinPumpIntervalSec = 0.001;
 } // namespace

@@ -136,6 +136,9 @@ protected:
   void fakeLocalKey(KeyButton button, bool press) const;
 
 private:
+  //! True when the foreground window covers its monitor (exclusive/borderless fullscreen).
+  static bool isForegroundFullscreen();
+
   bool renderDelayedFilePaste();
 
   // initialization and shutdown operations

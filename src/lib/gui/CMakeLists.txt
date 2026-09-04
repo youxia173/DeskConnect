@@ -133,5 +133,5 @@ target_link_libraries(${target}
 )
 
 if(WIN32)
-  target_link_libraries(${target} PUBLIC wlanapi)
+  target_link_libraries(${target} PUBLIC wlanapi dwmapi)
 endif()

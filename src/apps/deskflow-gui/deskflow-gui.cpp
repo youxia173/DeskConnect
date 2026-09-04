@@ -123,8 +123,7 @@ int main(int argc, char *argv[])
     QApplication::setStyle("fusion");
   }
 
-  // Sets the fallback icon path and fallback theme
-  updateIconTheme();
+  applyAppTheme();
 
   qInstallMessageHandler(deskflow::gui::messages::messageHandler);
   qInfo("%s v%s", kAppName, kDisplayVersion);
@@ -151,6 +150,7 @@ int main(int argc, char *argv[])
   }
 
   MainWindow mainWindow;
+  applyAppTheme();
   mainWindow.open();
 
   return QApplication::exec();

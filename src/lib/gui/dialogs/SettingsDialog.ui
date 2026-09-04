@@ -79,6 +79,26 @@
         </layout>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayoutTheme">
+         <item>
+          <widget class="QLabel" name="lblTheme">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Theme</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboTheme"/>
+         </item>
+        </layout>
+       </item>
+       <item>
         <widget class="QCheckBox" name="cbAutoUpdate">
          <property name="text">
           <string>Check for updates on startup</string>
@@ -136,18 +156,24 @@
               <property name="text">
                <string>Max size (MB)</string>
               </property>
+              <property name="toolTip">
+               <string>Maximum total size per transfer. Example: 10240 ≈ 10 GB.</string>
+              </property>
              </widget>
             </item>
             <item>
              <widget class="QSpinBox" name="sbFileTransferMaxMb">
+              <property name="toolTip">
+               <string>Maximum total size per transfer. Example: 10240 ≈ 10 GB.</string>
+              </property>
               <property name="minimum">
                <number>1</number>
               </property>
               <property name="maximum">
-               <number>10240</number>
+               <number>102400</number>
               </property>
               <property name="value">
-               <number>100</number>
+               <number>10240</number>
               </property>
              </widget>
             </item>
@@ -175,7 +201,7 @@
              <string>Limit speed on server (keep mouse/keyboard responsive)</string>
             </property>
             <property name="checked">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -190,6 +216,9 @@
             </item>
             <item>
              <widget class="QSpinBox" name="sbFileTransferMaxSpeedMibs">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="toolTip">
                <string>Target upload rate in MB/s while speed limiting is enabled</string>
               </property>
@@ -228,6 +257,9 @@
           <widget class="QRadioButton" name="rbIconColorful">
            <property name="text">
             <string>Colorful</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -363,6 +395,9 @@
         <widget class="QCheckBox" name="cbShowVersion">
          <property name="text">
           <string>Include version in the window title</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

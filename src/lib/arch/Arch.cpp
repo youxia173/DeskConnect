@@ -51,7 +51,8 @@ void Arch::sleep(double timeout)
 
 double Arch::time()
 {
-  auto sinceEpoch = std::chrono::steady_clock::now().time_since_epoch();
-  auto uSecSinceEpoch = std::chrono::duration_cast<std::chrono::microseconds>(sinceEpoch).count();
-  return double(uSecSinceEpoch / 1000000);
+  const auto sinceEpoch = std::chrono::steady_clock::now().time_since_epoch();
+  // duration<double> keeps sub-second precision; integer usec/1e6 truncates to whole seconds
+  // and made limited file transfers stall near one 64 KiB chunk per second.
+  return std::chrono::duration<double>(sinceEpoch).count();
 }

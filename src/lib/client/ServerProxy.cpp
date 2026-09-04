@@ -63,7 +63,15 @@ ServerProxy::ServerProxy(Client *client, deskflow::IStream *stream, IEventQueue 
 
 ServerProxy::~ServerProxy()
 {
-  m_fileSend.cancel();
+  const bool recvActive = m_fileReceive.isActive();
+  const bool sendActive = m_fileSend.isActive();
+  m_fileSend.cancel(false);
+  m_fileReceive.reset();
+  m_recvProgress.reset();
+  m_sendProgress.reset();
+  if (recvActive || sendActive) {
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|connection lost"));
+  }
   setKeepAliveRate(-1.0);
   m_events->removeHandler(EventTypes::StreamInputReady, m_stream->getEventTarget());
   m_events->removeHandler(EventTypes::ClipboardSending, this);
@@ -1040,6 +1048,14 @@ void ServerProxy::fileChunkReceived()
     LOG_ERR("failed to read file transfer chunk from server");
     return;
   }
+  if (mark == ChunkType::FullSpeedReq) {
+    // Acknowledge readiness so the server can lift its send limit safely.
+    std::string empty;
+    ProtocolUtil::writef(m_stream, kMsgDFileTransfer, static_cast<uint8_t>(ChunkType::FullSpeedAck), &empty);
+    LOG_INFO("acked full-speed request from server");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("fullSpeed|ready"));
+    return;
+  }
   if (!deskflow::isFileTransferEnabled()) {
     return;
   }
@@ -1070,5 +1086,7 @@ void ServerProxy::fileChunkReceived()
   } else if (state == TransferState::Error) {
     LOG_ERR("file transfer from server failed");
     m_fileReceive.reset();
+    m_recvProgress.reset();
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer failed"));
   }
 }
