@@ -364,8 +364,15 @@ void MSWindowsScreen::leave()
   m_isOnScreen = false;
 }
 
-bool MSWindowsScreen::setClipboard(ClipboardID, const IClipboard *src)
+bool MSWindowsScreen::setClipboard(ClipboardID id, const IClipboard *src)
 {
+  // Windows has one system clipboard. X11 PRIMARY (selection) often arrives
+  // after CLIPBOARD and would wipe an image/text that just synced from Linux.
+  if (id == kClipboardSelection) {
+    LOG_DEBUG("skipping selection clipboard update on Windows");
+    return true;
+  }
+
   // DCLIP (text) often arrives around the same switch as CFOR. Emptying the clipboard
   // here would cancel delayed CF_HDROP and break paste-time file transfer.
   if (m_hasDelayedFilePaste) {

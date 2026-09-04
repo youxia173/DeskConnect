@@ -486,8 +486,10 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
     m_active->enter(x, y, m_seqNum, m_primaryClient->getToggleMask(), forScreensaver);
 
     if (m_enableClipboard) {
-      // send the clipboard data to new active screen
-      for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
+      // PRIMARY before CLIPBOARD: Windows/macOS have one system clipboard;
+      // Linux often syncs a tiny PRIMARY after a PNG and would wipe the image.
+      static const ClipboardID kOrder[] = {kClipboardSelection, kClipboardClipboard};
+      for (ClipboardID id : kOrder) {
         // Hackity hackity hack
         if (m_clipboards[id].m_clipboard.marshall().size() > (m_maximumClipboardSize * 1024)) {
           continue;
