@@ -12,6 +12,8 @@ VERSION="${VERSION:-1.26.0.9999}"
 # Prefer git describe-ish from binary if available
 if [[ -x "$BUILD_BIN/deskflow-core" ]]; then
   VERSION="$("$BUILD_BIN/deskflow-core" --version 2>/dev/null | head -1 | awk '{print $2}' || echo 1.26.0.9999)"
+  VERSION="${VERSION%,}"
+  VERSION="${VERSION%%[^0-9.vV]*}"
 fi
 
 if [[ ! -x "$BUILD_BIN/deskflow" || ! -x "$BUILD_BIN/deskflow-core" ]]; then

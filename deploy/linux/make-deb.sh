@@ -13,8 +13,11 @@ if [[ ! -x "$PORTABLE/DeskConnect" || ! -x "$PORTABLE/bin/deskflow-core" ]]; the
 fi
 
 VERSION="$("$PORTABLE/bin/deskflow-core" --version 2>/dev/null | head -1 | awk '{print $2}' || echo 1.26.0.9999)"
-# Debian version: drop leading 'v'
+# Debian version: drop leading 'v' and trailing comma from "v1.26.2, protocol …"
 VERSION="${VERSION#v}"
+VERSION="${VERSION%,}"
+VERSION="${VERSION%%[^0-9.]*}"
+[[ -n "$VERSION" ]] || VERSION="1.26.0.9999"
 PKG_NAME="deskconnect"
 PKG_ROOT="$DIST_ROOT/${PKG_NAME}_${VERSION}_${ARCH_DEB}"
 DEB_PATH="$DIST_ROOT/${PKG_NAME}_${VERSION}_${ARCH_DEB}.deb"
