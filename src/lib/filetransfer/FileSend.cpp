@@ -30,6 +30,12 @@ constexpr double kFullSpeedTurnBudgetSec = 0.008;
 constexpr int kFullSpeedMaxChunksPerPump = 64; // safety: 4 MiB max per turn
 // newOneShotTimer requires duration > 0; keep a tiny yield even at full speed.
 constexpr double kMinPumpIntervalSec = 0.001;
+// The same socket carries mouse, keyboard and CALV, and messages leave in the
+// order they were queued. A configured rate faster than the link would grow the
+// output buffer without bound, so input ends up seconds behind. Stop feeding the
+// socket once this much is still pending and let the link set the real pace.
+constexpr uint32_t kMaxQueuedOutputBytes = 128 * 1024;
+constexpr double kDrainPollIntervalSec = 0.004;
 } // namespace
 
 FileSendSession::~FileSendSession()
@@ -65,6 +71,7 @@ void FileSendSession::cancel(bool notifyDone)
   m_active = false;
   m_startedFile = false;
   m_forceFullSpeed = false;
+  m_waitingForDrain = false;
   m_stream = nullptr;
   m_events = nullptr;
   m_offers.clear();
@@ -142,6 +149,7 @@ bool FileSendSession::start(
   m_onProgress = {};
   m_startedFile = false;
   m_forceFullSpeed = false;
+  m_waitingForDrain = false;
   m_offers.clear();
   m_index = 0;
   m_sent = 0;
@@ -195,6 +203,9 @@ void FileSendSession::schedulePump()
     if (interval < kMinPumpIntervalSec) {
       interval = kMinPumpIntervalSec;
     }
+  }
+  if (m_waitingForDrain && interval < kDrainPollIntervalSec) {
+    interval = kDrainPollIntervalSec;
   }
 
   m_timer = m_events->newOneShotTimer(interval, nullptr);
@@ -321,8 +332,13 @@ void FileSendSession::pump()
     const uint64_t limitBps = effectiveLimitBytesPerSec();
     Stopwatch turn;
     int chunksSent = 0;
+    m_waitingForDrain = false;
 
     while (m_active && m_stream != nullptr) {
+      if (m_stream->getOutputSize() >= kMaxQueuedOutputBytes) {
+        m_waitingForDrain = true;
+        break;
+      }
       if (limitBps == 0) {
         if (chunksSent >= kFullSpeedMaxChunksPerPump || turn.getTime() >= kFullSpeedTurnBudgetSec) {
           break;

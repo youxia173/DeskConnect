@@ -71,6 +71,8 @@ public:
     return m_coreProcess.mode();
   }
   void open();
+  //! Send paths chosen from Explorer / CLI (shows peer picker when needed).
+  void sendFilesFromPaths(const QStringList &paths);
   ServerConfig &serverConfig()
   {
     return m_serverConfig;
@@ -150,6 +152,7 @@ private:
   void showHelpViewer() const;
   void sendFiles();
   void updateSendFilesAction();
+  void onDuplicateInstanceConnected();
   void loadHostnameHistory();
   void rememberSuccessfulHost();
   void removeSelectedHostnameFromHistory();

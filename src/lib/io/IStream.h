@@ -102,6 +102,19 @@ public:
   */
   virtual uint32_t getSize() const = 0;
 
+  //! Get bytes buffered for writing
+  /*!
+  Returns the number of bytes handed to \c write() that have not yet
+  reached the underlying stream.  Bulk senders use this to stop queueing
+  more than the link can drain; otherwise mouse, keyboard and keep alive
+  messages end up behind a large backlog.  Streams that cannot report
+  this return zero.
+  */
+  virtual uint32_t getOutputSize() const
+  {
+    return 0;
+  }
+
   //@}
 };
 

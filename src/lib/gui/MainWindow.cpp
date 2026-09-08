@@ -12,6 +12,7 @@
 
 #include "Diagnostic.h"
 #include "StyleUtils.h"
+#include "WindowsShellContextMenu.h"
 
 #include "dialogs/AboutDialog.h"
 #include "dialogs/ClientConfigDialog.h"
@@ -42,6 +43,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QInputDialog>
 #include <QLineEdit>
 #include <QVBoxLayout>
@@ -59,6 +61,7 @@
 #include <QScreen>
 #include <QScrollBar>
 #include <QSignalBlocker>
+#include <QTimer>
 #include <QToolButton>
 
 #include <memory>
@@ -315,25 +318,22 @@ void MainWindow::connectSlots()
               bool sending, const QString &fileName, int fileIndex, int fileCount, qint64 bytesDone, qint64 bytesTotal,
               qint64 bytesPerSec, int etaSeconds
           ) {
-            m_fileTransferPanel->setHostControlsVisible(m_coreProcess.mode() == CoreMode::Server);
+            m_fileTransferPanel->setHostControlsVisible(true);
             m_fileTransferPanel->updateProgress(
                 sending, fileName, fileIndex, fileCount, bytesDone, bytesTotal, bytesPerSec, etaSeconds
             );
           });
   connect(&m_coreProcess, &CoreProcess::fileTransferStatus, this, [this](const QString &status, const QString &detail) {
-    const bool isServer = m_coreProcess.mode() == CoreMode::Server;
     if (status == QLatin1String("sending")) {
       const auto msg = tr("Sending %1 file(s)…").arg(detail);
       m_statusBar->showMessage(msg, 4000);
       m_trayIcon->showMessage(kAppName, msg, QSystemTrayIcon::Information, 3000);
-      m_fileTransferPanel->setHostControlsVisible(isServer);
-      m_fileTransferPanel->setFullSpeedEnabled(
-          isServer && Settings::value(Settings::FileTransfer::LimitSpeed).toBool()
-      );
+      m_fileTransferPanel->setHostControlsVisible(true);
+      m_fileTransferPanel->setFullSpeedEnabled(Settings::value(Settings::FileTransfer::LimitSpeed).toBool());
       m_fileTransferPanel->updateProgress(true, tr("(starting…)"), 0, detail.toInt(), 0, 0, 0, -1);
     } else if (status == QLatin1String("fullSpeed")) {
       if (detail == QLatin1String("waiting")) {
-        m_statusBar->showMessage(tr("Waiting for client before full speed…"), 4000);
+        m_statusBar->showMessage(tr("Waiting for peer before full speed…"), 4000);
       } else {
         m_fileTransferPanel->setFullSpeedEnabled(false);
         m_statusBar->showMessage(tr("Speed limit disabled for this transfer"), 4000);
@@ -406,7 +406,7 @@ void MainWindow::connectSlots()
   connect(m_statusBar, &StatusBar::requestUpdateVersion, this, &MainWindow::openGetNewVersionUrl);
   connect(&m_versionChecker, &VersionChecker::updateFound, m_statusBar, &StatusBar::updateFound);
 
-  connect(m_guiDupeChecker, &QLocalServer::newConnection, this, &MainWindow::showAndActivate);
+  connect(m_guiDupeChecker, &QLocalServer::newConnection, this, &MainWindow::onDuplicateInstanceConnected);
 
   connect(ui->btnEditName, &QPushButton::clicked, this, &MainWindow::showHostNameEditor);
 
@@ -462,6 +462,12 @@ void MainWindow::settingsChanged(const QString &key)
 
   if (key == Settings::FileTransfer::Enabled) {
     updateSendFilesAction();
+  }
+
+  if (key == Settings::Gui::ShellSendMenu && deskflow::gui::WindowsShellContextMenu::isSupported()) {
+    if (Settings::value(Settings::Gui::ShellSendMenu).toBool()) {
+      deskflow::gui::WindowsShellContextMenu::setEnabled(true);
+    }
   }
 
   if (key == Settings::Log::Level) {
@@ -1371,6 +1377,37 @@ void MainWindow::toggleCanRunCore(bool enableButtons)
   updateSendFilesAction();
 }
 
+void MainWindow::onDuplicateInstanceConnected()
+{
+  auto *socket = m_guiDupeChecker->nextPendingConnection();
+  if (!socket) {
+    showAndActivate();
+    return;
+  }
+
+  connect(socket, &QLocalSocket::readyRead, this, [this, socket]() {
+    while (socket->canReadLine()) {
+      const QString line = QString::fromUtf8(socket->readLine()).trimmed();
+      if (line.startsWith(QLatin1String("SENDFILE|"))) {
+        const QString path = line.mid(9);
+        if (!path.isEmpty()) {
+          sendFilesFromPaths({path});
+        }
+      } else {
+        showAndActivate();
+      }
+    }
+  });
+  connect(socket, &QLocalSocket::disconnected, socket, &QObject::deleteLater);
+
+  // Legacy clients only connect without writing - still raise the window.
+  QTimer::singleShot(200, this, [this, socket]() {
+    if (socket && socket->state() == QLocalSocket::ConnectedState && !socket->bytesAvailable()) {
+      showAndActivate();
+    }
+  });
+}
+
 void MainWindow::updateSendFilesAction()
 {
   const bool enabledSetting = Settings::value(Settings::FileTransfer::Enabled).toBool();
@@ -1393,6 +1430,38 @@ void MainWindow::sendFiles()
     return;
   }
 
+  const auto paths = QFileDialog::getOpenFileNames(this, tr("Select files to send"));
+  if (paths.isEmpty()) {
+    return;
+  }
+  sendFilesFromPaths(paths);
+}
+
+void MainWindow::sendFilesFromPaths(const QStringList &paths)
+{
+  QStringList files;
+  for (const auto &path : paths) {
+    QFileInfo info(path);
+    if (info.isFile()) {
+      files.append(info.absoluteFilePath());
+    }
+  }
+  if (files.isEmpty()) {
+    QMessageBox::information(this, kAppName, tr("Please choose a file (folders are not supported)."));
+    return;
+  }
+
+  showAndActivate();
+
+  if (!Settings::value(Settings::FileTransfer::Enabled).toBool()) {
+    QMessageBox::information(this, kAppName, tr("File transfer is disabled in settings."));
+    return;
+  }
+  if (!m_coreProcess.isStarted()) {
+    QMessageBox::information(this, kAppName, tr("Start DeskConnect before sending files."));
+    return;
+  }
+
   QString peer;
   if (m_coreProcess.mode() == CoreMode::Server) {
     if (m_connectedClients.isEmpty()) {
@@ -1403,21 +1472,22 @@ void MainWindow::sendFiles()
       peer = m_connectedClients.constFirst();
     } else {
       bool ok = false;
-      peer = QInputDialog::getItem(
-          this, tr("Send files"), tr("Send to:"), m_connectedClients, 0, false, &ok
-      );
+      peer = QInputDialog::getItem(this, tr("Send files"), tr("Send to:"), m_connectedClients, 0, false, &ok);
       if (!ok || peer.isEmpty()) {
         return;
       }
     }
-  }
-
-  const auto paths = QFileDialog::getOpenFileNames(this, tr("Select files to send"));
-  if (paths.isEmpty()) {
+  } else if (m_coreProcess.mode() == CoreMode::Client) {
+    if (m_coreProcess.connectionState() != ConnectionState::Connected) {
+      QMessageBox::information(this, kAppName, tr("Not connected to the server."));
+      return;
+    }
+  } else {
+    QMessageBox::information(this, kAppName, tr("Choose server or client mode and start before sending files."));
     return;
   }
 
-  if (!m_coreProcess.sendFiles(peer, paths)) {
+  if (!m_coreProcess.sendFiles(peer, files)) {
     QMessageBox::warning(this, kAppName, tr("Could not send files. Is DeskConnect running?"));
   }
 }
@@ -1498,6 +1568,8 @@ void MainWindow::setHelpFilePath()
   } else if (deskflow::platform::isWindows()) {
     // Portable / beside exe, then MSVC multi-config build tree, then install layout.
     candidates << QStringLiteral("%1/docs/HelpMain.md").arg(appPath)
+               << QStringLiteral("%1/share/doc/deskflow/HelpMain.md").arg(appPath)
+               << QStringLiteral("%1/share/doc/deskconnect/HelpMain.md").arg(appPath)
                << QStringLiteral("%1/../docs/HelpMain.md").arg(appPath)
                << QStringLiteral("%1/../../docs/HelpMain.md").arg(appPath);
   } else {

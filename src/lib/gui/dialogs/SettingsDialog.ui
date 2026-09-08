@@ -195,13 +195,23 @@
           <item>
            <widget class="QCheckBox" name="cbFileTransferLimitSpeed">
             <property name="toolTip">
-             <string>Only applies on the server (keyboard/mouse host). Slow transfers so mouse and keyboard stay usable. Uncheck for maximum speed.</string>
+             <string>Slow file transfers so mouse and keyboard stay usable on the shared connection. Uncheck for maximum speed.</string>
             </property>
             <property name="text">
-             <string>Limit speed on server (keep mouse/keyboard responsive)</string>
+             <string>Limit transfer speed (keep mouse/keyboard responsive)</string>
             </property>
             <property name="checked">
              <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="cbShellSendMenu">
+            <property name="toolTip">
+             <string>Add a right-click menu item on files (not folders) to send them with DeskConnect.</string>
+            </property>
+            <property name="text">
+             <string>Add &quot;Send with DeskConnect&quot; to Explorer right-click menu</string>
             </property>
            </widget>
           </item>
@@ -728,6 +738,33 @@
          </item>
          <item>
           <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayoutFirewall">
+         <item>
+          <widget class="QPushButton" name="btnAddFirewallRule">
+           <property name="text">
+            <string>Allow through Windows Firewall</string>
+           </property>
+           <property name="toolTip">
+            <string>Add inbound firewall rules for deskflow-core and the TCP port (requires administrator approval).</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacerFirewall">
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
            </property>

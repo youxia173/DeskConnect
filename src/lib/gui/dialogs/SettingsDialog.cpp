@@ -15,6 +15,8 @@
 #include "common/Settings.h"
 #include "gui/Autostart.h"
 #include "gui/TlsUtility.h"
+#include "gui/WindowsFirewall.h"
+#include "gui/WindowsShellContextMenu.h"
 #include "gui/core/NetworkMonitor.h"
 #include "gui/widgets/SettingsDialogButtonBox.h"
 
@@ -59,6 +61,12 @@ SettingsDialog::SettingsDialog(QWidget *parent, const ServerConfig &serverConfig
 
   ui->rbIconMono->setIcon(QIcon::fromTheme(QStringLiteral("%1-symbolic").arg(kRevFqdnName)));
   ui->rbIconColorful->setIcon(QIcon::fromTheme(kRevFqdnName));
+
+  ui->btnAddFirewallRule->setVisible(WindowsFirewall::isSupported());
+  if (WindowsFirewall::isSupported()) {
+    ui->btnAddFirewallRule->setIcon(QIcon::fromTheme(QStringLiteral("security-high")));
+  }
+  ui->cbShellSendMenu->setVisible(WindowsShellContextMenu::isSupported());
 
   // force the first tab, since qt creator sets the active tab as the last one
   // the developer was looking at, and it's easy to accidentally save that.
@@ -119,6 +127,7 @@ void SettingsDialog::initConnections() const
   connect(ui->btnTlsCertPath, &QPushButton::clicked, this, &SettingsDialog::browseCertificatePath);
   connect(ui->btnBrowseLog, &QPushButton::clicked, this, &SettingsDialog::browseLogPath);
   connect(ui->btnBrowseFileTransferDir, &QPushButton::clicked, this, &SettingsDialog::browseFileTransferDir);
+  connect(ui->btnAddFirewallRule, &QPushButton::clicked, this, &SettingsDialog::addFirewallRules);
   connect(ui->groupLogToFile, &QGroupBox::toggled, this, &SettingsDialog::setLogToFile);
   connect(ui->comboLogLevel, &QComboBox::currentIndexChanged, this, &SettingsDialog::logLevelChanged);
   connect(ui->comboLanguage, &QComboBox::currentTextChanged, this, [](const QString &lang) {
@@ -157,6 +166,7 @@ void SettingsDialog::initConnections() const
   connect(ui->sbFileTransferMaxMb, &QSpinBox::valueChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->cbFileTransferLimitSpeed, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->sbFileTransferMaxSpeedMibs, &QSpinBox::valueChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->cbShellSendMenu, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(Settings::instance(), &Settings::settingsWritableChanged, this, &SettingsDialog::updateControls);
 }
 
@@ -204,6 +214,31 @@ void SettingsDialog::browseFileTransferDir()
   if (!dir.isEmpty()) {
     ui->lineFileTransferDir->setText(dir);
   }
+}
+
+void SettingsDialog::addFirewallRules()
+{
+  if (!WindowsFirewall::isSupported()) {
+    return;
+  }
+
+  QString error;
+  const int port = ui->sbPort->value();
+  if (!WindowsFirewall::addAllowRules(port, &error)) {
+    QMessageBox::warning(
+        this, tr("Firewall"),
+        error.isEmpty() ? tr("Failed to add firewall rules.") : error
+    );
+    return;
+  }
+
+  QMessageBox::information(
+      this, tr("Firewall"),
+      tr("Windows Firewall inbound rules were added for %1 (TCP port %2).\n"
+         "You may need to restart the connection if it was blocked before.")
+          .arg(kAppName)
+          .arg(port)
+  );
 }
 
 void SettingsDialog::setLogToFile(bool logToFile)
@@ -273,6 +308,7 @@ void SettingsDialog::accept()
   Settings::setValue(Settings::FileTransfer::MaxSizeMb, ui->sbFileTransferMaxMb->value());
   Settings::setValue(Settings::FileTransfer::LimitSpeed, ui->cbFileTransferLimitSpeed->isChecked());
   Settings::setValue(Settings::FileTransfer::MaxSpeedMibs, ui->sbFileTransferMaxSpeedMibs->value());
+  Settings::setValue(Settings::Gui::ShellSendMenu, ui->cbShellSendMenu->isChecked());
 
   Settings::ProcessMode mode;
   if (ui->groupService->isChecked())
@@ -283,6 +319,16 @@ void SettingsDialog::accept()
 
   if (Autostart::isSupported()) {
     Autostart::setEnabled(ui->cbLaunchAtLogin->isChecked());
+  }
+
+  if (WindowsShellContextMenu::isSupported()) {
+    QString shellError;
+    if (!WindowsShellContextMenu::setEnabled(ui->cbShellSendMenu->isChecked(), &shellError)) {
+      QMessageBox::warning(
+          this, tr("Explorer menu"),
+          shellError.isEmpty() ? tr("Failed to update Explorer context menu.") : shellError
+      );
+    }
   }
 
   QDialog::accept();
@@ -309,6 +355,7 @@ void SettingsDialog::loadFromConfig()
   ui->sbFileTransferMaxSpeedMibs->setValue(Settings::value(Settings::FileTransfer::MaxSpeedMibs).toInt());
   ui->sbFileTransferMaxSpeedMibs->setEnabled(ui->cbFileTransferLimitSpeed->isChecked());
   ui->lblFileTransferMaxSpeed->setEnabled(ui->cbFileTransferLimitSpeed->isChecked());
+  ui->cbShellSendMenu->setChecked(Settings::value(Settings::Gui::ShellSendMenu).toBool());
   ui->cbElevateDaemon->setChecked(Settings::value(Settings::Daemon::Elevate).toBool());
   ui->cbAutoUpdate->setChecked(Settings::value(Settings::Gui::AutoUpdateCheck).toBool());
   ui->cbGuiDebug->setChecked(Settings::value(Settings::Log::GuiDebug).toBool());
@@ -419,6 +466,8 @@ void SettingsDialog::updateControls()
   const bool logToFile = ui->groupLogToFile->isChecked();
 
   ui->sbPort->setEnabled(writable);
+  ui->btnAddFirewallRule->setEnabled(writable && WindowsFirewall::isSupported());
+  ui->cbShellSendMenu->setEnabled(writable && WindowsShellContextMenu::isSupported());
   ui->comboInterface->setEnabled(writable);
   ui->comboLogLevel->setEnabled(writable);
   ui->groupLogToFile->setEnabled(writable);
@@ -501,6 +550,7 @@ bool SettingsDialog::isModified() const
       (ui->sbFileTransferMaxMb->value() != Settings::value(Settings::FileTransfer::MaxSizeMb).toInt()) ||
       (ui->cbFileTransferLimitSpeed->isChecked() != Settings::value(Settings::FileTransfer::LimitSpeed).toBool()) ||
       (ui->sbFileTransferMaxSpeedMibs->value() != Settings::value(Settings::FileTransfer::MaxSpeedMibs).toInt()) ||
+      (ui->cbShellSendMenu->isChecked() != Settings::value(Settings::Gui::ShellSendMenu).toBool()) ||
       (ui->comboTheme->currentData().toString() != Settings::value(Settings::Gui::Theme).toString()) ||
       (I18N::nativeTo639Name(ui->comboLanguage->currentText()) != Settings::value(Settings::Core::Language).toString());
 
@@ -546,6 +596,7 @@ bool SettingsDialog::isDefault() const
        Settings::defaultValue(Settings::FileTransfer::LimitSpeed).toBool()) &&
       (ui->sbFileTransferMaxSpeedMibs->value() ==
        Settings::defaultValue(Settings::FileTransfer::MaxSpeedMibs).toInt()) &&
+      (ui->cbShellSendMenu->isChecked() == Settings::defaultValue(Settings::Gui::ShellSendMenu).toBool()) &&
       (ui->comboTheme->currentData().toString() == Settings::defaultValue(Settings::Gui::Theme).toString()) &&
       (I18N::nativeTo639Name(ui->comboLanguage->currentText()) ==
        Settings::defaultValue(Settings::Core::Language).toString())
@@ -577,6 +628,7 @@ void SettingsDialog::resetToDefault()
   ui->sbFileTransferMaxSpeedMibs->setValue(Settings::defaultValue(Settings::FileTransfer::MaxSpeedMibs).toInt());
   ui->sbFileTransferMaxSpeedMibs->setEnabled(ui->cbFileTransferLimitSpeed->isChecked());
   ui->lblFileTransferMaxSpeed->setEnabled(ui->cbFileTransferLimitSpeed->isChecked());
+  ui->cbShellSendMenu->setChecked(Settings::defaultValue(Settings::Gui::ShellSendMenu).toBool());
 
   const auto autoHide = Settings::defaultValue(Settings::Gui::Autohide).toBool();
   ui->rbCloseToTray->setChecked(autoHide);

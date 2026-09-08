@@ -13,6 +13,7 @@
 #include "deskflow/ClipboardTypes.h"
 #include "deskflow/KeyTypes.h"
 #include "deskflow/KeyboardLayoutManager.h"
+#include "deskflow/StreamChunker.h"
 #include "filetransfer/FileReceiveSession.h"
 #include "filetransfer/FileSend.h"
 #include "filetransfer/TransferProgress.h"
@@ -141,6 +142,7 @@ private:
   std::string m_serverLayout = "";
   std::string m_clipboardDataCached;
   ClipboardChunkAssemblyState m_clipboardChunkState;
+  StreamChunker m_clipboardSender;
   bool m_isUserNotifiedAboutLayoutSyncError = false;
   deskflow::KeyboardLayoutManager m_layoutManager;
   deskflow::FileReceiveSession m_fileReceive;

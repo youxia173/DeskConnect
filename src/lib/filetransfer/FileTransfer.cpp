@@ -203,11 +203,8 @@ bool isFileTransferEnabled()
 
 bool isTransferSpeedLimited()
 {
-  // Speed limiting is for the keyboard/mouse host (server) only; clients always send full speed.
-  const auto mode = Settings::value(Settings::Core::CoreMode).value<Settings::CoreMode>();
-  if (mode != Settings::CoreMode::Server) {
-    return false;
-  }
+  // Same TCP link carries mouse/keyboard. Cap uploads on both server and client
+  // when the user enables the limit, or a client full-speed send will stall the cursor.
   return Settings::value(Settings::FileTransfer::LimitSpeed).toBool();
 }
 

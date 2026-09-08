@@ -725,7 +725,7 @@ Current Wi-Fi: %1</source>
     </message>
     <message>
         <source>Waiting for client before full speed…</source>
-        <translation>正在等待客户端确认后再全速传输…</translation>
+        <translation type="vanished">正在等待客户端确认后再全速传输…</translation>
     </message>
     <message>
         <source>File transfer cancelled</source>
@@ -766,6 +766,30 @@ Current Wi-Fi: %1</source>
     <message>
         <source>(starting…)</source>
         <translation>（开始中…）</translation>
+    </message>
+    <message>
+        <source>Please choose a file (folders are not supported).</source>
+        <translation type="unfinished">请选择文件（不支持文件夹）。</translation>
+    </message>
+    <message>
+        <source>File transfer is disabled in settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start DeskConnect before sending files.</source>
+        <translation type="unfinished">请先启动 DeskConnect 再发送文件。</translation>
+    </message>
+    <message>
+        <source>Not connected to the server.</source>
+        <translation type="unfinished">尚未连接到服务器。</translation>
+    </message>
+    <message>
+        <source>Choose server or client mode and start before sending files.</source>
+        <translation type="unfinished">请先选择服务器或客户端模式并启动后再发送文件。</translation>
+    </message>
+    <message>
+        <source>Waiting for peer before full speed…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -918,6 +942,46 @@ Current Wi-Fi: %1</source>
     <message>
         <source>%1 is already running</source>
         <translation>%1 已经在运行中</translation>
+    </message>
+    <message>
+        <source>Firewall rules are only available on Windows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid port: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find deskflow-core.exe next to the application.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write temporary firewall script.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Administrator approval was cancelled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to start elevated firewall helper (error %1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to add firewall rules (exit code %1). Try running DeskConnect as administrator.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send with %1</source>
+        <translation type="unfinished">用 %1 发送</translation>
+    </message>
+    <message>
+        <source>Shell context menu is only available on Windows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to write Explorer context menu registry keys.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1308,6 +1372,28 @@ Enabling this setting will disable the server config GUI.</source>
         <translation>端口</translation>
     </message>
     <message>
+        <source>Allow through Windows Firewall</source>
+        <translation>允许通过 Windows 防火墙</translation>
+    </message>
+    <message>
+        <source>Add inbound firewall rules for deskflow-core and the TCP port (requires administrator approval).</source>
+        <translation>为 deskflow-core 和 TCP 端口添加入站防火墙规则（需要管理员确认）。</translation>
+    </message>
+    <message>
+        <source>Firewall</source>
+        <translation>防火墙</translation>
+    </message>
+    <message>
+        <source>Failed to add firewall rules.</source>
+        <translation>添加防火墙规则失败。</translation>
+    </message>
+    <message>
+        <source>Windows Firewall inbound rules were added for %1 (TCP port %2).
+You may need to restart the connection if it was blocked before.</source>
+        <translation>已为 %1 添加入站防火墙规则（TCP 端口 %2）。
+若之前被拦截，可能需要重新连接。</translation>
+    </message>
+    <message>
         <source>Network IP</source>
         <translation>网络 IP</translation>
     </message>
@@ -1497,11 +1583,47 @@ Enabling this setting will disable the server config GUI.</source>
     </message>
     <message>
         <source>Limit speed on server (keep mouse/keyboard responsive)</source>
-        <translation>服务器限速（保证键鼠可操控）</translation>
+        <translation type="vanished">服务器限速（保证键鼠可操控）</translation>
+    </message>
+    <message>
+        <source>Add &quot;Send with DeskConnect&quot; to Explorer right-click menu</source>
+        <translation>添加「用 DeskConnect 发送」到资源管理器右键菜单</translation>
+    </message>
+    <message>
+        <source>Add a right-click menu item on files (not folders) to send them with DeskConnect.</source>
+        <translation>在文件（不含文件夹）右键菜单中增加用 DeskConnect 发送的项。</translation>
+    </message>
+    <message>
+        <source>Send with %1</source>
+        <translation type="vanished">用 %1 发送</translation>
+    </message>
+    <message>
+        <source>Please choose a file (folders are not supported).</source>
+        <translation type="vanished">请选择文件（不支持文件夹）。</translation>
+    </message>
+    <message>
+        <source>Start DeskConnect before sending files.</source>
+        <translation type="vanished">请先启动 DeskConnect 再发送文件。</translation>
+    </message>
+    <message>
+        <source>Not connected to the server.</source>
+        <translation type="vanished">尚未连接到服务器。</translation>
+    </message>
+    <message>
+        <source>Choose server or client mode and start before sending files.</source>
+        <translation type="vanished">请先选择服务器或客户端模式并启动后再发送文件。</translation>
+    </message>
+    <message>
+        <source>Explorer menu</source>
+        <translation>资源管理器菜单</translation>
+    </message>
+    <message>
+        <source>Failed to update Explorer context menu.</source>
+        <translation>更新资源管理器右键菜单失败。</translation>
     </message>
     <message>
         <source>Only applies on the server (keyboard/mouse host). Slow transfers so mouse and keyboard stay usable. Uncheck for maximum speed.</source>
-        <translation>仅对键鼠主机（服务器）生效。限制传输速度，让同一连接上的键鼠仍可正常使用。取消勾选即为全速传输。</translation>
+        <translation type="vanished">仅对键鼠主机（服务器）生效。限制传输速度，让同一连接上的键鼠仍可正常使用。取消勾选即为全速传输。</translation>
     </message>
     <message>
         <source>Max speed (MB/s)</source>
@@ -1518,6 +1640,14 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>File transfer</source>
         <translation>文件传输</translation>
+    </message>
+    <message>
+        <source>Slow file transfers so mouse and keyboard stay usable on the shared connection. Uncheck for maximum speed.</source>
+        <translation>限制传输速度，让同一连接上的键鼠仍可正常使用。取消勾选即为全速传输。</translation>
+    </message>
+    <message>
+        <source>Limit transfer speed (keep mouse/keyboard responsive)</source>
+        <translation>限制传输速度（保证键鼠可操控）</translation>
     </message>
 </context>
 <context>

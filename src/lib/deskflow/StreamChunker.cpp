@@ -6,48 +6,117 @@
 
 #include "deskflow/StreamChunker.h"
 
-#include "base/Event.h"
+#include "base/EventTypes.h"
 #include "base/IEventQueue.h"
 #include "base/Log.h"
-#include "deskflow/ClipboardChunk.h"
+#include "deskflow/ProtocolTypes.h"
+#include "deskflow/ProtocolUtil.h"
+#include "io/IStream.h"
 
-static const size_t g_chunkSize = 512 * 1024; // 512kb
+#include <QString>
+
+#include <algorithm>
+
+namespace {
+
+constexpr size_t g_chunkSize = 64 * 1024;
+// Keep the socket backlog small so input messages are never far behind.
+constexpr uint32_t g_maxQueuedOutputBytes = 128 * 1024;
+constexpr double g_pumpIntervalSec = 0.004;
+
+void writeChunk(deskflow::IStream *stream, ClipboardID id, uint32_t sequence, uint8_t mark, const std::string &payload)
+{
+  std::string data = payload;
+  ProtocolUtil::writef(stream, kMsgDClipboard, id, sequence, mark, &data);
+}
+
+} // namespace
+
+StreamChunker::~StreamChunker()
+{
+  cancel();
+}
+
+void StreamChunker::cancel()
+{
+  clearTimer();
+  m_queue.clear();
+}
+
+void StreamChunker::clearTimer()
+{
+  if (m_events != nullptr && m_timer != nullptr) {
+    m_events->removeHandler(EventTypes::Timer, m_timer);
+    m_events->deleteTimer(m_timer);
+  }
+  m_timer = nullptr;
+}
 
 void StreamChunker::sendClipboard(
-    const std::string_view &data, size_t size, ClipboardID id, uint32_t sequence, IEventQueue *events, void *eventTarget
+    std::string data, ClipboardID id, uint32_t sequence, deskflow::IStream *stream, IEventQueue *events
 )
 {
-  // send first message (data size)
-  std::string dataSize = QString::number(size).toStdString();
-  ClipboardChunk *sizeMessage = ClipboardChunk::start(id, sequence, dataSize);
-
-  events->addEvent(Event(EventTypes::ClipboardSending, eventTarget, sizeMessage));
-
-  // send clipboard chunk with a fixed size
-  size_t sentLength = 0;
-  size_t chunkSize = g_chunkSize;
-
-  while (true) {
-    // make sure we don't read too much from the mock data.
-    if (sentLength + chunkSize > size) {
-      chunkSize = size - sentLength;
-    }
-
-    std::string chunk(data.substr(sentLength, chunkSize).data(), chunkSize);
-    ClipboardChunk *dataChunk = ClipboardChunk::data(id, sequence, chunk);
-
-    events->addEvent(Event(EventTypes::ClipboardSending, eventTarget, dataChunk));
-
-    sentLength += chunkSize;
-    if (sentLength == size) {
-      break;
-    }
+  if (stream == nullptr || events == nullptr) {
+    return;
   }
 
-  // send last message
-  ClipboardChunk *end = ClipboardChunk::end(id, sequence);
+  m_stream = stream;
+  m_events = events;
 
-  events->addEvent(Event(EventTypes::ClipboardSending, eventTarget, end));
+  Pending pending;
+  pending.data = std::move(data);
+  pending.id = id;
+  pending.sequence = sequence;
+  m_queue.push_back(std::move(pending));
 
-  LOG_DEBUG("sent clipboard size=%d", sentLength);
+  pump();
+}
+
+void StreamChunker::schedule()
+{
+  clearTimer();
+  m_timer = m_events->newOneShotTimer(g_pumpIntervalSec, nullptr);
+  m_events->addHandler(EventTypes::Timer, m_timer, [this](const auto &) { pump(); });
+}
+
+void StreamChunker::pump()
+{
+  clearTimer();
+  if (m_stream == nullptr) {
+    m_queue.clear();
+    return;
+  }
+
+  try {
+    while (!m_queue.empty()) {
+      if (m_stream->getOutputSize() >= g_maxQueuedOutputBytes) {
+        schedule();
+        return;
+      }
+
+      auto &pending = m_queue.front();
+      if (!pending.started) {
+        pending.started = true;
+        writeChunk(
+            m_stream, pending.id, pending.sequence, ChunkType::DataStart,
+            QString::number(static_cast<qulonglong>(pending.data.size())).toStdString()
+        );
+        continue;
+      }
+
+      if (pending.sent < pending.data.size()) {
+        const size_t n = std::min(g_chunkSize, pending.data.size() - pending.sent);
+        writeChunk(m_stream, pending.id, pending.sequence, ChunkType::DataChunk, pending.data.substr(pending.sent, n));
+        pending.sent += n;
+        continue;
+      }
+
+      writeChunk(m_stream, pending.id, pending.sequence, ChunkType::DataEnd, std::string());
+      LOG_DEBUG("sent clipboard %d size=%zu", pending.id, pending.sent);
+      m_queue.pop_front();
+    }
+  } catch (...) {
+    LOG_WARN("clipboard send failed");
+    m_queue.clear();
+  }
 }

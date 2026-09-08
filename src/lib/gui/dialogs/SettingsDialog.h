@@ -38,6 +38,7 @@ private:
   void browseCertificatePath();
   void browseLogPath();
   void browseFileTransferDir();
+  void addFirewallRules();
   void setLogToFile(bool logToFile);
   void accept() override;
   bool isClientMode() const;

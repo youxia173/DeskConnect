@@ -90,8 +90,10 @@ public:
     inline static const auto ShownServerFirstStartMessage = QStringLiteral("gui/shownServerFirstStartMessage");
     inline static const auto ShowVersionInTitle = QStringLiteral("gui/showVersionInTitle");
     inline static const auto IgnoreMissingKeyboardLayouts = QStringLiteral("gui/ignoreMissingKeyboardLayouts");
-    //! UI theme: "light", "dark", or "cyber"
+    //! UI theme: "light" or "dark"
     inline static const auto Theme = QStringLiteral("gui/theme");
+    //! Windows Explorer: add "Send with DeskConnect" for files.
+    inline static const auto ShellSendMenu = QStringLiteral("gui/shellSendMenu");
   };
   struct Log
   {
@@ -320,6 +322,7 @@ private:
     , Gui::ShowVersionInTitle
     , Gui::IgnoreMissingKeyboardLayouts
     , Gui::Theme
+    , Gui::ShellSendMenu
     , Security::Certificate
     , Security::CheckPeers
     , Security::KeySize
@@ -360,6 +363,7 @@ private:
     , Gui::LogExpanded
     , Gui::SymbolicTrayIcon
     , Gui::IgnoreMissingKeyboardLayouts
+    , Gui::ShellSendMenu
     , Core::PreventSleep
     , Core::EnableEnterCommand
     , Core::EnableExitCommand

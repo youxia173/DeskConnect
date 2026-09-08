@@ -89,6 +89,7 @@ private:
   bool m_active = false;
   bool m_startedFile = false;
   bool m_forceFullSpeed = false;
+  bool m_waitingForDrain = false;
   std::string m_fingerprint;
   DoneCallback m_onDone;
   ProgressCallback m_onProgress;

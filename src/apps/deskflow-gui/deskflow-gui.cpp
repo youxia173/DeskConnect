@@ -16,12 +16,15 @@
 #include "gui/MainWindow.h"
 #include "gui/Messages.h"
 #include "gui/StyleUtils.h"
+#include "gui/WindowsShellContextMenu.h"
+#include "common/Settings.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QLocalSocket>
 #include <QMessageBox>
 #include <QSharedMemory>
+#include <QTimer>
 
 #if defined(Q_OS_MACOS)
 #include <Carbon/Carbon.h>
@@ -71,12 +74,17 @@ int main(int argc, char *argv[])
   auto helpOption = QCommandLineOption({"h", "help"}, "Display Help on the command line");
   auto versionOption = QCommandLineOption({"v", "version"}, "Display version information");
   auto resetOption = QCommandLineOption("reset", "Reset all settings");
+  auto sendFileOption = QCommandLineOption(
+      QStringLiteral("send-file"), QStringLiteral("Send a file via the running DeskConnect instance"),
+      QStringLiteral("path")
+  );
 
   QCommandLineParser parser;
   parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
   parser.addOption(helpOption);
   parser.addOption(versionOption);
   parser.addOption(resetOption);
+  parser.addOption(sendFileOption);
   parser.parse(QCoreApplication::arguments());
 
   if (!parser.errorText().isEmpty()) {
@@ -95,6 +103,8 @@ int main(int argc, char *argv[])
     return s_exitSuccess;
   }
 
+  const QStringList sendFilePaths = parser.values(sendFileOption);
+
   const auto shmId = QStringLiteral("%1-gui").arg(kAppFileId);
   // Create a shared memory segment with a unique key
   // This is to prevent a new instance from running if one is already running
@@ -107,14 +117,22 @@ int main(int argc, char *argv[])
 
   // If we can create 1 byte of SHM we are the only instance
   if (!sharedMemory.create(1)) {
-    // Ping the running instance to have it show itself
+    // Talk to the running instance (raise window and/or send files)
     QLocalSocket socket;
-    socket.connectToServer(shmId, QLocalSocket::ReadOnly);
-    if (!socket.waitForConnected()) {
-      // If we can't connect to the other instance tell the user its running.
-      // This should never happen but just incase we should show something
+    socket.connectToServer(shmId, QLocalSocket::ReadWrite);
+    if (!socket.waitForConnected(2000)) {
       QMessageBox::information(nullptr, kAppName, QObject::tr("%1 is already running").arg(kAppName));
+      return s_exitDuplicate;
     }
+    if (sendFilePaths.isEmpty()) {
+      socket.write("SHOW\n");
+    } else {
+      for (const auto &path : sendFilePaths) {
+        socket.write(QByteArray("SENDFILE|") + path.toUtf8() + '\n');
+      }
+    }
+    socket.flush();
+    socket.waitForBytesWritten(2000);
     socket.disconnectFromServer();
     return s_exitDuplicate;
   }
@@ -149,9 +167,18 @@ int main(int argc, char *argv[])
     diagnostic::clearSettings(false);
   }
 
+  // Keep Explorer menu command path up to date when enabled.
+  if (WindowsShellContextMenu::isSupported() && Settings::value(Settings::Gui::ShellSendMenu).toBool()) {
+    WindowsShellContextMenu::setEnabled(true);
+  }
+
   MainWindow mainWindow;
   applyAppTheme();
   mainWindow.open();
+
+  if (!sendFilePaths.isEmpty()) {
+    QTimer::singleShot(400, &mainWindow, [&mainWindow, sendFilePaths]() { mainWindow.sendFilesFromPaths(sendFilePaths); });
+  }
 
   return QApplication::exec();
 }

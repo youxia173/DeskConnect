@@ -17,6 +17,10 @@ add_library(${target} STATIC
   ${platform_sources}
   Autostart.cpp
   Autostart.h
+  WindowsFirewall.cpp
+  WindowsFirewall.h
+  WindowsShellContextMenu.cpp
+  WindowsShellContextMenu.h
   WifiInfo.cpp
   WifiInfo.h
   Diagnostic.cpp
@@ -133,5 +137,5 @@ target_link_libraries(${target}
 )
 
 if(WIN32)
-  target_link_libraries(${target} PUBLIC wlanapi dwmapi)
+  target_link_libraries(${target} PUBLIC wlanapi dwmapi shell32)
 endif()

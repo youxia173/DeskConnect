@@ -23,8 +23,12 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent), ui{std::make_unique
   const QSize pixmapSize(px, px);
   ui->lblIcon->setFixedSize(pixmapSize);
 
+#ifdef Q_OS_WIN
+  ui->lblIcon->setPixmap(QIcon(QStringLiteral(":/deskflow.ico")).pixmap(pixmapSize));
+#else
   ui->lblIcon->setPixmap(QPixmap(QIcon::fromTheme(kRevFqdnName).pixmap(QSize().scaled(pixmapSize, Qt::KeepAspectRatio)))
   );
+#endif
 
   ui->btnCopyVersion->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy));
   connect(ui->btnCopyVersion, &QPushButton::clicked, this, &AboutDialog::copyVersionText);

@@ -13,7 +13,7 @@
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Ubuntu&apos;; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://www.gnu.org/licenses/old-licenses/gpl-2.0.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;License: GNU GPL Version 2&lt;/a&gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+        <translation type="vanished">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Ubuntu&apos;; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
@@ -33,7 +33,7 @@ p, li { white-space: pre-wrap; }
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Ubuntu&apos;; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;https://github.com/deskflow/deskflow/graphs/contributors&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;Code Contributors&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+        <translation type="vanished">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Ubuntu&apos;; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
@@ -41,11 +41,11 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Icons from &lt;a href=&quot;https://develop.kde.org/frameworks/breeze-icons/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;KDE Breeze&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Иконки &lt;a href=&quot;https://develop.kde.org/frameworks/breeze-icons/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;KDE Breeze&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="vanished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Иконки &lt;a href=&quot;https://develop.kde.org/frameworks/breeze-icons/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;KDE Breeze&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Important Developers</source>
-        <translation>Ключевые разработчики</translation>
+        <translation type="vanished">Ключевые разработчики</translation>
     </message>
     <message>
         <source>&amp;Close</source>
@@ -53,6 +53,22 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>About DeskConnect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Author: 游侠173</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;/head&gt;&lt;body&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;&quot;&gt;&lt;a href=&quot;https://www.gnu.org/licenses/old-licenses/gpl-2.0.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;License: GNU GPL Version 2&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;/head&gt;&lt;body&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;&quot;&gt;&lt;a href=&quot;https://github.com/youxia173/DeskConnect&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#508ed8;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -350,6 +366,25 @@ Do you want to connect to the server?
     <message>
         <source>Close</source>
         <translation type="unfinished">Закрывать</translation>
+    </message>
+    <message>
+        <source># DeskConnect Help
+
+Share one keyboard and mouse across multiple computers on your network.
+
+## Quick start
+
+1. On the computer with the keyboard and mouse, set mode to **Server** and click **Start**.
+2. On other computers, set mode to **Client**, enter the server hostname or IP, then click **Start**.
+3. Move the mouse past the screen edge to switch computers.
+
+## Tips
+
+- Use **Send files…** from the tray or File menu to transfer files.
+- Clipboard text and images sync when you switch screens (size limit is in settings).
+- Project page: https://github.com/youxia173/DeskConnect
+</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -755,7 +790,27 @@ Current Wi-Fi: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Waiting for client before full speed…</source>
+        <source>Please choose a file (folders are not supported).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File transfer is disabled in settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start DeskConnect before sending files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not connected to the server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose server or client mode and start before sending files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for peer before full speed…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -907,6 +962,46 @@ Current Wi-Fi: %1</source>
     <message>
         <source>%1 is already running</source>
         <translation>%1 уже запущен</translation>
+    </message>
+    <message>
+        <source>Firewall rules are only available on Windows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid port: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find deskflow-core.exe next to the application.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write temporary firewall script.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Administrator approval was cancelled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to start elevated firewall helper (error %1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to add firewall rules (exit code %1). Try running DeskConnect as administrator.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send with %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shell context menu is only available on Windows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to write Explorer context menu registry keys.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1467,14 +1562,6 @@ Enabling this setting will disable the server config GUI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Only applies on the server (keyboard/mouse host). Slow transfers so mouse and keyboard stay usable. Uncheck for maximum speed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Limit speed on server (keep mouse/keyboard responsive)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Max speed (MB/s)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1499,7 +1586,48 @@ Enabling this setting will disable the server config GUI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Cyber</source>
+        <source>Allow through Windows Firewall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add inbound firewall rules for deskflow-core and the TCP port (requires administrator approval).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Firewall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to add firewall rules.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows Firewall inbound rules were added for %1 (TCP port %2).
+You may need to restart the connection if it was blocked before.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a right-click menu item on files (not folders) to send them with DeskConnect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add &quot;Send with DeskConnect&quot; to Explorer right-click menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to update Explorer context menu.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Slow file transfers so mouse and keyboard stay usable on the shared connection. Uncheck for maximum speed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Limit transfer speed (keep mouse/keyboard responsive)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
