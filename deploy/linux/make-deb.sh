@@ -7,12 +7,17 @@ PORTABLE="${PORTABLE:-$ROOT/dist/DeskConnect}"
 DIST_ROOT="$(dirname "$PORTABLE")"
 ARCH_DEB="${ARCH_DEB:-amd64}"
 
-if [[ ! -x "$PORTABLE/DeskConnect" || ! -x "$PORTABLE/bin/deskflow-core" ]]; then
-  echo "Portable tree missing — running make-portable.sh first..." >&2
+# Always refresh the portable tree so .deb picks up the latest build/binaries.
+# Set SKIP_PORTABLE_REFRESH=1 to reuse an existing dist/DeskConnect tree.
+if [[ "${SKIP_PORTABLE_REFRESH:-0}" != "1" || ! -x "$PORTABLE/DeskConnect" || ! -x "$PORTABLE/bin/deskflow-core" ]]; then
+  echo "Refreshing portable tree from build..." >&2
   QTDIR="${QTDIR:-/home/hans/Qt/6.8.3/gcc_64}" "$ROOT/deploy/linux/make-portable.sh"
 fi
 
-VERSION="$("$PORTABLE/bin/deskflow-core" --version 2>/dev/null | head -1 | awk '{print $2}' || echo 1.26.0.9999)"
+VERSION="${VERSION_OVERRIDE:-}"
+if [[ -z "$VERSION" ]]; then
+  VERSION="$("$PORTABLE/bin/deskflow-core" --version 2>/dev/null | head -1 | awk '{print $2}' || echo 1.26.0.9999)"
+fi
 # Debian version: drop leading 'v' and trailing comma from "v1.26.2, protocol …"
 VERSION="${VERSION#v}"
 VERSION="${VERSION%,}"

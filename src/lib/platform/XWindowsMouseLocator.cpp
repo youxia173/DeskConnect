@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
-#include "platform/XWindowsMouseLocator.h"
-
 #include "base/EventTypes.h"
 #include "base/IEventQueue.h"
 #include "base/Log.h"
+
+// X11 (Status/Bool) must come after Qt headers pulled in above.
+#include "platform/XWindowsMouseLocator.h"
 
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -94,7 +95,19 @@ void XWindowsMouseLocator::show(Display *display, Window root, int x, int y, IEv
   attr.override_redirect = True;
   attr.backing_store = NotUseful;
   attr.save_under = True;
-  attr.background_pixel = 0xFFE040; // bright yellow
+  // Bright yellow; ring is cut via Shape so only the circle shows.
+  attr.background_pixel = 0x40E0FF; // BGR: yellow-ish (X11 often packs as BGR for TrueColor)
+  {
+    // Prefer a vivid yellow from the default colormap.
+    Colormap cmap = DefaultColormap(m_display, DefaultScreen(m_display));
+    XColor color = {};
+    color.red = 0xffff;
+    color.green = 0xc800;
+    color.blue = 0x0000;
+    if (XAllocColor(m_display, cmap, &color) != 0) {
+      attr.background_pixel = color.pixel;
+    }
+  }
   attr.border_pixel = 0;
   attr.event_mask = ExposureMask;
 
@@ -108,13 +121,24 @@ void XWindowsMouseLocator::show(Display *display, Window root, int x, int y, IEv
     return;
   }
 
-  // Keep the overlay above others without taking focus.
   Atom state = XInternAtom(m_display, "_NET_WM_STATE", False);
   Atom above = XInternAtom(m_display, "_NET_WM_STATE_ABOVE", False);
   if (state != None && above != None) {
     XChangeProperty(m_display, m_window, state, XA_ATOM, 32, PropModeReplace, reinterpret_cast<unsigned char *>(&above), 1);
   }
 
+  // Do not accept input so clicks pass through to apps underneath.
+  if (m_haveShape) {
+    Pixmap empty = XCreatePixmap(m_display, m_window, 1, 1, 1);
+    GC gc = XCreateGC(m_display, empty, 0, nullptr);
+    XSetForeground(m_display, gc, 0);
+    XFillRectangle(m_display, empty, gc, 0, 0, 1, 1);
+    XShapeCombineMask(m_display, m_window, ShapeInput, 0, 0, empty, ShapeSet);
+    XFreeGC(m_display, gc);
+    XFreePixmap(m_display, empty);
+  }
+
+  LOG_INFO("mouse locator: show at %d,%d", m_centerX, m_centerY);
   XMapRaised(m_display, m_window);
   paint();
   schedule();
@@ -144,24 +168,55 @@ void XWindowsMouseLocator::paint()
   const float maxRadius = half - 8.0f;
   const float minRadius = 12.0f;
   const float radius = maxRadius + (minRadius - maxRadius) * e;
-  const int thickness = (std::max)(4, static_cast<int>(m_windowSize * 0.04f * (1.0f - 0.2f * e)));
+  const int thickness = (std::max)(6, static_cast<int>(m_windowSize * 0.045f * (1.0f - 0.2f * e)));
+
+  const int outer = static_cast<int>(radius + thickness * 0.5f);
+  const int inner = (std::max)(0, static_cast<int>(radius - thickness * 0.5f));
 
   if (m_haveShape) {
-    Pixmap mask = XCreatePixmap(m_display, m_window, static_cast<unsigned>(m_windowSize), static_cast<unsigned>(m_windowSize), 1);
+    // Reliable ring: fill outer disk, then clear inner disk (XDrawArc on 1-bit often fails).
+    Pixmap mask =
+        XCreatePixmap(m_display, m_window, static_cast<unsigned>(m_windowSize), static_cast<unsigned>(m_windowSize), 1);
     GC gc = XCreateGC(m_display, mask, 0, nullptr);
     XSetForeground(m_display, gc, 0);
     XFillRectangle(m_display, mask, gc, 0, 0, static_cast<unsigned>(m_windowSize), static_cast<unsigned>(m_windowSize));
     XSetForeground(m_display, gc, 1);
-    XSetLineAttributes(m_display, gc, thickness, LineSolid, CapRound, JoinRound);
-    const int diam = static_cast<int>(radius * 2.0f);
-    const int x = static_cast<int>(half - radius);
-    const int y = static_cast<int>(half - radius);
-    XDrawArc(m_display, mask, gc, x, y, diam, diam, 0, 360 * 64);
+    XFillArc(
+        m_display, mask, gc, static_cast<int>(half) - outer, static_cast<int>(half) - outer, outer * 2, outer * 2, 0,
+        360 * 64
+    );
+    if (inner > 1) {
+      XSetForeground(m_display, gc, 0);
+      XFillArc(
+          m_display, mask, gc, static_cast<int>(half) - inner, static_cast<int>(half) - inner, inner * 2, inner * 2, 0,
+          360 * 64
+      );
+    }
     XShapeCombineMask(m_display, m_window, ShapeBounding, 0, 0, mask, ShapeSet);
     XFreeGC(m_display, gc);
     XFreePixmap(m_display, mask);
+    XClearWindow(m_display, m_window);
+  } else {
+    // No Shape: draw ring with Xlib into the window.
+    XClearWindow(m_display, m_window);
+    GC gc = XCreateGC(m_display, m_window, 0, nullptr);
+    Colormap cmap = DefaultColormap(m_display, DefaultScreen(m_display));
+    XColor color = {};
+    color.red = 0xffff;
+    color.green = 0xc800;
+    color.blue = 0x0000;
+    if (XAllocColor(m_display, cmap, &color) != 0) {
+      XSetForeground(m_display, gc, color.pixel);
+    }
+    XSetLineAttributes(m_display, gc, thickness, LineSolid, CapRound, JoinRound);
+    const int diam = static_cast<int>(radius * 2.0f);
+    XDrawArc(
+        m_display, m_window, gc, static_cast<int>(half - radius), static_cast<int>(half - radius), diam, diam, 0,
+        360 * 64
+    );
+    XFreeGC(m_display, gc);
   }
 
-  XClearWindow(m_display, m_window);
+  XRaiseWindow(m_display, m_window);
   XFlush(m_display);
 }

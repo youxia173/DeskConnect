@@ -120,10 +120,12 @@ XWindowsScreen::XWindowsScreen(const char *displayName, bool isPrimary, IEventQu
 #ifdef HAVE_XI2
     m_xi2detected = detectXI2();
     if (m_xi2detected) {
+      LOG_INFO("XInput2 detected; enabling raw motion/button events (mouse locator)");
       selectXIRawMotion();
     } else
 #endif
     {
+      LOG_INFO("XInput2 not available; falling back to selected window events");
       // start watching for events on other windows
       selectEvents(m_root);
     }
@@ -1241,7 +1243,7 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
 
 #ifdef HAVE_XI2
   if (m_xi2detected) {
-    // Process RawMotion
+    // Process RawMotion / RawButtonPress (global middle-click for mouse locator)
     auto *cookie = &xevent->xcookie;
     if (XGetEventData(m_display, cookie) && cookie->type == GenericEvent && cookie->extension == xi_opcode) {
       if (cookie->evtype == XI_RawMotion) {
@@ -1258,6 +1260,16 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
             &xmotion.y, &msk
         );
         onMouseMove(xmotion);
+        XFreeEventData(m_display, cookie);
+        return;
+      }
+      if (cookie->evtype == XI_RawButtonPress) {
+        // Raw button events are delivered even when the cursor is over other apps
+        // (Windows LL hook equivalent). Only show locator while on this screen.
+        const auto *raw = static_cast<const XIRawEvent *>(cookie->data);
+        if (raw != nullptr && raw->detail == Button2) {
+          maybeShowMouseLocator(kButtonMiddle);
+        }
         XFreeEventData(m_display, cookie);
         return;
       }
@@ -1539,9 +1551,11 @@ void XWindowsScreen::maybeShowMouseLocator(ButtonID button)
     return;
   }
   if (m_isPrimary && !m_isOnScreen) {
+    LOG_DEBUG("mouse locator: skip (primary cursor is on another screen)");
     return;
   }
   if (!Settings::value(Settings::Core::MouseLocator).toBool()) {
+    LOG_DEBUG("mouse locator: skip (disabled in settings)");
     return;
   }
 
@@ -2049,13 +2063,20 @@ void XWindowsScreen::selectXIRawMotion()
 {
   XIEventMask mask;
 
-  mask.deviceid = XIAllDevices;
-  mask.mask_len = XIMaskLen(XI_RawMotion);
+  // XI_RawButtonPress may require a longer mask than XI_RawMotion alone.
+  mask.mask_len = XIMaskLen(XI_RawButtonPress);
+  if (mask.mask_len < XIMaskLen(XI_RawMotion)) {
+    mask.mask_len = XIMaskLen(XI_RawMotion);
+  }
+  if (mask.mask_len < XIMaskLen(XI_RawKeyRelease)) {
+    mask.mask_len = XIMaskLen(XI_RawKeyRelease);
+  }
   mask.mask = (unsigned char *)calloc(mask.mask_len, sizeof(char));
   mask.deviceid = XIAllMasterDevices;
-  memset(mask.mask, 0, 2);
+  memset(mask.mask, 0, mask.mask_len);
   XISetMask(mask.mask, XI_RawKeyRelease);
   XISetMask(mask.mask, XI_RawMotion);
+  XISetMask(mask.mask, XI_RawButtonPress);
   XISelectEvents(m_display, DefaultRootWindow(m_display), &mask, 1);
   free(mask.mask);
 }

@@ -1630,6 +1630,14 @@ You may need to restart the connection if it was blocked before.</source>
         <source>Limit transfer speed (keep mouse/keyboard responsive)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Press the middle mouse button to show a shrinking circle around the cursor. Helps find which screen the mouse is on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Middle-click to locate mouse (shrinking circle)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SettingsDialogButtonBox</name>

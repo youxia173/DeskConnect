@@ -278,6 +278,12 @@ QVariant Settings::defaultValue(const QString &key)
   if (key == Core::Language)
     return QStringLiteral("zh_CN");
 
+  if (key == Core::PreventSleep)
+    return false;
+
+  if (key == Core::MouseLocator)
+    return true; // middle-click shrinking circle to find the cursor
+
   if (key == Gui::Theme)
     return QStringLiteral("light");
 
