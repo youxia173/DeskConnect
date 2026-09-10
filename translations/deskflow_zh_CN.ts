@@ -793,6 +793,141 @@ Current Wi-Fi: %1</source>
     </message>
 </context>
 <context>
+    <name>MouseLocatorBinding</name>
+    <message>
+        <source>Not set</source>
+        <translation>未设置</translation>
+    </message>
+    <message>
+        <source>Left mouse button</source>
+        <translation>鼠标左键</translation>
+    </message>
+    <message>
+        <source>Middle mouse button</source>
+        <translation>鼠标中键</translation>
+    </message>
+    <message>
+        <source>Right mouse button</source>
+        <translation>鼠标右键</translation>
+    </message>
+    <message>
+        <source>Mouse back button</source>
+        <translation>鼠标侧键（后退）</translation>
+    </message>
+    <message>
+        <source>Mouse forward button</source>
+        <translation>鼠标侧键（前进）</translation>
+    </message>
+    <message>
+        <source>Mouse side button</source>
+        <translation>鼠标侧键</translation>
+    </message>
+    <message>
+        <source>Shift</source>
+        <translation>Shift</translation>
+    </message>
+    <message>
+        <source>Ctrl</source>
+        <translation>Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt</source>
+        <translation>Alt</translation>
+    </message>
+    <message>
+        <source>Win</source>
+        <translation>Win</translation>
+    </message>
+    <message>
+        <source>Space</source>
+        <translation>空格</translation>
+    </message>
+    <message>
+        <source>Esc</source>
+        <translation>Esc</translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation>Tab</translation>
+    </message>
+    <message>
+        <source>Shift+Tab</source>
+        <translation>Shift+Tab</translation>
+    </message>
+    <message>
+        <source>Backspace</source>
+        <translation>退格</translation>
+    </message>
+    <message>
+        <source>Enter</source>
+        <translation>回车</translation>
+    </message>
+    <message>
+        <source>Insert</source>
+        <translation>Insert</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation>End</translation>
+    </message>
+    <message>
+        <source>Left Arrow</source>
+        <translation>左方向键</translation>
+    </message>
+    <message>
+        <source>Up Arrow</source>
+        <translation>上方向键</translation>
+    </message>
+    <message>
+        <source>Right Arrow</source>
+        <translation>右方向键</translation>
+    </message>
+    <message>
+        <source>Down Arrow</source>
+        <translation>下方向键</translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation>Page Up</translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation>Page Down</translation>
+    </message>
+    <message>
+        <source>Caps Lock</source>
+        <translation>大写锁定</translation>
+    </message>
+    <message>
+        <source>Num Lock</source>
+        <translation>Num Lock</translation>
+    </message>
+    <message>
+        <source>Scroll Lock</source>
+        <translation>Scroll Lock</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation>Pause</translation>
+    </message>
+    <message>
+        <source>Print Screen</source>
+        <translation>Print Screen</translation>
+    </message>
+    <message>
+        <source>Menu</source>
+        <translation>菜单键</translation>
+    </message>
+</context>
+<context>
     <name>NewScreenWidget</name>
     <message>
         <source>Unnamed</source>
@@ -1332,12 +1467,48 @@ Enabling this setting will disable the server config GUI.</source>
         <translation>防止此计算机进入睡眠状态</translation>
     </message>
     <message>
-        <source>Middle-click to locate mouse (shrinking circle)</source>
-        <translation>中键定位鼠标（缩小圆圈）</translation>
+        <source>Locate mouse</source>
+        <translation>定位鼠标</translation>
     </message>
     <message>
-        <source>Press the middle mouse button to show a shrinking circle around the cursor. Helps find which screen the mouse is on.</source>
-        <translation>按下鼠标中键时，在光标周围显示缩小的定位圆，方便在多台电脑间找到鼠标位置。</translation>
+        <source>Show a short animation around the cursor when the locate key or mouse button is pressed. Helps find which screen the mouse is on.</source>
+        <translation>按下定位键或鼠标键时，在光标周围播放短暂动画，方便在多台电脑间找到鼠标位置。</translation>
+    </message>
+    <message>
+        <source>Animation style shown around the cursor</source>
+        <translation>光标周围显示的定位动画样式</translation>
+    </message>
+    <message>
+        <source>Shrinking circle</source>
+        <translation>缩小圆圈</translation>
+    </message>
+    <message>
+        <source>Ripple</source>
+        <translation>涟漪扩散</translation>
+    </message>
+    <message>
+        <source>Crosshair</source>
+        <translation>十字准星</translation>
+    </message>
+    <message>
+        <source>Spotlight</source>
+        <translation>高亮光斑</translation>
+    </message>
+    <message>
+        <source>Pulse</source>
+        <translation>脉冲闪烁</translation>
+    </message>
+    <message>
+        <source>Blinking dot</source>
+        <translation>闪烁圆点</translation>
+    </message>
+    <message>
+        <source>Click, then press a mouse button (not left), a key, or a key combination. Esc cancels.</source>
+        <translation>点击后按下鼠标键（左键除外）、任意键或组合键以绑定。Esc 取消。</translation>
+    </message>
+    <message>
+        <source>Press key or mouse button...</source>
+        <translation>请按下按键或鼠标键...</translation>
     </message>
     <message>
         <source>Tray icon style</source>
@@ -1656,6 +1827,10 @@ You may need to restart the connection if it was blocked before.</source>
     <message>
         <source>Limit transfer speed (keep mouse/keyboard responsive)</source>
         <translation>限制传输速度（保证键鼠可操控）</translation>
+    </message>
+    <message>
+        <source>mousebutton(2)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

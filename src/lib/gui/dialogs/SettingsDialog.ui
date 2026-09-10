@@ -113,17 +113,41 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="cbMouseLocator">
-         <property name="toolTip">
-          <string>Press the middle mouse button to show a shrinking circle around the cursor. Helps find which screen the mouse is on.</string>
-         </property>
-         <property name="text">
-          <string>Middle-click to locate mouse (shrinking circle)</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="horizontalLayoutMouseLocator">
+         <item>
+          <widget class="QCheckBox" name="cbMouseLocator">
+           <property name="toolTip">
+            <string>Show a short animation around the cursor when the locate key or mouse button is pressed. Helps find which screen the mouse is on.</string>
+           </property>
+           <property name="text">
+            <string>Locate mouse</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboMouseLocatorStyle">
+           <property name="toolTip">
+            <string>Animation style shown around the cursor</string>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="KeySequenceWidget" name="keyMouseLocator">
+           <property name="toolTip">
+            <string>Click, then press a mouse button (not left), a key, or a key combination. Esc cancels.</string>
+           </property>
+           <property name="text">
+            <string>mousebutton(2)</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QGroupBox" name="groupFileTransfer">
@@ -1091,6 +1115,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KeySequenceWidget</class>
+   <extends>QPushButton</extends>
+   <header>widgets/KeySequenceWidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

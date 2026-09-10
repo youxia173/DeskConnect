@@ -54,8 +54,12 @@ public:
     inline static const auto LastVersion = QStringLiteral("core/lastVersion");
     inline static const auto Port = QStringLiteral("core/port");
     inline static const auto PreventSleep = QStringLiteral("core/preventSleep");
-    //! Middle-click shows a shrinking circle around the cursor to help find it.
+    //! Shows a shrinking circle around the cursor to help find it.
     inline static const auto MouseLocator = QStringLiteral("core/mouseLocator");
+    //! Binding: mousebutton(N) with Deskflow ButtonID, or keystroke(modifiers+key).
+    inline static const auto MouseLocatorBinding = QStringLiteral("core/mouseLocatorBinding");
+    //! Visual style id: shrink, ripple, crosshair, spotlight, pulse, dot.
+    inline static const auto MouseLocatorStyle = QStringLiteral("core/mouseLocatorStyle");
     inline static const auto ProcessMode = QStringLiteral("core/processMode");
     inline static const auto ComputerName = QStringLiteral("core/computerName");
     inline static const auto Display = QStringLiteral("core/display");
@@ -293,6 +297,8 @@ private:
     , Core::Port
     , Core::PreventSleep
     , Core::MouseLocator
+    , Core::MouseLocatorBinding
+    , Core::MouseLocatorStyle
     , Core::ProcessMode
     , Core::EnableEnterCommand
     , Core::EnableExitCommand

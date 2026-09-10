@@ -815,6 +815,141 @@ Current Wi-Fi: %1</source>
     </message>
 </context>
 <context>
+    <name>MouseLocatorBinding</name>
+    <message>
+        <source>Not set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left mouse button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Middle mouse button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right mouse button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mouse back button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mouse forward button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mouse side button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift</source>
+        <translation type="unfinished">Shift</translation>
+    </message>
+    <message>
+        <source>Ctrl</source>
+        <translation type="unfinished">Ctrl</translation>
+    </message>
+    <message>
+        <source>Alt</source>
+        <translation type="unfinished">Alt</translation>
+    </message>
+    <message>
+        <source>Win</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Space</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Esc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift+Tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left Arrow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up Arrow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right Arrow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Down Arrow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Page Up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Page Down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Caps Lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Num Lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scroll Lock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Print Screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>NewScreenWidget</name>
     <message>
         <source>Unnamed</source>
@@ -1635,11 +1770,51 @@ You may need to restart the connection if it was blocked before.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Press the middle mouse button to show a shrinking circle around the cursor. Helps find which screen the mouse is on.</source>
+        <source>Click, then press a mouse button (not left), a key, or a key combination. Esc cancels.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Middle-click to locate mouse (shrinking circle)</source>
+        <source>mousebutton(2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press key or mouse button...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show a short animation around the cursor when the locate key or mouse button is pressed. Helps find which screen the mouse is on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Locate mouse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation style shown around the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shrinking circle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ripple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crosshair</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spotlight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pulse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blinking dot</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

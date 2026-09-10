@@ -6,12 +6,17 @@
 
 #pragma once
 
+#include "platform/MouseLocatorPainter.h"
+
 #include <X11/Xlib.h>
+
+#include <cstdint>
+#include <vector>
 
 class EventQueueTimer;
 class IEventQueue;
 
-//! Short-lived override-redirect ring around the cursor (X11).
+//! Short-lived override-redirect locator overlay around the cursor (X11).
 class XWindowsMouseLocator
 {
 public:
@@ -40,4 +45,6 @@ private:
   int m_frameCount = 0;
   int m_windowSize = 0;
   bool m_haveShape = false;
+  MouseLocatorPainter::Style m_style = MouseLocatorPainter::Style::ShrinkRing;
+  std::vector<uint32_t> m_pixels;
 };

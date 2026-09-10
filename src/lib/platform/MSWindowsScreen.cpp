@@ -29,6 +29,7 @@
 #include "platform/MSWindowsEventQueueBuffer.h"
 #include "platform/MSWindowsKeyState.h"
 #include "platform/MSWindowsScreenSaver.h"
+#include "platform/MouseLocatorTrigger.h"
 
 #include <Shlobj.h>
 #include <algorithm>
@@ -332,12 +333,22 @@ void MSWindowsScreen::leave()
   // tell the key mapper about the keyboard layout
   m_keyState->setKeyLayout(m_keyLayout);
 
+  // Park at the exit edge so the unused screen keeps that cursor position.
+  POINT pos = {};
+  if (getThisCursorPos(&pos)) {
+    m_parkX = pos.x;
+    m_parkY = pos.y;
+  } else {
+    m_parkX = m_xCursor;
+    m_parkY = m_yCursor;
+  }
+
   // tell desk that we're leaving and tell it the keyboard layout
   m_desks->leave(m_keyLayout);
 
   if (m_isPrimary) {
-    LOG_VERBOSE("centering cursor on leave: %+d, %+d", m_xCenter, m_yCenter);
-    warpCursor(m_xCenter, m_yCenter);
+    LOG_VERBOSE("parking cursor on leave: %+d, %+d", m_parkX, m_parkY);
+    warpCursor(m_parkX, m_parkY);
 
     // disable special key sequences on win95 family
     enableSpecialKeys(false);
@@ -863,6 +874,7 @@ void MSWindowsScreen::updateKeys()
 void MSWindowsScreen::fakeKeyDown(KeyID id, KeyModifierMask mask, KeyButton button, const std::string &lang)
 {
   PlatformScreen::fakeKeyDown(id, mask, button, lang);
+  maybeShowMouseLocatorForKey(id, mask, true, false);
   updateMouseKeys();
 }
 
@@ -1291,8 +1303,11 @@ bool MSWindowsScreen::onKey(WPARAM wParam, LPARAM lParam)
     }
     if (key != kKeyNone) {
       // do it
+      const bool down = ((lParam & 0x80000000u) == 0);
+      const bool repeat = ((lParam & 0x40000000u) != 0);
+      maybeShowMouseLocatorForKey(key, mask, down, repeat);
       m_keyState->sendKeyEvent(
-          getEventTarget(), ((lParam & 0x80000000u) == 0), ((lParam & 0x40000000u) != 0), key, mask,
+          getEventTarget(), down, repeat, key, mask,
           (int32_t)(lParam & 0xffff), button
       );
     } else {
@@ -1411,22 +1426,14 @@ bool MSWindowsScreen::onMouseMove(int32_t mx, int32_t my)
     // motion on primary screen
     sendEvent(EventTypes::PrimaryScreenMotionOnPrimary, MotionInfo::alloc(m_xCursor, m_yCursor));
   } else {
-    // the motion is on the secondary screen, so we warp mouse back to
-    // center on the server screen. if we don't do this, then the mouse
-    // will always try to return to the original entry point on the
-    // secondary screen.
-    LOG_VERBOSE("centering cursor on motion: %+d,%+d", m_xCenter, m_yCenter);
-    warpCursorNoFlush(m_xCenter, m_yCenter);
+    // Controlling another screen: warp back to the leave-edge park point (not the
+    // geometric center) so the unused monitor keeps showing the exit position.
+    LOG_VERBOSE("parking cursor on motion: %+d,%+d", m_parkX, m_parkY);
+    warpCursorNoFlush(m_parkX, m_parkY);
 
-    // examine the motion.  if it's about the distance
-    // from the center of the screen to an edge then
-    // it's probably a bogus motion that we want to
-    // ignore (see warpCursorNoFlush() for a further
-    // description).
-    static int32_t bogusZoneSize = 10;
-    if (-x + bogusZoneSize > m_xCenter - m_x || x + bogusZoneSize > m_x + m_w - m_xCenter ||
-        -y + bogusZoneSize > m_yCenter - m_y || y + bogusZoneSize > m_y + m_h - m_yCenter) {
-
+    // Drop warp artifacts. Park is at an edge so use a fixed bound, not center-to-edge.
+    static const int32_t kMaxDelta = 100;
+    if (x > kMaxDelta || x < -kMaxDelta || y > kMaxDelta || y < -kMaxDelta) {
       LOG_DEBUG("dropped bogus delta motion: %+d,%+d", x, y);
     } else {
       // send motion
@@ -1489,8 +1496,8 @@ bool MSWindowsScreen::onDisplayChange()
   if (xOld != m_x || yOld != m_y || wOld != m_w || hOld != m_h) {
     if (m_isPrimary) {
       if (!m_isOnScreen) {
-        LOG_VERBOSE("centering cursor on display change: %+d, %+d", m_xCenter, m_yCenter);
-        warpCursor(m_xCenter, m_yCenter);
+        LOG_VERBOSE("parking cursor on display change: %+d, %+d", m_parkX, m_parkY);
+        warpCursor(m_parkX, m_parkY);
       }
 
       // tell hook about resize if on screen
@@ -1601,6 +1608,10 @@ void MSWindowsScreen::updateScreenShape()
   m_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
   m_xCenter = GetSystemMetrics(SM_CXSCREEN) >> 1;
   m_yCenter = GetSystemMetrics(SM_CYSCREEN) >> 1;
+  if (m_isOnScreen || (m_parkX == 0 && m_parkY == 0)) {
+    m_parkX = m_xCenter;
+    m_parkY = m_yCenter;
+  }
 
   // check for multiple monitors
   m_multimon = (m_w != GetSystemMetrics(SM_CXSCREEN) || m_h != GetSystemMetrics(SM_CYSCREEN));
@@ -1762,7 +1773,7 @@ void MSWindowsScreen::updateKeysCB(const void *)
 
 void MSWindowsScreen::maybeShowMouseLocator(ButtonID button, bool press)
 {
-  if (!press || button != kButtonMiddle) {
+  if (!press) {
     return;
   }
   // Primary draws only while the cursor is on this machine; secondary draws on inject.
@@ -1770,6 +1781,33 @@ void MSWindowsScreen::maybeShowMouseLocator(ButtonID button, bool press)
     return;
   }
   if (!Settings::value(Settings::Core::MouseLocator).toBool()) {
+    return;
+  }
+
+  const KeyModifierMask mask = m_keyState->getActiveModifiers();
+  if (!MouseLocatorTrigger::matchesButton(button, mask)) {
+    return;
+  }
+
+  POINT pt = {};
+  if (!getThisCursorPos(&pt)) {
+    return;
+  }
+  m_mouseLocator.show(pt.x, pt.y);
+}
+
+void MSWindowsScreen::maybeShowMouseLocatorForKey(KeyID key, KeyModifierMask mask, bool down, bool repeat)
+{
+  if (!down || repeat) {
+    return;
+  }
+  if (m_isPrimary && !m_isOnScreen) {
+    return;
+  }
+  if (!Settings::value(Settings::Core::MouseLocator).toBool()) {
+    return;
+  }
+  if (!MouseLocatorTrigger::matchesKey(key, mask)) {
     return;
   }
 

@@ -230,6 +230,7 @@ private: // HACK
 
   //! Middle-click locator: draw only on the machine that currently owns the cursor.
   void maybeShowMouseLocator(ButtonID button, bool press);
+  void maybeShowMouseLocatorForKey(KeyID key, KeyModifierMask mask, bool down, bool repeat);
 
   // our window proc
   static LRESULT CALLBACK wndProc(HWND, UINT, WPARAM, LPARAM);
@@ -283,6 +284,10 @@ private:
   int32_t m_h = 0;
   int32_t m_xCenter = 0;
   int32_t m_yCenter = 0;
+  //! While controlling another screen, park the (usually hidden) cursor here
+  //! instead of the geometric center so the unused monitor keeps the exit edge.
+  int32_t m_parkX = 0;
+  int32_t m_parkY = 0;
 
   // true if system appears to have multiple monitors
   bool m_multimon = false;

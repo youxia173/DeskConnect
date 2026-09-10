@@ -565,23 +565,26 @@ void MSWindowsDesks::deskLeave(Desk *desk, HKL keyLayout)
     saveRelativeRestorePosition(desk);
   }
 
+  POINT cursorPos = {};
+  const bool haveCursor = (GetCursorPos(&cursorPos) != 0);
+
   setCursorVisibility(false);
 
   if (m_isPrimary) {
     // map a window to hide the cursor and to use whatever keyboard
     // layout we choose rather than the keyboard layout of the last
-    // active window.
+    // active window. Park the hider on the leave-edge, not screen center.
     int x, y, w, h;
     if (desk->m_lowLevel) {
       // with a low level hook the cursor will never budge so
       // just a 1x1 window is sufficient.
-      x = m_xCenter;
-      y = m_yCenter;
+      x = haveCursor ? cursorPos.x : m_xCenter;
+      y = haveCursor ? cursorPos.y : m_yCenter;
       w = 1;
       h = 1;
     } else {
       // with regular hooks the cursor will jitter as it's moved
-      // by the user then back to the center by us.  to be sure
+      // by the user then back to the park by us.  to be sure
       // we never lose it, cover all the monitors with the window.
       x = m_x;
       y = m_y;
@@ -623,26 +626,16 @@ void MSWindowsDesks::deskLeave(Desk *desk, HKL keyLayout)
       }
     }
   } else {
-    // move hider window under the cursor center, raise, and show it
-    SetWindowPos(desk->m_window, HWND_TOP, m_xCenter, m_yCenter, 1, 1, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+    // Keep the exit-edge position on the unused secondary screen.
+    const int hx = haveCursor ? cursorPos.x : m_xCenter;
+    const int hy = haveCursor ? cursorPos.y : m_yCenter;
+    SetWindowPos(desk->m_window, HWND_TOP, hx, hy, 1, 1, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 
     // watch for mouse motion.  if we see any then we hide the
     // hider window so the user can use the physically attached
     // mouse if desired.  we'd rather not capture the mouse but
     // we aren't notified when the mouse leaves our window.
     SetCapture(desk->m_window);
-
-    // windows can take a while to hide the cursor, so wait a few milliseconds to ensure the cursor
-    // is hidden before centering. this doesn't seem to affect the fluidity of the transition.
-    // without this, the cursor appears to flicker in the center of the screen which is annoying.
-    // a slightly more elegant but complex solution could be to use a timed event.
-    // 30 ms seems to work well enough without making the transition feel janky; a lower number
-    // would be better but 10 ms doesn't seem to be quite long enough, as we get noticeable flicker.
-    // this is largely a balance and out of our control, since windows can be unpredictable...
-    // maybe another approach would be to repeatedly check the cursor visibility until it is hidden.
-    LOG_VERBOSE("centering cursor on leave: %+d,%+d", m_xCenter, m_yCenter);
-    ARCH->sleep(0.03);
-    deskMouseMove(m_xCenter, m_yCenter);
   }
 }
 

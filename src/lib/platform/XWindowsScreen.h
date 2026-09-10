@@ -57,6 +57,7 @@ public:
   void getCursorCenter(int32_t &x, int32_t &y) const override;
 
   // ISecondaryScreen overrides
+  void fakeKeyDown(KeyID id, KeyModifierMask mask, KeyButton button, const std::string &lang) override;
   void fakeMouseButton(ButtonID id, bool press) override;
   void fakeMouseMove(int32_t x, int32_t y) override;
   void fakeMouseRelativeMove(int32_t dx, int32_t dy) const override;
@@ -134,7 +135,8 @@ private:
   void onMousePress(const XButtonEvent &);
   void onMouseRelease(const XButtonEvent &);
   void onMouseMove(const XMotionEvent &);
-  void maybeShowMouseLocator(ButtonID button);
+  void maybeShowMouseLocator(ButtonID button, KeyModifierMask mask);
+  void maybeShowMouseLocatorForKey(KeyID key, KeyModifierMask mask);
 
   bool detectXI2();
 #ifdef HAVE_XI2
@@ -189,6 +191,9 @@ private:
   int32_t m_h = 0;
   int32_t m_xCenter = 0;
   int32_t m_yCenter = 0;
+  //! Cursor park while this primary controls another screen (leave-edge, not center).
+  int32_t m_parkX = 0;
+  int32_t m_parkY = 0;
 
   // last mouse position
   int32_t m_xCursor = 0;

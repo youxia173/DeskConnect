@@ -9,7 +9,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-//! Short-lived click-through overlay that shrinks a ring around the cursor.
+#include "platform/MouseLocatorPainter.h"
+
+//! Short-lived click-through overlay that highlights the cursor.
 class MSWindowsMouseLocator
 {
 public:
@@ -36,4 +38,5 @@ private:
   int m_frame = 0;
   int m_frameCount = 0;
   int m_windowSize = 0;
+  MouseLocatorPainter::Style m_style = MouseLocatorPainter::Style::ShrinkRing;
 };

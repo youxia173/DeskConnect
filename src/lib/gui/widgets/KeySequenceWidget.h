@@ -71,14 +71,46 @@ public:
     return keySequence().valid();
   }
 
+  //! When true, Esc cancels recording and restores the previous binding.
+  void setEscapeCancels(bool enabled)
+  {
+    m_EscapeCancels = enabled;
+  }
+
+  //! When true, left mouse button cannot be bound.
+  void setRejectLeftButton(bool enabled)
+  {
+    m_RejectLeftButton = enabled;
+  }
+
+  //! Button label while waiting for the next key/button.
+  void setRecordingText(const QString &text)
+  {
+    m_RecordingText = text;
+  }
+
+  //! Show mousebutton(N) using Deskflow ButtonID (Left=1, Middle=2, Right=3).
+  void setDeskflowMouseIds(bool enabled)
+  {
+    m_DeskflowMouseIds = enabled;
+  }
+
+  //! Localized display for mouse locator (Chinese labels etc.).
+  void setLocalizedDisplay(bool enabled)
+  {
+    m_LocalizedDisplay = enabled;
+  }
+
 protected:
   void mousePressEvent(QMouseEvent *) override;
   void keyPressEvent(QKeyEvent *) override;
   bool event(QEvent *event) override;
-  void appendToSequence(int key);
+  bool eventFilter(QObject *watched, QEvent *event) override;
   void updateOutput();
   void startRecording();
   void stopRecording();
+  void cancelRecording();
+  void finishGrab();
 
 private:
   enum Status
@@ -99,6 +131,12 @@ private:
   KeySequence m_KeySequence;
   KeySequence m_BackupSequence;
   Status m_Status = Status::Stopped;
+  bool m_EscapeCancels = false;
+  bool m_RejectLeftButton = false;
+  bool m_DeskflowMouseIds = false;
+  bool m_LocalizedDisplay = false;
+  bool m_FilterInstalled = false;
+  QString m_RecordingText;
   QString m_MousePrefix = QStringLiteral("mousebutton(");
   QString m_MousePostfix = QStringLiteral(")");
   QString m_KeyPrefix = QStringLiteral("keystroke(");

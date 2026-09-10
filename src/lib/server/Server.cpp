@@ -252,14 +252,27 @@ void Server::adoptClient(BaseClientProxy *client)
     return;
   }
 
-  // add client to client list
+  // Name must be unique among live clients. After a WiFi blip the client often
+  // reconnects while the server still holds the dead session; take over instead
+  // of refusing with EBusy (which pops a confusing dialog on every reconnect).
+  const std::string name = getName(client);
+  if (auto existing = m_clients.find(name); existing != m_clients.end()) {
+    BaseClientProxy *old = existing->second;
+    if (old == m_primaryClient) {
+      LOG_WARN("a client with name \"%s\" is already connected", name.c_str());
+      closeClient(client, kMsgEBusy);
+      return;
+    }
+    LOG_INFO("client \"%s\" reconnected; disconnecting previous session", name.c_str());
+    closeClient(old, kMsgCClose);
+  }
+
   if (!addClient(client)) {
-    // can only have one screen with a given name at any given time
-    LOG_WARN("a client with name \"%s\" is already connected", getName(client).c_str());
+    LOG_WARN("a client with name \"%s\" is already connected", name.c_str());
     closeClient(client, kMsgEBusy);
     return;
   }
-  LOG_DEBUG("client \"%s\" has connected", getName(client).c_str());
+  LOG_DEBUG("client \"%s\" has connected", name.c_str());
   ipcSendConnectionState(deskflow::core::ConnectionState::Connected);
   sendConnectedClientsIpc();
 
@@ -272,7 +285,7 @@ void Server::adoptClient(BaseClientProxy *client)
   }
 
   // send notification
-  auto *info = new Server::ScreenConnectedInfo(getName(client));
+  auto *info = new Server::ScreenConnectedInfo(name);
   m_events->addEvent(Event(EventTypes::ServerConnected, m_primaryClient->getEventTarget(), info));
 }
 

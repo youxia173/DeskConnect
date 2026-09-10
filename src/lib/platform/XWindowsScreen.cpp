@@ -20,6 +20,7 @@
 #include "deskflow/KeyMap.h"
 #include "deskflow/ScreenException.h"
 #include "filetransfer/FileTransfer.h"
+#include "platform/MouseLocatorTrigger.h"
 #include "platform/XDGKeyUtil.h"
 #include "platform/XWindowsClipboard.h"
 #include "platform/XWindowsConfig.h"
@@ -289,6 +290,10 @@ bool XWindowsScreen::canLeave()
 
 void XWindowsScreen::leave()
 {
+  // Keep the exit-edge position on the unused screen (do not jump to center).
+  m_parkX = m_xCursor;
+  m_parkY = m_yCursor;
+
   if (!m_isPrimary) {
     // restore the previous keyboard auto-repeat state.  if the user
     // changed the auto-repeat configuration while on the client then
@@ -299,8 +304,8 @@ void XWindowsScreen::leave()
       // XAutoRepeatOn(m_display);
     }
 
-    // move hider window under the cursor center
-    XMoveWindow(m_display, m_window, m_xCenter, m_yCenter);
+    // move hider window under the parked cursor
+    XMoveWindow(m_display, m_window, m_parkX, m_parkY);
   }
 
   // raise and show the window
@@ -322,13 +327,10 @@ void XWindowsScreen::leave()
   // now warp the mouse.  we warp after showing the window so we're
   // guaranteed to get the mouse leave event and to prevent the
   // keyboard focus from changing under point-to-focus policies.
+  // Primary parks at the leave edge for relative tracking; secondary stays put.
   if (m_isPrimary) {
-    warpCursor(m_xCenter, m_yCenter);
-  } else {
-    // WARN: not using fakeMouseMove() intentionally
-    // forcibly ignore any xinerama quirks, so that `xrandr --panning ... --tracking ...` works
-    XTestFakeMotionEvent(m_display, DefaultScreen(m_display), m_xCenter, m_yCenter, CurrentTime);
-    XFlush(m_display);
+    LOG_VERBOSE("parking cursor on leave: %+d, %+d", m_parkX, m_parkY);
+    warpCursor(m_parkX, m_parkY);
   }
 
   // set input context focus to our window
@@ -838,6 +840,12 @@ void XWindowsScreen::getCursorCenter(int32_t &x, int32_t &y) const
   y = m_yCenter;
 }
 
+void XWindowsScreen::fakeKeyDown(KeyID id, KeyModifierMask mask, KeyButton button, const std::string &lang)
+{
+  PlatformScreen::fakeKeyDown(id, mask, button, lang);
+  maybeShowMouseLocatorForKey(id, mask);
+}
+
 void XWindowsScreen::fakeMouseButton(ButtonID button, bool press)
 {
   const unsigned int xButton = mapButtonToX(button);
@@ -846,7 +854,7 @@ void XWindowsScreen::fakeMouseButton(ButtonID button, bool press)
     XFlush(m_display);
   }
   if (press) {
-    maybeShowMouseLocator(button);
+    maybeShowMouseLocator(button, 0);
   }
 }
 
@@ -983,6 +991,10 @@ void XWindowsScreen::setShape(int32_t width, int32_t height)
   // get center of screen
   m_xCenter = m_x + (m_w >> 1);
   m_yCenter = m_y + (m_h >> 1);
+  if (m_isOnScreen || (m_parkX == 0 && m_parkY == 0)) {
+    m_parkX = m_xCenter;
+    m_parkY = m_yCenter;
+  }
 
   // check if xinerama is enabled and there is more than one screen.
   // get center of first Xinerama screen.  Xinerama appears to have
@@ -1267,8 +1279,31 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
         // Raw button events are delivered even when the cursor is over other apps
         // (Windows LL hook equivalent). Only show locator while on this screen.
         const auto *raw = static_cast<const XIRawEvent *>(cookie->data);
-        if (raw != nullptr && raw->detail == Button2) {
-          maybeShowMouseLocator(kButtonMiddle);
+        if (raw != nullptr) {
+          ButtonID button = kButtonNone;
+          switch (raw->detail) {
+          case 1:
+            button = kButtonLeft;
+            break;
+          case 2:
+            button = kButtonMiddle;
+            break;
+          case 3:
+            button = kButtonRight;
+            break;
+          case 8:
+            button = kButtonExtra0;
+            break;
+          case 9:
+            button = kButtonExtra1;
+            break;
+          default:
+            break;
+          }
+          if (button != kButtonNone) {
+            const KeyModifierMask mask = m_keyState != nullptr ? m_keyState->getActiveModifiers() : 0;
+            maybeShowMouseLocator(button, mask);
+          }
         }
         XFreeEventData(m_display, cookie);
         return;
@@ -1468,6 +1503,7 @@ void XWindowsScreen::onKeyPress(XKeyEvent &xkey)
     }
 
     // handle key
+    maybeShowMouseLocatorForKey(key, mask);
     m_keyState->sendKeyEvent(getEventTarget(), true, false, key, mask, 1, keycode);
 
     // do fake release if this is a fake press
@@ -1540,22 +1576,40 @@ void XWindowsScreen::onMousePress(const XButtonEvent &xbutton)
   ButtonID button = mapButtonFromX(&xbutton);
   KeyModifierMask mask = m_keyState->mapModifiersFromX(xbutton.state);
   if (button != kButtonNone) {
-    maybeShowMouseLocator(button);
+    maybeShowMouseLocator(button, mask);
     sendEvent(EventTypes::PrimaryScreenButtonDown, ButtonInfo::alloc(button, mask));
   }
 }
 
-void XWindowsScreen::maybeShowMouseLocator(ButtonID button)
+void XWindowsScreen::maybeShowMouseLocator(ButtonID button, KeyModifierMask mask)
 {
-  if (button != kButtonMiddle) {
-    return;
-  }
   if (m_isPrimary && !m_isOnScreen) {
     LOG_DEBUG("mouse locator: skip (primary cursor is on another screen)");
     return;
   }
   if (!Settings::value(Settings::Core::MouseLocator).toBool()) {
     LOG_DEBUG("mouse locator: skip (disabled in settings)");
+    return;
+  }
+  if (!MouseLocatorTrigger::matchesButton(button, mask)) {
+    return;
+  }
+
+  int32_t x = 0;
+  int32_t y = 0;
+  getCursorPos(x, y);
+  m_mouseLocator.show(m_display, m_root, x, y, m_events);
+}
+
+void XWindowsScreen::maybeShowMouseLocatorForKey(KeyID key, KeyModifierMask mask)
+{
+  if (m_isPrimary && !m_isOnScreen) {
+    return;
+  }
+  if (!Settings::value(Settings::Core::MouseLocator).toBool()) {
+    return;
+  }
+  if (!MouseLocatorTrigger::matchesKey(key, mask)) {
     return;
   }
 
@@ -1621,26 +1675,15 @@ void XWindowsScreen::onMouseMove(const XMotionEvent &xmotion)
     // motion on primary screen
     sendEvent(EventTypes::PrimaryScreenMotionOnPrimary, MotionInfo::alloc(m_xCursor, m_yCursor));
   } else {
-    // motion on secondary screen.  warp mouse back to
-    // center.
-    //
-    // my lombard (powerbook g3) running linux and
-    // using the adbmouse driver has two problems:
-    // first, the driver only sends motions of +/-2
-    // pixels and, second, it seems to discard some
-    // physical input after a warp.  the former isn't a
-    // big deal (we're just limited to every other
-    // pixel) but the latter is a PITA.  to work around
-    // it we only warp when the mouse has moved more
-    // than s_size pixels from the center.
+    // Controlling another screen: warp back to the leave-edge park point.
     static const int32_t s_size = 32;
-    if (xmotion.x_root - m_xCenter < -s_size || xmotion.x_root - m_xCenter > s_size ||
-        xmotion.y_root - m_yCenter < -s_size || xmotion.y_root - m_yCenter > s_size) {
-      warpCursorNoFlush(m_xCenter, m_yCenter);
+    if (xmotion.x_root - m_parkX < -s_size || xmotion.x_root - m_parkX > s_size ||
+        xmotion.y_root - m_parkY < -s_size || xmotion.y_root - m_parkY > s_size) {
+      warpCursorNoFlush(m_parkX, m_parkY);
     }
 
     // send event if mouse moved.  do this after warping
-    // back to center in case the motion takes us onto
+    // back to park in case the motion takes us onto
     // the primary screen.  if we sent the event first
     // in that case then the warp would happen after
     // warping to the primary screen's enter position,

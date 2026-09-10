@@ -21,6 +21,8 @@ add_library(common STATIC
   I18N.cpp
   KeySequence.h
   KeySequence.cpp
+  MouseLocatorBinding.h
+  MouseLocatorBinding.cpp
   LogLevel.h
   NetworkProtocol.h
   PlatformInfo.h

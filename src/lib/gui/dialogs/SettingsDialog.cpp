@@ -12,12 +12,14 @@
 #include "ui_SettingsDialog.h"
 
 #include "common/I18N.h"
+#include "common/MouseLocatorBinding.h"
 #include "common/Settings.h"
 #include "gui/Autostart.h"
 #include "gui/TlsUtility.h"
 #include "gui/WindowsFirewall.h"
 #include "gui/WindowsShellContextMenu.h"
 #include "gui/core/NetworkMonitor.h"
+#include "gui/widgets/KeySequenceWidget.h"
 #include "gui/widgets/SettingsDialogButtonBox.h"
 
 #include <QComboBox>
@@ -67,6 +69,22 @@ SettingsDialog::SettingsDialog(QWidget *parent, const ServerConfig &serverConfig
     ui->btnAddFirewallRule->setIcon(QIcon::fromTheme(QStringLiteral("security-high")));
   }
   ui->cbShellSendMenu->setVisible(WindowsShellContextMenu::isSupported());
+
+  ui->keyMouseLocator->setEscapeCancels(true);
+  ui->keyMouseLocator->setRejectLeftButton(true);
+  ui->keyMouseLocator->setDeskflowMouseIds(true);
+  ui->keyMouseLocator->setLocalizedDisplay(true);
+  ui->keyMouseLocator->setRecordingText(tr("Press key or mouse button..."));
+  // Keep out of dialog tab order so Tab / typing never lands in neighboring fields.
+  ui->keyMouseLocator->setFocusPolicy(Qt::ClickFocus);
+
+  ui->comboMouseLocatorStyle->clear();
+  ui->comboMouseLocatorStyle->addItem(tr("Shrinking circle"), QStringLiteral("shrink"));
+  ui->comboMouseLocatorStyle->addItem(tr("Ripple"), QStringLiteral("ripple"));
+  ui->comboMouseLocatorStyle->addItem(tr("Crosshair"), QStringLiteral("crosshair"));
+  ui->comboMouseLocatorStyle->addItem(tr("Spotlight"), QStringLiteral("spotlight"));
+  ui->comboMouseLocatorStyle->addItem(tr("Pulse"), QStringLiteral("pulse"));
+  ui->comboMouseLocatorStyle->addItem(tr("Blinking dot"), QStringLiteral("dot"));
 
   // force the first tab, since qt creator sets the active tab as the last one
   // the developer was looking at, and it's easy to accidentally save that.
@@ -146,6 +164,13 @@ void SettingsDialog::initConnections() const
   connect(ui->rbAutoHide, &QRadioButton::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->cbPreventSleep, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->cbMouseLocator, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->cbMouseLocator, &QCheckBox::toggled, this, [this](bool checked) {
+    const bool on = Settings::isWritable() && checked;
+    ui->keyMouseLocator->setEnabled(on);
+    ui->comboMouseLocatorStyle->setEnabled(on);
+  });
+  connect(ui->keyMouseLocator, &KeySequenceWidget::keySequenceChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->comboMouseLocatorStyle, &QComboBox::currentIndexChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->rbCloseToTray, &QRadioButton::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->cbElevateDaemon, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->cbAutoUpdate, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
@@ -290,6 +315,10 @@ void SettingsDialog::accept()
   Settings::setValue(Settings::Gui::AutoUpdateCheck, ui->cbAutoUpdate->isChecked());
   Settings::setValue(Settings::Core::PreventSleep, ui->cbPreventSleep->isChecked());
   Settings::setValue(Settings::Core::MouseLocator, ui->cbMouseLocator->isChecked());
+  Settings::setValue(
+      Settings::Core::MouseLocatorBinding, MouseLocatorBinding::fromSequence(ui->keyMouseLocator->keySequence())
+  );
+  Settings::setValue(Settings::Core::MouseLocatorStyle, ui->comboMouseLocatorStyle->currentData().toString());
   Settings::setValue(Settings::Security::Certificate, ui->lineTlsCertPath->text());
   Settings::setValue(Settings::Security::KeySize, ui->comboTlsKeyLength->currentText().toInt());
   Settings::setValue(Settings::Security::TlsEnabled, ui->groupSecurity->isChecked());
@@ -346,6 +375,14 @@ void SettingsDialog::loadFromConfig()
   ui->lineLogFilename->setText(Settings::value(Settings::Log::File).toString());
   ui->cbPreventSleep->setChecked(Settings::value(Settings::Core::PreventSleep).toBool());
   ui->cbMouseLocator->setChecked(Settings::value(Settings::Core::MouseLocator).toBool());
+  ui->keyMouseLocator->setKeySequence(
+      MouseLocatorBinding::toSequence(Settings::value(Settings::Core::MouseLocatorBinding).toString())
+  );
+  {
+    const auto style = Settings::value(Settings::Core::MouseLocatorStyle).toString();
+    const int styleIndex = ui->comboMouseLocatorStyle->findData(style);
+    ui->comboMouseLocatorStyle->setCurrentIndex(styleIndex >= 0 ? styleIndex : 0);
+  }
   {
     const auto theme = Settings::value(Settings::Gui::Theme).toString();
     const int themeIndex = ui->comboTheme->findData(theme);
@@ -486,6 +523,8 @@ void SettingsDialog::updateControls()
   ui->cbAutoUpdate->setEnabled(writable);
   ui->cbPreventSleep->setEnabled(writable);
   ui->cbMouseLocator->setEnabled(writable);
+  ui->keyMouseLocator->setEnabled(writable && ui->cbMouseLocator->isChecked());
+  ui->comboMouseLocatorStyle->setEnabled(writable && ui->cbMouseLocator->isChecked());
   ui->lineTlsCertPath->setEnabled(writable);
   ui->comboTlsKeyLength->setEnabled(writable);
   ui->rbCloseToTray->setEnabled(writable);
@@ -534,6 +573,10 @@ bool SettingsDialog::isModified() const
       (ui->rbAutoHide->isChecked() != Settings::value(Settings::Gui::Autohide).toBool()) ||
       (ui->cbPreventSleep->isChecked() != Settings::value(Settings::Core::PreventSleep).toBool()) ||
       (ui->cbMouseLocator->isChecked() != Settings::value(Settings::Core::MouseLocator).toBool()) ||
+      (MouseLocatorBinding::fromSequence(ui->keyMouseLocator->keySequence()) !=
+       Settings::value(Settings::Core::MouseLocatorBinding).toString()) ||
+      (ui->comboMouseLocatorStyle->currentData().toString() !=
+       Settings::value(Settings::Core::MouseLocatorStyle).toString()) ||
       (ui->rbCloseToTray->isChecked() != Settings::value(Settings::Gui::CloseToTray).toBool()) ||
       (ui->cbElevateDaemon->isChecked() != Settings::value(Settings::Daemon::Elevate).toBool()) ||
       (ui->cbAutoUpdate->isChecked() != Settings::value(Settings::Gui::AutoUpdateCheck).toBool()) ||
@@ -578,6 +621,10 @@ bool SettingsDialog::isDefault() const
       (ui->rbAutoHide->isChecked() == Settings::defaultValue(Settings::Gui::Autohide).toBool()) &&
       (ui->cbPreventSleep->isChecked() == Settings::defaultValue(Settings::Core::PreventSleep).toBool()) &&
       (ui->cbMouseLocator->isChecked() == Settings::defaultValue(Settings::Core::MouseLocator).toBool()) &&
+      (MouseLocatorBinding::fromSequence(ui->keyMouseLocator->keySequence()) ==
+       Settings::defaultValue(Settings::Core::MouseLocatorBinding).toString()) &&
+      (ui->comboMouseLocatorStyle->currentData().toString() ==
+       Settings::defaultValue(Settings::Core::MouseLocatorStyle).toString()) &&
       (ui->rbCloseToTray->isChecked() == Settings::defaultValue(Settings::Gui::CloseToTray).toBool()) &&
       (ui->cbElevateDaemon->isChecked() == Settings::defaultValue(Settings::Daemon::Elevate).toBool()) &&
       (ui->cbAutoUpdate->isChecked() == Settings::defaultValue(Settings::Gui::AutoUpdateCheck).toBool()) &&
@@ -619,6 +666,14 @@ void SettingsDialog::resetToDefault()
   ui->lineLogFilename->setText(Settings::defaultValue(Settings::Log::File).toString());
   ui->cbPreventSleep->setChecked(Settings::defaultValue(Settings::Core::PreventSleep).toBool());
   ui->cbMouseLocator->setChecked(Settings::defaultValue(Settings::Core::MouseLocator).toBool());
+  ui->keyMouseLocator->setKeySequence(
+      MouseLocatorBinding::toSequence(Settings::defaultValue(Settings::Core::MouseLocatorBinding).toString())
+  );
+  {
+    const auto style = Settings::defaultValue(Settings::Core::MouseLocatorStyle).toString();
+    const int styleIndex = ui->comboMouseLocatorStyle->findData(style);
+    ui->comboMouseLocatorStyle->setCurrentIndex(styleIndex >= 0 ? styleIndex : 0);
+  }
   ui->cbElevateDaemon->setChecked(Settings::defaultValue(Settings::Daemon::Elevate).toBool());
   ui->cbAutoUpdate->setChecked(Settings::defaultValue(Settings::Gui::AutoUpdateCheck).toBool());
   ui->cbGuiDebug->setChecked(Settings::defaultValue(Settings::Log::GuiDebug).toBool());

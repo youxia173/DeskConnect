@@ -60,6 +60,10 @@ if(WIN32)
     MSWindowsScreen.h
     MSWindowsMouseLocator.cpp
     MSWindowsMouseLocator.h
+    MouseLocatorTrigger.cpp
+    MouseLocatorTrigger.h
+    MouseLocatorPainter.cpp
+    MouseLocatorPainter.h
     MSWindowsScreenSaver.cpp
     MSWindowsScreenSaver.h
     MSWindowsSession.cpp
@@ -149,6 +153,10 @@ elseif(UNIX)
       XWindowsScreen.h
       XWindowsMouseLocator.cpp
       XWindowsMouseLocator.h
+      MouseLocatorTrigger.cpp
+      MouseLocatorTrigger.h
+      MouseLocatorPainter.cpp
+      MouseLocatorPainter.h
       XWindowsScreenSaver.cpp
       XWindowsScreenSaver.h
       XWindowsUtil.cpp
