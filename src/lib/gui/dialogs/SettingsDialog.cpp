@@ -145,6 +145,7 @@ void SettingsDialog::initConnections() const
   connect(ui->comboTheme, &QComboBox::currentIndexChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->rbAutoHide, &QRadioButton::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->cbPreventSleep, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
+  connect(ui->cbMouseLocator, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->rbCloseToTray, &QRadioButton::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->cbElevateDaemon, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(ui->cbAutoUpdate, &QCheckBox::toggled, this, &SettingsDialog::setButtonBoxEnabledButtons);
@@ -288,6 +289,7 @@ void SettingsDialog::accept()
   Settings::setValue(Settings::Gui::Autohide, ui->rbAutoHide->isChecked());
   Settings::setValue(Settings::Gui::AutoUpdateCheck, ui->cbAutoUpdate->isChecked());
   Settings::setValue(Settings::Core::PreventSleep, ui->cbPreventSleep->isChecked());
+  Settings::setValue(Settings::Core::MouseLocator, ui->cbMouseLocator->isChecked());
   Settings::setValue(Settings::Security::Certificate, ui->lineTlsCertPath->text());
   Settings::setValue(Settings::Security::KeySize, ui->comboTlsKeyLength->currentText().toInt());
   Settings::setValue(Settings::Security::TlsEnabled, ui->groupSecurity->isChecked());
@@ -343,6 +345,7 @@ void SettingsDialog::loadFromConfig()
   ui->groupLogToFile->setChecked(Settings::value(Settings::Log::ToFile).toBool());
   ui->lineLogFilename->setText(Settings::value(Settings::Log::File).toString());
   ui->cbPreventSleep->setChecked(Settings::value(Settings::Core::PreventSleep).toBool());
+  ui->cbMouseLocator->setChecked(Settings::value(Settings::Core::MouseLocator).toBool());
   {
     const auto theme = Settings::value(Settings::Gui::Theme).toString();
     const int themeIndex = ui->comboTheme->findData(theme);
@@ -482,6 +485,7 @@ void SettingsDialog::updateControls()
   ui->btnClearAllSettings->setEnabled(writable);
   ui->cbAutoUpdate->setEnabled(writable);
   ui->cbPreventSleep->setEnabled(writable);
+  ui->cbMouseLocator->setEnabled(writable);
   ui->lineTlsCertPath->setEnabled(writable);
   ui->comboTlsKeyLength->setEnabled(writable);
   ui->rbCloseToTray->setEnabled(writable);
@@ -529,6 +533,7 @@ bool SettingsDialog::isModified() const
       (ui->lineLogFilename->text() != Settings::value(Settings::Log::File).toString()) ||
       (ui->rbAutoHide->isChecked() != Settings::value(Settings::Gui::Autohide).toBool()) ||
       (ui->cbPreventSleep->isChecked() != Settings::value(Settings::Core::PreventSleep).toBool()) ||
+      (ui->cbMouseLocator->isChecked() != Settings::value(Settings::Core::MouseLocator).toBool()) ||
       (ui->rbCloseToTray->isChecked() != Settings::value(Settings::Gui::CloseToTray).toBool()) ||
       (ui->cbElevateDaemon->isChecked() != Settings::value(Settings::Daemon::Elevate).toBool()) ||
       (ui->cbAutoUpdate->isChecked() != Settings::value(Settings::Gui::AutoUpdateCheck).toBool()) ||
@@ -572,6 +577,7 @@ bool SettingsDialog::isDefault() const
       (ui->lineLogFilename->text() == Settings::defaultValue(Settings::Log::File).toString()) &&
       (ui->rbAutoHide->isChecked() == Settings::defaultValue(Settings::Gui::Autohide).toBool()) &&
       (ui->cbPreventSleep->isChecked() == Settings::defaultValue(Settings::Core::PreventSleep).toBool()) &&
+      (ui->cbMouseLocator->isChecked() == Settings::defaultValue(Settings::Core::MouseLocator).toBool()) &&
       (ui->rbCloseToTray->isChecked() == Settings::defaultValue(Settings::Gui::CloseToTray).toBool()) &&
       (ui->cbElevateDaemon->isChecked() == Settings::defaultValue(Settings::Daemon::Elevate).toBool()) &&
       (ui->cbAutoUpdate->isChecked() == Settings::defaultValue(Settings::Gui::AutoUpdateCheck).toBool()) &&
@@ -612,6 +618,7 @@ void SettingsDialog::resetToDefault()
   ui->groupLogToFile->setChecked(Settings::defaultValue(Settings::Log::ToFile).toBool());
   ui->lineLogFilename->setText(Settings::defaultValue(Settings::Log::File).toString());
   ui->cbPreventSleep->setChecked(Settings::defaultValue(Settings::Core::PreventSleep).toBool());
+  ui->cbMouseLocator->setChecked(Settings::defaultValue(Settings::Core::MouseLocator).toBool());
   ui->cbElevateDaemon->setChecked(Settings::defaultValue(Settings::Daemon::Elevate).toBool());
   ui->cbAutoUpdate->setChecked(Settings::defaultValue(Settings::Gui::AutoUpdateCheck).toBool());
   ui->cbGuiDebug->setChecked(Settings::defaultValue(Settings::Log::GuiDebug).toBool());

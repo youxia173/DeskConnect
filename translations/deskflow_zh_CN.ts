@@ -1332,6 +1332,14 @@ Enabling this setting will disable the server config GUI.</source>
         <translation>防止此计算机进入睡眠状态</translation>
     </message>
     <message>
+        <source>Middle-click to locate mouse (shrinking circle)</source>
+        <translation>中键定位鼠标（缩小圆圈）</translation>
+    </message>
+    <message>
+        <source>Press the middle mouse button to show a shrinking circle around the cursor. Helps find which screen the mouse is on.</source>
+        <translation>按下鼠标中键时，在光标周围显示缩小的定位圆，方便在多台电脑间找到鼠标位置。</translation>
+    </message>
+    <message>
         <source>Tray icon style</source>
         <translation>托盘图标样式</translation>
     </message>

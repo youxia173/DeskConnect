@@ -54,6 +54,8 @@ public:
     inline static const auto LastVersion = QStringLiteral("core/lastVersion");
     inline static const auto Port = QStringLiteral("core/port");
     inline static const auto PreventSleep = QStringLiteral("core/preventSleep");
+    //! Middle-click shows a shrinking circle around the cursor to help find it.
+    inline static const auto MouseLocator = QStringLiteral("core/mouseLocator");
     inline static const auto ProcessMode = QStringLiteral("core/processMode");
     inline static const auto ComputerName = QStringLiteral("core/computerName");
     inline static const auto Display = QStringLiteral("core/display");
@@ -290,6 +292,7 @@ private:
     , Core::LastVersion
     , Core::Port
     , Core::PreventSleep
+    , Core::MouseLocator
     , Core::ProcessMode
     , Core::EnableEnterCommand
     , Core::EnableExitCommand
@@ -385,6 +388,7 @@ private:
   // When checking the default values this list contains the ones that default to true.
   inline static const QStringList m_defaultTrueValues = {
       Core::UseHooks
+    , Core::MouseLocator
     , Client::LanguageSync
     , FileTransfer::LimitSpeed
     , Gui::CloseToTray

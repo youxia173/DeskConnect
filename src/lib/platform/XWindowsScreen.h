@@ -12,6 +12,7 @@
 #include "deskflow/PlatformScreen.h"
 #include "platform/XDGPowerManager.h"
 #include "platform/XWindowsConfig.h"
+#include "platform/XWindowsMouseLocator.h"
 
 #include <functional>
 #include <set>
@@ -133,6 +134,7 @@ private:
   void onMousePress(const XButtonEvent &);
   void onMouseRelease(const XButtonEvent &);
   void onMouseMove(const XMotionEvent &);
+  void maybeShowMouseLocator(ButtonID button);
 
   bool detectXI2();
 #ifdef HAVE_XI2
@@ -251,6 +253,7 @@ private:
 
   IEventQueue *m_events = nullptr;
   deskflow::KeyMap m_keyMap;
+  XWindowsMouseLocator m_mouseLocator;
 
   // pointer to (singleton) screen.  this is only needed by
   // ioErrorHandler().

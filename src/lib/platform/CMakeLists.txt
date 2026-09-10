@@ -58,6 +58,8 @@ if(WIN32)
     MSWindowsProcess.h
     MSWindowsScreen.cpp
     MSWindowsScreen.h
+    MSWindowsMouseLocator.cpp
+    MSWindowsMouseLocator.h
     MSWindowsScreenSaver.cpp
     MSWindowsScreenSaver.h
     MSWindowsSession.cpp
@@ -145,6 +147,8 @@ elseif(UNIX)
       XWindowsKeyState.h
       XWindowsScreen.cpp
       XWindowsScreen.h
+      XWindowsMouseLocator.cpp
+      XWindowsMouseLocator.h
       XWindowsScreenSaver.cpp
       XWindowsScreenSaver.h
       XWindowsUtil.cpp

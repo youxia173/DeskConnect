@@ -843,6 +843,9 @@ void XWindowsScreen::fakeMouseButton(ButtonID button, bool press)
     XTestFakeButtonEvent(m_display, xButton, press ? True : False, CurrentTime);
     XFlush(m_display);
   }
+  if (press) {
+    maybeShowMouseLocator(button);
+  }
 }
 
 void XWindowsScreen::fakeMouseMove(int32_t x, int32_t y)
@@ -1525,8 +1528,27 @@ void XWindowsScreen::onMousePress(const XButtonEvent &xbutton)
   ButtonID button = mapButtonFromX(&xbutton);
   KeyModifierMask mask = m_keyState->mapModifiersFromX(xbutton.state);
   if (button != kButtonNone) {
+    maybeShowMouseLocator(button);
     sendEvent(EventTypes::PrimaryScreenButtonDown, ButtonInfo::alloc(button, mask));
   }
+}
+
+void XWindowsScreen::maybeShowMouseLocator(ButtonID button)
+{
+  if (button != kButtonMiddle) {
+    return;
+  }
+  if (m_isPrimary && !m_isOnScreen) {
+    return;
+  }
+  if (!Settings::value(Settings::Core::MouseLocator).toBool()) {
+    return;
+  }
+
+  int32_t x = 0;
+  int32_t y = 0;
+  getCursorPos(x, y);
+  m_mouseLocator.show(m_display, m_root, x, y, m_events);
 }
 
 void XWindowsScreen::onMouseRelease(const XButtonEvent &xbutton)

@@ -113,6 +113,19 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="cbMouseLocator">
+         <property name="toolTip">
+          <string>Press the middle mouse button to show a shrinking circle around the cursor. Helps find which screen the mouse is on.</string>
+         </property>
+         <property name="text">
+          <string>Middle-click to locate mouse (shrinking circle)</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupFileTransfer">
          <property name="title">
           <string>File transfer</string>

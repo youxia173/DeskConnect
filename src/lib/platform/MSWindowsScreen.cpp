@@ -836,6 +836,7 @@ void MSWindowsScreen::fakeMouseButton(ButtonID id, bool press)
   if (id == kButtonLeft) {
     m_buttons[kButtonLeft] = press;
   }
+  maybeShowMouseLocator(id, press);
 }
 
 void MSWindowsScreen::fakeMouseMove(int32_t x, int32_t y)
@@ -1356,6 +1357,9 @@ bool MSWindowsScreen::onMouseButton(WPARAM wParam, LPARAM lParam)
     m_buttons[button] = pressed;
   }
 
+  // Draw on the machine that currently owns the cursor (primary while on-screen).
+  maybeShowMouseLocator(button, pressed);
+
   // ignore message if posted prior to last mark change
   if (!ignore()) {
     KeyModifierMask mask = m_keyState->getActiveModifiers();
@@ -1754,6 +1758,26 @@ void MSWindowsScreen::updateKeysCB(const void *)
       }
     }
   }
+}
+
+void MSWindowsScreen::maybeShowMouseLocator(ButtonID button, bool press)
+{
+  if (!press || button != kButtonMiddle) {
+    return;
+  }
+  // Primary draws only while the cursor is on this machine; secondary draws on inject.
+  if (m_isPrimary && !m_isOnScreen) {
+    return;
+  }
+  if (!Settings::value(Settings::Core::MouseLocator).toBool()) {
+    return;
+  }
+
+  POINT pt = {};
+  if (!getThisCursorPos(&pt)) {
+    return;
+  }
+  m_mouseLocator.show(pt.x, pt.y);
 }
 
 void MSWindowsScreen::setupMouseKeys()

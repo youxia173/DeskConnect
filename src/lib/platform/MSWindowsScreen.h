@@ -10,6 +10,7 @@
 
 #include "deskflow/PlatformScreen.h"
 #include "platform/MSWindowsHook.h"
+#include "platform/MSWindowsMouseLocator.h"
 #include "platform/MSWindowsPowerManager.h"
 
 #include <functional>
@@ -26,6 +27,7 @@ class MSWindowsKeyState;
 class MSWindowsScreenSaver;
 class Thread;
 class MSWindowsDropTarget;
+class MSWindowsMouseLocator;
 
 //! Implementation of IPlatformScreen for Microsoft Windows
 class MSWindowsScreen : public PlatformScreen
@@ -226,6 +228,9 @@ private: // HACK
   // mouse cursor can be shown.
   void updateMouseKeys();
 
+  //! Middle-click locator: draw only on the machine that currently owns the cursor.
+  void maybeShowMouseLocator(ButtonID button, bool press);
+
   // our window proc
   static LRESULT CALLBACK wndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -347,4 +352,5 @@ private:
 
   PrimaryKeyDownList m_primaryKeyDownList;
   MSWindowsPowerManager m_powerManager;
+  MSWindowsMouseLocator m_mouseLocator;
 };
