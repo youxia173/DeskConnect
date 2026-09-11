@@ -594,7 +594,10 @@ void ServerProxy::setClipboard()
 
     LOG_INFO("clipboard was updated");
   } else if (r == TransferState::Error) {
-    requestDisconnect("invalid clipboard data from server");
+    // Keep the session alive; discard the bad transfer and wait for a retry.
+    LOG_ERR("invalid clipboard data from server; discarding transfer");
+    m_clipboardDataCached.clear();
+    m_clipboardDataCached.shrink_to_fit();
   }
 }
 

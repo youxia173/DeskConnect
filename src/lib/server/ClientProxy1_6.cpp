@@ -73,7 +73,12 @@ bool ClientProxy1_6::recvClipboard()
     info->m_sequenceNumber = seq;
     m_events->addEvent(Event(EventTypes::ClipboardChanged, getEventTarget(), info));
   } else if (r == TransferState::Error) {
-    return false;
+    // Do not drop the client — a bad clipboard chunk must not tear down
+    // mouse/keyboard sharing (especially when a phone companion syncs).
+    LOG_ERR("clipboard assemble error from \"%s\"; discarding transfer", getName().c_str());
+    m_clipboardDataCached.clear();
+    m_clipboardDataCached.shrink_to_fit();
+    return true;
   }
 
   return true;

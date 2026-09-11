@@ -382,13 +382,28 @@ bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
     return false;
   }
 
-  // Keep delayed uri-list ownership; a subsequent text DCLIP must not cancel paste-time transfer.
+  // Phone/companion text sync must win over an armed delayed file paste;
+  // otherwise Linux keeps an empty CLIPBOARD after grab+ignored set.
   if (m_hasDelayedFilePaste && id == kClipboardClipboard) {
-    LOG_DEBUG("ignoring clipboard update; delayed file paste is armed");
-    return true;
+    if (clipboard == nullptr) {
+      LOG_DEBUG("ignoring empty clipboard grab; delayed file paste is armed");
+      return true;
+    }
+    bool hasText = false;
+    if (clipboard->open(0)) {
+      hasText = clipboard->has(IClipboard::Format::Text) && !clipboard->get(IClipboard::Format::Text).empty();
+      clipboard->close();
+    }
+    if (hasText) {
+      LOG_DEBUG("clearing delayed file paste; applying text clipboard from peer");
+      clearDelayedFilePaste();
+    } else {
+      LOG_DEBUG("ignoring clipboard update; delayed file paste is armed");
+      return true;
+    }
+  } else {
+    clearDelayedFilePaste();
   }
-
-  clearDelayedFilePaste();
 
   // get the actual time.  ICCCM does not allow CurrentTime.
   Time timestamp = XWindowsUtil::getCurrentTime(m_display, m_clipboard[id]->getWindow());

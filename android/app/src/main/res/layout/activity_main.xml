@@ -26,10 +26,19 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?attr/textAppearanceBody2" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/permissionsButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="start|center_vertical"
+                android:text="@string/perm_guide_button"
+                android:textAllCaps="false" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:text="@string/saved_hosts_title"
                 android:textAppearance="?attr/textAppearanceSubtitle2" />
 

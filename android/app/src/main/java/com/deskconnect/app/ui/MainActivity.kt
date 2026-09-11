@@ -8,8 +8,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Toast
@@ -18,11 +20,15 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.deskconnect.app.ConnectionService
+import com.deskconnect.app.PermissionGuide
+import com.deskconnect.app.PermissionKind
 import com.deskconnect.app.R
 import com.deskconnect.app.SavedHost
 import com.deskconnect.app.SavedHostStore
 import com.deskconnect.app.WifiNetworkHelper
 import com.deskconnect.app.databinding.ActivityMainBinding
+import com.deskconnect.app.databinding.DialogPermissionGuideBinding
+import com.deskconnect.app.databinding.ItemPermissionBinding
 import com.deskconnect.app.databinding.ItemSavedHostBinding
 import com.deskconnect.app.protocol.FingerprintUtil
 import com.deskconnect.app.protocol.TlsSupport
@@ -48,12 +54,26 @@ class MainActivity : AppCompatActivity() {
 
     private val requestNotificationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* optional */ }
+    ) {
+        refreshPermissionUi()
+    }
 
     private val requestWifiPermission = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
         refreshWifiAndHosts(selectLatest = true)
+        refreshPermissionUi()
+    }
+
+    private val requestGuidePermissions = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        refreshWifiAndHosts(selectLatest = false)
+        refreshPermissionUi()
+        // If still missing after dialog, reopen guide so user can jump to Settings.
+        if (PermissionGuide.missing(this).isNotEmpty()) {
+            binding.root.post { showPermissionGuide(force = true) }
+        }
     }
 
     private val events = object : BroadcastReceiver() {
@@ -93,7 +113,6 @@ class MainActivity : AppCompatActivity() {
         binding.tlsSwitch.isChecked = prefs.getBoolean(KEY_TLS, true)
 
         refreshClientFingerprintLabel()
-        maybeRequestWifiPermission()
         refreshWifiAndHosts(selectLatest = binding.hostInput.text.isNullOrBlank())
 
         binding.connectButton.setOnClickListener { connect() }
@@ -111,8 +130,26 @@ class MainActivity : AppCompatActivity() {
             ConnectionService.syncClipboard(this)
             Toast.makeText(this, R.string.clipboard_syncing, Toast.LENGTH_SHORT).show()
         }
+        binding.permissionsButton.setOnClickListener { showPermissionGuide(force = true) }
+        binding.wifiLabel.setOnClickListener { showPermissionGuide(force = true) }
 
         maybeRequestNotificationPermission()
+        maybeRequestWifiPermission()
+        if (PermissionGuide.missing(this).isNotEmpty() &&
+            !prefs.getBoolean(KEY_PERM_GUIDE_SHOWN, false)
+        ) {
+            binding.root.post {
+                showPermissionGuide(force = true)
+                prefs.edit().putBoolean(KEY_PERM_GUIDE_SHOWN, true).apply()
+            }
+        }
+        refreshPermissionUi()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshWifiAndHosts(selectLatest = false)
+        refreshPermissionUi()
     }
 
     override fun onStart() {
@@ -135,26 +172,110 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun maybeRequestWifiPermission() {
-        val needed = mutableListOf<String>()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.NEARBY_WIFI_DEVICES)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                needed += Manifest.permission.NEARBY_WIFI_DEVICES
-            }
-        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            needed += Manifest.permission.ACCESS_FINE_LOCATION
+        val needed = PermissionGuide.wifiRuntimePermissions().filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
         if (needed.isNotEmpty()) {
+            PermissionGuide.markRuntimeAsked(this, needed.toTypedArray())
             requestWifiPermission.launch(needed.toTypedArray())
+        }
+    }
+
+    private fun refreshPermissionUi() {
+        val missing = PermissionGuide.missing(this)
+        if (missing.isEmpty()) {
+            binding.permissionsButton.text = getString(R.string.perm_guide_button)
+        } else {
+            binding.permissionsButton.text =
+                getString(R.string.perm_missing_banner) + "（${missing.size}）"
+        }
+    }
+
+    private fun showPermissionGuide(force: Boolean) {
+        if (!force && PermissionGuide.missing(this).isEmpty()) return
+        val dialogBinding = DialogPermissionGuideBinding.inflate(layoutInflater)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.perm_guide_title)
+            .setView(dialogBinding.root)
+            .setPositiveButton(R.string.perm_open_app_settings) { _, _ ->
+                PermissionGuide.openAppDetails(this)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        fun bindList() {
+            dialogBinding.permissionList.removeAllViews()
+            val inflater = LayoutInflater.from(this)
+            PermissionGuide.items(this).forEach { item ->
+                val row = ItemPermissionBinding.inflate(inflater, dialogBinding.permissionList, false)
+                row.permTitle.setText(item.titleRes)
+                row.permReason.setText(item.reasonRes)
+                if (item.granted) {
+                    row.permStatus.setText(R.string.perm_status_granted)
+                    row.permAction.setText(R.string.perm_action_done)
+                    row.permAction.isEnabled = false
+                } else {
+                    row.permStatus.setText(R.string.perm_status_missing)
+                    row.permAction.setText(R.string.perm_action_grant)
+                    row.permAction.isEnabled = true
+                    row.permAction.setOnClickListener {
+                        dialog.dismiss()
+                        requestPermissionItem(item.kind)
+                    }
+                }
+                dialogBinding.permissionList.addView(row.root)
+            }
+        }
+        bindList()
+        dialog.setOnDismissListener { refreshPermissionUi() }
+        dialog.show()
+    }
+
+    private fun requestPermissionItem(kind: PermissionKind) {
+        when (kind) {
+            PermissionKind.Notifications -> {
+                val runtime = PermissionGuide.notificationRuntimePermissions()
+                if (runtime.isNotEmpty() &&
+                    ContextCompat.checkSelfPermission(this, runtime[0]) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    if (PermissionGuide.shouldOpenSettingsForRuntime(this, runtime[0])) {
+                        PermissionGuide.openNotificationSettings(this)
+                    } else {
+                        PermissionGuide.markRuntimeAsked(this, runtime)
+                        requestGuidePermissions.launch(runtime)
+                    }
+                } else if (!PermissionGuide.hasNotifications(this)) {
+                    PermissionGuide.openNotificationSettings(this)
+                }
+            }
+            PermissionKind.WifiSsid -> {
+                val runtime = PermissionGuide.wifiRuntimePermissions()
+                val first = runtime.firstOrNull() ?: return
+                if (ContextCompat.checkSelfPermission(this, first) == PackageManager.PERMISSION_GRANTED) {
+                    return
+                }
+                if (PermissionGuide.shouldOpenSettingsForRuntime(this, first)) {
+                    PermissionGuide.openAppDetails(this)
+                } else {
+                    PermissionGuide.markRuntimeAsked(this, runtime)
+                    requestGuidePermissions.launch(runtime)
+                }
+            }
+            PermissionKind.LocationServices -> PermissionGuide.openLocationServicesSettings(this)
+            PermissionKind.Overlay -> PermissionGuide.openOverlaySettings(this)
         }
     }
 
     private fun refreshWifiAndHosts(selectLatest: Boolean) {
         currentWifiKey = WifiNetworkHelper.currentWifiKey(this)
-        binding.wifiLabel.text = getString(R.string.wifi_label, WifiNetworkHelper.displayName(this))
+        val wifiName = WifiNetworkHelper.displayName(this)
+        binding.wifiLabel.text = getString(R.string.wifi_label, wifiName)
+        if (!PermissionGuide.hasWifiSsidPermission(this) ||
+            (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && !PermissionGuide.isLocationEnabled(this))
+        ) {
+            binding.wifiLabel.append("\n")
+            binding.wifiLabel.append(getString(R.string.perm_missing_banner))
+        }
         val hosts = hostStore.listForWifi(currentWifiKey)
         binding.savedHostsContainer.removeAllViews()
         if (hosts.isEmpty()) {
@@ -242,6 +363,7 @@ class MainActivity : AppCompatActivity() {
                 binding.syncClipboardButton.isEnabled = true
                 setInputsEnabled(false)
                 refreshWifiAndHosts(selectLatest = false)
+                maybeAskOverlayPermission()
             }
             "connecting" -> {
                 connected = false
@@ -369,6 +491,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun maybeAskOverlayPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        if (ConnectionService.canDrawOverlays(this)) return
+        if (prefs.getBoolean(KEY_OVERLAY_PROMPT_DONE, false)) return
+        AlertDialog.Builder(this)
+            .setTitle(R.string.overlay_permission_title)
+            .setMessage(R.string.overlay_permission_message)
+            .setPositiveButton(R.string.overlay_permission_open) { _, _ ->
+                prefs.edit().putBoolean(KEY_OVERLAY_PROMPT_DONE, true).apply()
+                try {
+                    startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:$packageName")
+                        )
+                    )
+                } catch (_: Exception) {
+                    Toast.makeText(this, R.string.overlay_permission_later, Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(R.string.overlay_permission_later) { _, _ ->
+                prefs.edit().putBoolean(KEY_OVERLAY_PROMPT_DONE, true).apply()
+            }
+            .show()
+    }
+
     private fun maybeRequestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -386,5 +534,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_SCREEN = "screen"
         private const val KEY_TLS = "tls"
         private const val KEY_TRUSTED_FPS = "trusted_server_fps"
+        private const val KEY_OVERLAY_PROMPT_DONE = "overlay_prompt_done"
+        private const val KEY_PERM_GUIDE_SHOWN = "perm_guide_shown"
     }
 }

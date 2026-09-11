@@ -1087,7 +1087,8 @@ Current Wi-Fi: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not find deskflow-core.exe next to the application.</source>
+        <source>Could not find %1 next to the application.</source>
+        <translation>在应用程序目录中找不到 %1。</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1555,8 +1556,8 @@ Enabling this setting will disable the server config GUI.</source>
         <translation>允许通过 Windows 防火墙</translation>
     </message>
     <message>
-        <source>Add inbound firewall rules for deskflow-core and the TCP port (requires administrator approval).</source>
-        <translation>为 deskflow-core 和 TCP 端口添加入站防火墙规则（需要管理员确认）。</translation>
+        <source>Add inbound firewall rules for deskconnect-core and the TCP port (requires administrator approval).</source>
+        <translation>为 deskconnect-core 和 TCP 端口添加入站防火墙规则（需要管理员确认）。</translation>
     </message>
     <message>
         <source>Firewall</source>

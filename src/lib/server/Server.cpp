@@ -1223,15 +1223,23 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
       clipboard.m_clipboard.empty();
       clipboard.m_clipboard.close();
     }
-    clipboard.m_clipboardData = clipboard.m_clipboard.marshall();
+    // Force a mismatch so the forthcoming DCLP always pushes, even when the
+    // phone re-sends the same text that was already cached.
+    clipboard.m_clipboardData.clear();
   }
 
   // tell all other screens to take ownership of clipboard.  tell the
   // grabber that it's clipboard isn't dirty.
+  //
+  // Do NOT grabClipboard() on the primary (Linux X11 server): that empties the
+  // local CLIPBOARD and can stall the input event loop. Mark it dirty instead
+  // so the DCLP push replaces contents without a blank/frozen window.
   for (auto index = m_clients.begin(); index != m_clients.end(); ++index) {
     BaseClientProxy *client = index->second;
     if (client == grabber) {
       client->setClipboardDirty(info->m_id, false);
+    } else if (client == m_primaryClient) {
+      client->setClipboardDirty(info->m_id, true);
     } else {
       client->grabClipboard(info->m_id);
     }
@@ -1528,8 +1536,16 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     return;
   }
 
-  // should be the expected client
-  assert(sender == m_clients.find(clipboard.m_clipboardOwner)->second);
+  // Remote DCLP can finish after XFixes/peer grabs stole ownership. Still accept
+  // the payload from the sender that assembled it — do not assert/crash.
+  if (clipboard.m_clipboardOwner != getName(sender)) {
+    LOG_DEBUG(
+        "clipboard %u owner was \"%s\", adopting sender \"%s\"", static_cast<unsigned>(id),
+        clipboard.m_clipboardOwner.c_str(), getName(sender).c_str()
+    );
+    clipboard.m_clipboardOwner = getName(sender);
+    clipboard.m_clipboardSeqNum = seqNum;
+  }
 
   // get data
   if (!sender->getClipboard(id, &clipboard.m_clipboard)) {
@@ -1546,19 +1562,24 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     return;
   }
 
+  bool hasText = false;
+  if (clipboard.m_clipboard.open(0)) {
+    hasText = clipboard.m_clipboard.has(IClipboard::Format::Text) &&
+              !clipboard.m_clipboard.get(IClipboard::Format::Text).empty();
+    clipboard.m_clipboard.close();
+  }
+
   // Primary Linux may report an empty marshall before ConvertSelection completes.
   // Do not treat that as a successful update (would block retries / wipe peers).
   if (sender == m_primaryClient) {
-    bool hasText = false;
-    if (clipboard.m_clipboard.open(0)) {
-      hasText = clipboard.m_clipboard.has(IClipboard::Format::Text) &&
-                !clipboard.m_clipboard.get(IClipboard::Format::Text).empty();
-      clipboard.m_clipboard.close();
-    }
     if (!hasText) {
       LOG_DEBUG("primary clipboard %u has no text yet; waiting for retry", static_cast<unsigned>(id));
       return;
     }
+  } else if (!hasText) {
+    // Companion sent DCLP but unmarshall produced no text — do not ACK or wipe peers.
+    LOG_WARN("ignored clipboard %u from \"%s\": no text after unmarshall", static_cast<unsigned>(id), getName(sender).c_str());
+    return;
   }
 
   auto ackClipboardToSender = [this, sender, id]() {
@@ -1572,16 +1593,16 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     }
   };
 
-  // ignore if data hasn't changed — still ACK remote sync attempts
-  if (data == clipboard.m_clipboardData) {
-    LOG_DEBUG("ignored screen \"%s\" update of clipboard %d (unchanged)", clipboard.m_clipboardOwner.c_str(), id);
-    ackClipboardToSender();
-    return;
+  // ignore if data hasn't changed — still ACK remote sync attempts, but only
+  // after peers that were marked dirty (e.g. primary after remote grab) receive
+  // a push. Otherwise a re-sync of the same text leaves Linux emptied/stale.
+  const bool unchanged = (data == clipboard.m_clipboardData);
+  if (unchanged) {
+    LOG_DEBUG("screen \"%s\" clipboard %d unchanged; still flushing dirty peers", clipboard.m_clipboardOwner.c_str(), id);
+  } else {
+    LOG_INFO("screen \"%s\" updated clipboard %d", clipboard.m_clipboardOwner.c_str(), id);
+    clipboard.m_clipboardData = data;
   }
-
-  // got new data
-  LOG_INFO("screen \"%s\" updated clipboard %d", clipboard.m_clipboardOwner.c_str(), id);
-  clipboard.m_clipboardData = data;
 
   // Clipboard-paste transfers are tied to clipboard content; menu Send files is not.
   if (id == kClipboardClipboard && m_fileSendFromClipboard) {
@@ -1599,7 +1620,8 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
       client->setClipboardDirty(id, false);
       continue;
     }
-    // ClientProxy1_6::setClipboard only transmits when dirty.
+    // Always dirty for companion→PC so primary/Windows get the text even when
+    // marshalled bytes match a previous cache entry.
     client->setClipboardDirty(id, true);
     LOG_INFO("pushing clipboard %u to \"%s\" (%zu bytes)", static_cast<unsigned>(id), getName(client).c_str(), data.size());
     client->setClipboard(id, &clipboard.m_clipboard);

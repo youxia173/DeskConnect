@@ -47,11 +47,11 @@ bool WindowsFirewall::addAllowRules(int port, QString *errorMessage)
   }
 
   const auto corePath = QDir::toNativeSeparators(
-      QCoreApplication::applicationDirPath() + QStringLiteral("/deskflow-core.exe")
+      QCoreApplication::applicationDirPath() + QLatin1Char('/') + QLatin1String(kCoreBinName)
   );
   if (!QFileInfo::exists(corePath)) {
     if (errorMessage) {
-      *errorMessage = QObject::tr("Could not find deskflow-core.exe next to the application.");
+      *errorMessage = QObject::tr("Could not find %1 next to the application.").arg(QLatin1String(kCoreBinName));
     }
     return false;
   }

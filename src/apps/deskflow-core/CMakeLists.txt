@@ -3,25 +3,29 @@
 # SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
 # SPDX-License-Identifier: MIT
 
+# Keep CMake target id stable; OUTPUT_NAME is the brand-facing binary.
 set(target ${CMAKE_PROJECT_NAME}-core)
+set(core_output_name deskconnect-core)
 
 add_executable(${target}
-  "${target}.cpp"
+  deskflow-core.cpp
   CoreArgs.h
   CoreArgParser.h
   CoreArgParser.cpp
 )
 
+set_target_properties(${target} PROPERTIES OUTPUT_NAME ${core_output_name})
+
 if(WIN32)
   # Generate rc file
   set(EXE_DESCRIPTION "${CMAKE_PROJECT_PROPER_NAME} combined server and client application")
   set(EXE_ICON "IDI_DESKFLOW ICON DISCARDABLE \"${CMAKE_SOURCE_DIR}/src/apps/res/deskflow.ico\"")
-  configure_file(${CMAKE_SOURCE_DIR}/src/apps/res/windows.rc.in ${target}.rc)
+  configure_file(${CMAKE_SOURCE_DIR}/src/apps/res/windows.rc.in ${core_output_name}.rc)
 
   target_sources(${target} PRIVATE
-    ${target}.exe.manifest
+    deskflow-core.exe.manifest
     ${CMAKE_SOURCE_DIR}/src/apps/res/deskflow.ico
-    ${CMAKE_CURRENT_BINARY_DIR}/${target}.rc
+    ${CMAKE_CURRENT_BINARY_DIR}/${core_output_name}.rc
   )
 endif()
 

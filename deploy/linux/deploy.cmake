@@ -17,7 +17,7 @@ if(UNIX AND NOT APPLE)
   set(_dc_wrapper "${MY_DIR}/deskflow-wrapper.sh")
   install(CODE [[
     file(MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/lib/deskconnect")
-    foreach(_bin deskflow deskflow-core)
+    foreach(_bin deskflow deskconnect-core)
       set(_src "${CMAKE_INSTALL_PREFIX}/bin/${_bin}")
       set(_dst "${CMAKE_INSTALL_PREFIX}/lib/deskconnect/${_bin}")
       if(EXISTS "${_src}")
@@ -27,8 +27,17 @@ if(UNIX AND NOT APPLE)
         endif()
       endif()
     endforeach()
+    # Old name used by some scripts/docs.
+    if(EXISTS "${CMAKE_INSTALL_PREFIX}/lib/deskconnect/deskconnect-core")
+      file(CREATE_LINK
+        "deskconnect-core"
+        "${CMAKE_INSTALL_PREFIX}/lib/deskconnect/deskflow-core"
+        SYMBOLIC)
+    endif()
   ]])
   install(PROGRAMS ${_dc_wrapper} DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME deskflow)
+  install(PROGRAMS ${_dc_wrapper} DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME deskconnect-core)
+  # Compatibility symlink/wrapper for older scripts and docs.
   install(PROGRAMS ${_dc_wrapper} DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME deskflow-core)
 endif()
 

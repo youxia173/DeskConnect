@@ -796,7 +796,7 @@
             <string>Allow through Windows Firewall</string>
            </property>
            <property name="toolTip">
-            <string>Add inbound firewall rules for deskflow-core and the TCP port (requires administrator approval).</string>
+            <string>Add inbound firewall rules for deskconnect-core and the TCP port (requires administrator approval).</string>
            </property>
           </widget>
          </item>

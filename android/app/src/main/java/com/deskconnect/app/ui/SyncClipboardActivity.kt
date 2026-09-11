@@ -15,12 +15,14 @@ import com.deskconnect.app.ConnectionService
 import com.deskconnect.app.R
 
 /**
- * Invisible activity used by the notification action so we can read the
- * clipboard (Android 10+ requires focus) without opening the main UI.
+ * Invisible activity used so we can read the clipboard (Android 10+ requires
+ * input focus) without opening the main UI — from notification or background
+ * clipboard-change auto launch.
  */
 class SyncClipboardActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var finished = false
+    private var syncStarted = false
 
     private val events = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -47,6 +49,10 @@ class SyncClipboardActivity : AppCompatActivity() {
         finishWithToast(getString(R.string.clipboard_sync_no_ack))
     }
 
+    private val focusFallback = Runnable {
+        if (!syncStarted) startSync()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val filter = IntentFilter().apply {
@@ -54,7 +60,21 @@ class SyncClipboardActivity : AppCompatActivity() {
             addAction(ConnectionService.ACTION_EVENT_CLIPBOARD_SYNC_RESULT)
         }
         ContextCompat.registerReceiver(this, events, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        // Wait briefly for window focus so clipboard read is allowed.
+        handler.postDelayed(focusFallback, 400)
+    }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            handler.removeCallbacks(focusFallback)
+            startSync()
+        }
+    }
+
+    private fun startSync() {
+        if (syncStarted || finished) return
+        syncStarted = true
         val text = readClipboardText()
         if (text.isNullOrEmpty()) {
             finishWithToast(getString(R.string.clipboard_sync_empty))
@@ -66,6 +86,7 @@ class SyncClipboardActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         handler.removeCallbacks(timeout)
+        handler.removeCallbacks(focusFallback)
         try {
             unregisterReceiver(events)
         } catch (_: Exception) {
@@ -77,7 +98,11 @@ class SyncClipboardActivity : AppCompatActivity() {
         if (finished) return
         finished = true
         handler.removeCallbacks(timeout)
-        Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
+        handler.removeCallbacks(focusFallback)
+        val quiet = intent?.getBooleanExtra(EXTRA_QUIET, false) == true
+        if (!quiet) {
+            Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
+        }
         finish()
     }
 
@@ -96,6 +121,17 @@ class SyncClipboardActivity : AppCompatActivity() {
     }
 
     companion object {
+        const val EXTRA_QUIET = "quiet"
         private const val ACK_TIMEOUT_MS = 8_000L
+
+        fun start(context: Context, quiet: Boolean = false) {
+            val intent = Intent(context, SyncClipboardActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                putExtra(EXTRA_QUIET, quiet)
+            }
+            context.startActivity(intent)
+        }
     }
 }

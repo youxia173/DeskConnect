@@ -1,4 +1,4 @@
-name: "Test Package"
+﻿name: "Test Package"
 description: "Installs the built package and verifies the installed binaries can run"
 
 inputs:
@@ -17,12 +17,12 @@ runs:
         if [ "$RUNNER_OS" == "macOS" ]; then
           dmg=$(ls build/deskflow-*.dmg | head -1)
           echo "Y" | hdiutil attach "$dmg" -nobrowse -mountpoint /tmp/deskflow-dmg
-          /tmp/deskflow-dmg/Deskflow.app/Contents/MacOS/deskflow-core --version
+          /tmp/deskflow-dmg/Deskflow.app/Contents/MacOS/deskconnect-core --version
           hdiutil detach /tmp/deskflow-dmg
 
         elif [ "$RUNNER_OS" == "Windows" ]; then
           7z x build/deskflow-*-portable.7z -otmp/deskflow-pkg
-          exe=$(find tmp/deskflow-pkg -name "deskflow-core.exe" -type f | head -1)
+          exe=$(find tmp/deskflow-pkg -name "deskconnect-core.exe" -type f | head -1)
           exe_dir=$(dirname "$exe")
           pkg_root=$(dirname "$exe_dir")
           export PATH="$exe_dir:$pkg_root:$pkg_root/lib:$PATH"
@@ -41,7 +41,7 @@ runs:
             echo "Unknown like: ${{inputs.like}}"
             exit 1
           fi
-          QT_QPA_PLATFORM=minimal deskflow-core --version
+          QT_QPA_PLATFORM=minimal deskconnect-core --version
 
         else
           echo "Unknown OS: $RUNNER_OS"

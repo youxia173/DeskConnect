@@ -14,6 +14,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
+import android.provider.Settings
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.deskconnect.app.protocol.BarrierClient
@@ -27,6 +30,7 @@ import java.io.FileOutputStream
 import java.io.OutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
@@ -55,9 +59,38 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     @Volatile
     private var notificationState: NotifState = NotifState.Connecting
 
+    private val lastAutoSyncLaunchMs = AtomicLong(0L)
+
     private val clipboardListener = ClipboardManager.OnPrimaryClipChangedListener {
         if (applyingRemoteClipboard.get()) return@OnPrimaryClipChangedListener
-        pushLocalClipboardIfPossible("listener")
+        if (clientRef.get() == null) return@OnPrimaryClipChangedListener
+        mainHandler.post { onLocalClipboardChanged() }
+    }
+
+    private fun onLocalClipboardChanged() {
+        if (applyingRemoteClipboard.get() || clientRef.get() == null) return
+        val text = readClipboardText()
+        if (!text.isNullOrEmpty()) {
+            pushClipboardText(text, "listener")
+            return
+        }
+        // Android 10+: background apps usually cannot read clipboard. Briefly take
+        // focus via a transparent activity (same approach as PC→phone apply).
+        launchBackgroundClipboardSync()
+    }
+
+    private fun launchBackgroundClipboardSync() {
+        val now = SystemClock.elapsedRealtime()
+        val prev = lastAutoSyncLaunchMs.get()
+        if (now - prev < AUTO_SYNC_DEBOUNCE_MS) return
+        if (!lastAutoSyncLaunchMs.compareAndSet(prev, now)) return
+        try {
+            SyncClipboardActivity.start(this, quiet = false)
+            broadcast(ACTION_EVENT_LOG, "clipboard changed: auto sync via focus activity")
+        } catch (e: Exception) {
+            broadcast(ACTION_EVENT_LOG, "auto clipboard sync blocked: ${e.message}")
+            showClipboardNudgeNotification()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -456,7 +489,8 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
             this,
             1,
             Intent(this, SyncClipboardActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val host = session?.host.orEmpty()
@@ -472,23 +506,66 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
                 getString(R.string.notification_title) to
                     getString(R.string.notification_connected_text, host)
         }
+
+        // Compact custom layout keeps the sync control on the far right so it is
+        // not collapsed into the overflow action list under long status text.
+        val content = RemoteViews(packageName, R.layout.notification_ongoing).apply {
+            setTextViewText(R.id.notifTitle, title)
+            setTextViewText(R.id.notifText, text)
+            setOnClickPendingIntent(R.id.notifSyncButton, syncPending)
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(text)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_sync_clipboard)
             .setContentIntent(openApp)
+            .setCustomContentView(content)
+            .setCustomBigContentView(content)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .addAction(0, getString(R.string.sync_clipboard_short), syncPending)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
 
+    private fun showClipboardNudgeNotification() {
+        ensureNudgeChannel()
+        val syncPending = PendingIntent.getActivity(
+            this,
+            2,
+            Intent(this, SyncClipboardActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val n = NotificationCompat.Builder(this, CHANNEL_NUDGE_ID)
+            .setContentTitle(getString(R.string.clipboard_nudge_title))
+            .setContentText(getString(R.string.clipboard_nudge_text))
+            .setSmallIcon(R.drawable.ic_sync_clipboard)
+            .setContentIntent(syncPending)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setTimeoutAfter(8_000)
+            .build()
+        getSystemService(NotificationManager::class.java)?.notify(CLIPBOARD_NUDGE_NOTIFICATION_ID, n)
+    }
+
     private fun ensureChannel() {
-        val manager = getSystemService(NotificationManager::class.java)
+        val manager = getSystemService(NotificationManager::class.java) ?: return
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.notification_channel),
             NotificationManager.IMPORTANCE_LOW
+        )
+        manager.createNotificationChannel(channel)
+    }
+
+    private fun ensureNudgeChannel() {
+        val manager = getSystemService(NotificationManager::class.java) ?: return
+        val channel = NotificationChannel(
+            CHANNEL_NUDGE_ID,
+            getString(R.string.notification_nudge_channel),
+            NotificationManager.IMPORTANCE_HIGH
         )
         manager.createNotificationChannel(channel)
     }
@@ -536,11 +613,22 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
         const val EXTRA_PAYLOAD = "payload"
 
         private const val CHANNEL_ID = "deskconnect_connection"
+        private const val CHANNEL_NUDGE_ID = "deskconnect_clipboard_nudge"
         private const val NOTIFICATION_ID = 42
         private const val SYNC_RESULT_NOTIFICATION_ID = 43
+        private const val CLIPBOARD_NUDGE_NOTIFICATION_ID = 44
         private const val ACK_TIMEOUT_MS = 8_000L
+        private const val AUTO_SYNC_DEBOUNCE_MS = 1_500L
         private const val BASE_RECONNECT_DELAY_MS = 2_000L
         private const val MAX_RECONNECT_DELAY_MS = 60_000L
+
+        fun canDrawOverlays(context: Context): Boolean {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Settings.canDrawOverlays(context)
+            } else {
+                true
+            }
+        }
 
         fun connect(
             context: Context,

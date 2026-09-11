@@ -21,9 +21,9 @@
     <RemoveFile Id="RmOldLogDeskConnect" On="install" Name="deskconnect-daemon.log"/>
   </CPackWiXFragment>
 
-  <CPackWiXFragment Id="CM_CP_deskflow_core.exe">
-    <firewall:FirewallException Id="ServerFirewallException" Name="@CMAKE_PROJECT_PROPER_NAME@ Server" Program="[INSTALL_ROOT]deskflow-core.exe" Scope="any"/>
-    <firewall:FirewallException Id="ClientFirewallException" Name="@CMAKE_PROJECT_PROPER_NAME@ Client" Program="[INSTALL_ROOT]deskflow-core.exe" Scope="any"/>
+  <CPackWiXFragment Id="CM_CP_deskconnect_core.exe">
+    <firewall:FirewallException Id="ServerFirewallException" Name="@CMAKE_PROJECT_PROPER_NAME@ Server" Program="[INSTALL_ROOT]deskconnect-core.exe" Scope="any"/>
+    <firewall:FirewallException Id="ClientFirewallException" Name="@CMAKE_PROJECT_PROPER_NAME@ Client" Program="[INSTALL_ROOT]deskconnect-core.exe" Scope="any"/>
   </CPackWiXFragment>
 
   <CPackWiXFragment Id="#PRODUCT">
@@ -55,6 +55,12 @@
     <util:CloseApplication
       Id="CloseDeskflowGui"
       Target="deskflow.exe"
+      CloseMessage="yes"
+      RebootPrompt="no"
+      TerminateProcess="10" />
+    <util:CloseApplication
+      Id="CloseDeskConnectCore"
+      Target="deskconnect-core.exe"
       CloseMessage="yes"
       RebootPrompt="no"
       TerminateProcess="10" />

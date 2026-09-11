@@ -347,7 +347,18 @@ class BarrierClient(
             else -> log("ignored message $code (${body.size} bytes)")
         }
 
-        if (code != Msg.CALV && code != Msg.CNOP) {
+        // Only reply CNOP for messages that historically needed a delayed-ACK
+        // kick. Flooding CNOP after every DCLP/CCLP/CLAK can stall the Linux
+        // server event loop and drop Windows peers during phone clipboard sync.
+        val needsNoop =
+            code != Msg.CALV &&
+                code != Msg.CNOP &&
+                code != Msg.DCLP &&
+                code != Msg.CCLP &&
+                code != Msg.CLAK &&
+                code != Msg.DFTR &&
+                code != Msg.DDRG
+        if (needsNoop) {
             try {
                 enqueuePacket { writeRaw(Msg.CNOP) }
             } catch (_: Exception) {
@@ -537,7 +548,8 @@ class BarrierClient(
         private const val PROTOCOL_MINOR = 8
         private const val CONNECT_TIMEOUT_MS = 10_000
         private const val CLIPBOARD_ID = 0
-        private const val CHUNK_SIZE = 64 * 1024
+        // Keep chunks modest so one TLS write cannot starve keepalive on the PC.
+        private const val CHUNK_SIZE = 16 * 1024
     }
 }
 

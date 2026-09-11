@@ -1,4 +1,4 @@
-# Building Deskflow
+﻿# Building Deskflow
 
 To build Deskflow you will a minimum of: 
     - [cmake] 3.24+
@@ -11,7 +11,7 @@ To build Deskflow you will a minimum of:
 
 By default a build of Deskflow will: 
      - The GUI application `deskflow`
-     - The Core application `deskflow-core`
+     - The Core application `deskconnect-core`
      - Documentation if [doxygen] was found on your system
      - Tests that will be run as part of the build process
 

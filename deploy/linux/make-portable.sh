@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # Build a self-contained DeskConnect distribution (bundled Qt + runtime libs).
 set -euo pipefail
 
@@ -10,14 +10,14 @@ ARCH="$(uname -m)"
 VERSION="$(grep -E 'set\(CMAKE_PROJECT_VERSION|project\(deskflow' "$ROOT/CMakeLists.txt" 2>/dev/null | head -1 || true)"
 VERSION="${VERSION:-1.26.0.9999}"
 # Prefer git describe-ish from binary if available
-if [[ -x "$BUILD_BIN/deskflow-core" ]]; then
-  VERSION="$("$BUILD_BIN/deskflow-core" --version 2>/dev/null | head -1 | awk '{print $2}' || echo 1.26.0.9999)"
+if [[ -x "$BUILD_BIN/deskconnect-core" ]]; then
+  VERSION="$("$BUILD_BIN/deskconnect-core" --version 2>/dev/null | head -1 | awk '{print $2}' || echo 1.26.0.9999)"
   VERSION="${VERSION%,}"
   VERSION="${VERSION%%[^0-9.vV]*}"
 fi
 
-if [[ ! -x "$BUILD_BIN/deskflow" || ! -x "$BUILD_BIN/deskflow-core" ]]; then
-  echo "Missing binaries in $BUILD_BIN — build Release first." >&2
+if [[ ! -x "$BUILD_BIN/deskflow" || ! -x "$BUILD_BIN/deskconnect-core" ]]; then
+  echo "Missing binaries in $BUILD_BIN 鈥?build Release first." >&2
   exit 1
 fi
 if [[ ! -d "$QTDIR/lib" ]]; then
@@ -29,7 +29,7 @@ rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"/{bin,lib,plugins,share/icons,share/applications,share/DeskConnect}
 
 cp -a "$BUILD_BIN/deskflow" "$OUT_DIR/bin/"
-cp -a "$BUILD_BIN/deskflow-core" "$OUT_DIR/bin/"
+cp -a "$BUILD_BIN/deskconnect-core" "$OUT_DIR/bin/"
 
 # ---- collect shared libs (exclude glibc / basic system) ----
 is_system_lib() {
@@ -66,7 +66,7 @@ enqueue() {
 }
 
 # Seed from binaries + Qt platform plugins we will ship
-for b in "$OUT_DIR/bin/deskflow" "$OUT_DIR/bin/deskflow-core"; do
+for b in "$OUT_DIR/bin/deskflow" "$OUT_DIR/bin/deskconnect-core"; do
   while read -r _ arrow lib _; do
     [[ "$arrow" == "=>" ]] && enqueue "$lib"
   done < <(ldd "$b" 2>/dev/null || true)
@@ -116,7 +116,7 @@ while (( idx < ${#queue[@]} )); do
   lib="${queue[$idx]}"
   idx=$((idx + 1))
   if is_system_lib "$lib"; then
-    # Still recurse into Qt libs even if path looks system-ish — skip only true system
+    # Still recurse into Qt libs even if path looks system-ish 鈥?skip only true system
     case "$lib" in
       /home/hans/Qt/*|/usr/local/*) ;;
       *) continue ;;
@@ -196,7 +196,7 @@ Libraries = lib
 Plugins = plugins
 EOF
 
-for bin in deskflow deskflow-core; do
+for bin in deskflow deskconnect-core; do
   patchelf --set-rpath '$ORIGIN/../lib' "$OUT_DIR/bin/$bin"
 done
 # Fix plugin rpaths too
@@ -222,17 +222,18 @@ export QT_QPA_PLATFORM_PLUGIN_PATH="$HERE/plugins/platforms"
 export QT_WAYLAND_DECORATION="${QT_WAYLAND_DECORATION:-adwaita}"
 exec "$HERE/bin/deskflow" "$@"
 EOF
-chmod 755 "$OUT_DIR/DeskConnect" "$OUT_DIR/bin/deskflow" "$OUT_DIR/bin/deskflow-core"
+chmod 755 "$OUT_DIR/DeskConnect" "$OUT_DIR/bin/deskflow" "$OUT_DIR/bin/deskconnect-core"
 
-cat > "$OUT_DIR/deskflow-core" <<'EOF'
+cat > "$OUT_DIR/deskconnect-core" <<'EOF'
 #!/bin/sh
 set -e
 HERE="$(CDPATH= cd -- "$(dirname "$(readlink -f "$0")")" && pwd)"
 export LD_LIBRARY_PATH="$HERE/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export QT_PLUGIN_PATH="$HERE/plugins"
-exec "$HERE/bin/deskflow-core" "$@"
+exec "$HERE/bin/deskconnect-core" "$@"
 EOF
-chmod 755 "$OUT_DIR/deskflow-core"
+chmod 755 "$OUT_DIR/deskconnect-core"
+ln -sfn deskconnect-core "$OUT_DIR/deskflow-core"
 
 # ---- translations (I18N looks for ../share/deskflow/translations from bin/) ----
 mkdir -p "$OUT_DIR/share/deskflow/translations"
@@ -273,7 +274,7 @@ Terminal=false
 Categories=Utility;
 Keywords=keyboard;mouse;sharing;network;share;
 Name[zh_CN]=DeskConnect
-Comment[zh_CN]=键鼠共享工具
+Comment[zh_CN]=閿紶鍏变韩宸ュ叿
 EOF
 
 cat > "$OUT_DIR/README.txt" <<EOF
@@ -304,7 +305,8 @@ rsync -a --delete \
   "$HERE"/ "$DEST"/
 ln -sfn "$DEST/DeskConnect" /usr/local/bin/DeskConnect
 ln -sfn "$DEST/DeskConnect" /usr/local/bin/deskflow
-ln -sfn "$DEST/deskflow-core" /usr/local/bin/deskflow-core
+ln -sfn "$DEST/deskconnect-core" /usr/local/bin/deskconnect-core
+ln -sfn "$DEST/deskconnect-core" /usr/local/bin/deskflow-core
 
 # Desktop entry with absolute Exec
 mkdir -p /usr/local/share/applications
@@ -327,7 +329,7 @@ cat > "$OUT_DIR/uninstall.sh" <<'EOF'
 #!/bin/sh
 set -e
 DEST="${DESTDIR:-}/opt/DeskConnect"
-rm -f /usr/local/bin/DeskConnect /usr/local/bin/deskflow /usr/local/bin/deskflow-core
+rm -f /usr/local/bin/DeskConnect /usr/local/bin/deskflow /usr/local/bin/deskconnect-core /usr/local/bin/deskflow-core
 rm -f /usr/local/share/applications/org.deskconnect.deskconnect.desktop
 rm -f /usr/local/share/icons/hicolor/*/apps/org.deskconnect.deskconnect.png
 rm -rf "$DEST"
@@ -347,4 +349,4 @@ echo "Archive: $ARCHIVE"
 du -sh "$OUT_DIR" "$ARCHIVE"
 # Smoke test
 export LD_LIBRARY_PATH="$OUT_DIR/lib"
-"$OUT_DIR/bin/deskflow-core" --version
+"$OUT_DIR/bin/deskconnect-core" --version

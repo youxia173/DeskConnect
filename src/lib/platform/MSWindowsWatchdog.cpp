@@ -39,7 +39,8 @@ HANDLE openProcessForKill(const PROCESSENTRY32 &entry)
 
   if (_wcsicmp(entry.szExeFile, L"deskflow-client.exe") != 0 && //
       _wcsicmp(entry.szExeFile, L"deskflow-server.exe") != 0 && //
-      _wcsicmp(entry.szExeFile, L"deskflow-core.exe") != 0) {
+      _wcsicmp(entry.szExeFile, L"deskflow-core.exe") != 0 &&   //
+      _wcsicmp(entry.szExeFile, L"deskconnect-core.exe") != 0) {
     return nullptr;
   }
 

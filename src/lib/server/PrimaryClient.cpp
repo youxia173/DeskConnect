@@ -115,12 +115,11 @@ bool PrimaryClient::leave()
 
 void PrimaryClient::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
-  // ignore if this clipboard is already clean
-  if (m_clipboardDirty[id]) {
-    // this clipboard is now clean
+  // Companion→PC pushes mark dirty then call setClipboard. Always apply a
+  // non-null payload so Linux (keyboard/mouse server) receives phone text
+  // even if a concurrent grab cleared the dirty flag.
+  if (clipboard != nullptr || m_clipboardDirty[id]) {
     m_clipboardDirty[id] = false;
-
-    // set clipboard
     m_screen->setClipboard(id, clipboard);
   }
 }

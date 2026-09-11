@@ -117,7 +117,7 @@ cmake --build build -j"$(nproc)"
 QTDIR=/path/to/Qt/6.8.x/gcc_64 ./deploy/linux/make-portable.sh
 ```
 
-开发用二进制一般在 `build/bin/`（`deskflow` GUI 与 `deskflow-core`）。对外品牌名为 DeskConnect，内部二进制名仍可能为 `deskflow*`。
+开发用二进制一般在 `build/bin/`（`deskflow` GUI 与 `deskconnect-core`）。对外品牌名为 DeskConnect，内部二进制名仍可能为 `deskflow*`。
 
 ## 许可证
 
