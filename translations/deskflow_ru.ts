@@ -1107,10 +1107,6 @@ Current Wi-Fi: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not find deskflow-core.exe next to the application.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Could not write temporary firewall script.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1136,6 +1132,10 @@ Current Wi-Fi: %1</source>
     </message>
     <message>
         <source>Failed to write Explorer context menu registry keys.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find %1 next to the application.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1725,10 +1725,6 @@ Enabling this setting will disable the server config GUI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add inbound firewall rules for deskflow-core and the TCP port (requires administrator approval).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Firewall</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1811,6 +1807,10 @@ You may need to restart the connection if it was blocked before.</source>
     </message>
     <message>
         <source>Blinking dot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add inbound firewall rules for deskconnect-core and the TCP port (requires administrator approval).</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

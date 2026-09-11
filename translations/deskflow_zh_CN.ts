@@ -1088,7 +1088,6 @@ Current Wi-Fi: %1</source>
     </message>
     <message>
         <source>Could not find %1 next to the application.</source>
-        <translation>在应用程序目录中找不到 %1。</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>

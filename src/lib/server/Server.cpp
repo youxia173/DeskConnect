@@ -277,6 +277,20 @@ void Server::adoptClient(BaseClientProxy *client)
   ipcSendConnectionState(deskflow::core::ConnectionState::Connected);
   sendConnectedClientsIpc();
 
+  // Tell the peer our primary computer name (IP bookmarks on Android, etc.).
+  if (m_primaryClient != nullptr) {
+    const std::string hostName = getName(m_primaryClient);
+    if (!hostName.empty()) {
+      if (auto *proxy = dynamic_cast<ClientProxy *>(client)) {
+        try {
+          ProtocolUtil::writef(proxy->getStream(), kMsgCHostName, &hostName);
+        } catch (...) {
+          LOG_DEBUG("failed to send host name to \"%s\"", name.c_str());
+        }
+      }
+    }
+  }
+
   // send configuration options to client
   sendOptions(client);
 

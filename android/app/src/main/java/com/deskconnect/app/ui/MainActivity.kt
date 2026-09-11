@@ -20,9 +20,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.deskconnect.app.ConnectionService
+import com.deskconnect.app.DeviceNameHelper
 import com.deskconnect.app.PermissionGuide
 import com.deskconnect.app.PermissionKind
 import com.deskconnect.app.R
+import com.deskconnect.app.ReceiveFolderStore
 import com.deskconnect.app.SavedHost
 import com.deskconnect.app.SavedHostStore
 import com.deskconnect.app.WifiNetworkHelper
@@ -33,15 +35,19 @@ import com.deskconnect.app.databinding.ItemSavedHostBinding
 import com.deskconnect.app.protocol.FingerprintUtil
 import com.deskconnect.app.protocol.TlsSupport
 import java.io.File
+import androidx.documentfile.provider.DocumentFile
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var clipboard: ClipboardManager
     private lateinit var hostStore: SavedHostStore
+    private lateinit var receiveFolderStore: ReceiveFolderStore
     private var connected = false
     private var sessionActive = false
     private var applyingRemoteClipboard = false
     private var currentWifiKey = SavedHostStore.WIFI_UNKNOWN
+    private var lastWifiKeyForHosts: String? = null
+    private var connectedPeerName: String = ""
 
     private val prefs by lazy { getSharedPreferences(PREFS, MODE_PRIVATE) }
 
@@ -50,6 +56,29 @@ class MainActivity : AppCompatActivity() {
     ) { uris ->
         if (uris.isNullOrEmpty()) return@registerForActivityResult
         ConnectionService.sendFiles(this, ArrayList(uris.map { it.toString() }))
+    }
+
+    private val pickReceiveFolder = registerForActivityResult(
+        ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri == null) return@registerForActivityResult
+        val label = DocumentFile.fromTreeUri(this, uri)?.name
+            ?: getString(R.string.receive_folder_change)
+        receiveFolderStore.setTreeUri(uri, label)
+        refreshReceiveFolderUi()
+        Toast.makeText(
+            this,
+            getString(R.string.receive_folder_changed, receiveFolderStore.displayPath()),
+            Toast.LENGTH_SHORT,
+        ).show()
+    }
+
+    private val requestLegacyStorage = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            Toast.makeText(this, R.string.receive_folder_need_storage, Toast.LENGTH_LONG).show()
+        }
     }
 
     private val requestNotificationPermission = registerForActivityResult(
@@ -88,6 +117,13 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "已收到文件", Toast.LENGTH_SHORT).show()
                 }
                 ConnectionService.ACTION_EVENT_FINGERPRINT -> showTrustDialog(payload)
+                ConnectionService.ACTION_EVENT_PEER_NAME -> {
+                    connectedPeerName = payload
+                    if (connected) {
+                        binding.statusText.text = getString(R.string.status_connected_peer, payload)
+                    }
+                    refreshWifiAndHosts(selectLatest = false)
+                }
                 ConnectionService.ACTION_EVENT_CLIPBOARD_SYNC_RESULT -> {
                     val parts = payload.split('|', limit = 2)
                     val msg = parts.getOrNull(1).orEmpty().ifBlank {
@@ -106,14 +142,20 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         clipboard = getSystemService(ClipboardManager::class.java)
         hostStore = SavedHostStore(this)
+        receiveFolderStore = ReceiveFolderStore(this)
 
         binding.hostInput.setText(prefs.getString(KEY_HOST, ""))
         binding.portInput.setText(prefs.getString(KEY_PORT, getString(R.string.default_port)))
-        binding.screenInput.setText(prefs.getString(KEY_SCREEN, getString(R.string.default_screen)))
+        val defaultScreen = DeviceNameHelper.screenName(this)
+        binding.screenInput.setText(
+            prefs.getString(KEY_SCREEN, null)?.takeIf { it.isNotBlank() } ?: defaultScreen
+        )
         binding.tlsSwitch.isChecked = prefs.getBoolean(KEY_TLS, true)
 
         refreshClientFingerprintLabel()
+        lastWifiKeyForHosts = null
         refreshWifiAndHosts(selectLatest = binding.hostInput.text.isNullOrBlank())
+        refreshReceiveFolderUi()
 
         binding.connectButton.setOnClickListener { connect() }
         binding.disconnectButton.setOnClickListener {
@@ -132,9 +174,18 @@ class MainActivity : AppCompatActivity() {
         }
         binding.permissionsButton.setOnClickListener { showPermissionGuide(force = true) }
         binding.wifiLabel.setOnClickListener { showPermissionGuide(force = true) }
+        binding.changeReceiveFolderButton.setOnClickListener {
+            pickReceiveFolder.launch(null)
+        }
+        binding.resetReceiveFolderButton.setOnClickListener {
+            receiveFolderStore.clearCustom()
+            refreshReceiveFolderUi()
+            Toast.makeText(this, R.string.receive_folder_reset_done, Toast.LENGTH_SHORT).show()
+        }
 
         maybeRequestNotificationPermission()
         maybeRequestWifiPermission()
+        maybeRequestLegacyStoragePermission()
         if (PermissionGuide.missing(this).isNotEmpty() &&
             !prefs.getBoolean(KEY_PERM_GUIDE_SHOWN, false)
         ) {
@@ -148,6 +199,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        refreshReceiveFolderUi()
         refreshWifiAndHosts(selectLatest = false)
         refreshPermissionUi()
     }
@@ -161,6 +213,7 @@ class MainActivity : AppCompatActivity() {
             addAction(ConnectionService.ACTION_EVENT_CLIPBOARD_SYNC_RESULT)
             addAction(ConnectionService.ACTION_EVENT_FILE)
             addAction(ConnectionService.ACTION_EVENT_FINGERPRINT)
+            addAction(ConnectionService.ACTION_EVENT_PEER_NAME)
         }
         ContextCompat.registerReceiver(this, events, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         refreshWifiAndHosts(selectLatest = false)
@@ -267,7 +320,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshWifiAndHosts(selectLatest: Boolean) {
+        val previousWifi = lastWifiKeyForHosts
         currentWifiKey = WifiNetworkHelper.currentWifiKey(this)
+        val wifiChanged = previousWifi != null && previousWifi != currentWifiKey
+        lastWifiKeyForHosts = currentWifiKey
         val wifiName = WifiNetworkHelper.displayName(this)
         binding.wifiLabel.text = getString(R.string.wifi_label, wifiName)
         if (!PermissionGuide.hasWifiSsidPermission(this) ||
@@ -295,7 +351,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 binding.savedHostsContainer.addView(item.root)
             }
-            if (selectLatest) {
+            // Switch Wi‑Fi → auto fill the latest host remembered on that network.
+            if ((selectLatest || wifiChanged) && !sessionActive) {
                 applySavedHost(hosts.first())
             }
         }
@@ -323,7 +380,8 @@ class MainActivity : AppCompatActivity() {
     private fun connect() {
         val host = binding.hostInput.text?.toString()?.trim().orEmpty()
         val port = binding.portInput.text?.toString()?.toIntOrNull() ?: 24800
-        val screen = binding.screenInput.text?.toString()?.trim().orEmpty().ifBlank { "Android" }
+        val screen = binding.screenInput.text?.toString()?.trim().orEmpty()
+            .ifBlank { DeviceNameHelper.screenName(this) }
         val useTls = binding.tlsSwitch.isChecked
         if (host.isEmpty()) {
             Toast.makeText(this, "请填写服务器 IP", Toast.LENGTH_SHORT).show()
@@ -336,8 +394,13 @@ class MainActivity : AppCompatActivity() {
             .putString(KEY_SCREEN, screen)
             .putBoolean(KEY_TLS, useTls)
             .apply()
-        // Optimistic remember; service also remembers on successful handshake.
-        hostStore.remember(currentWifiKey, SavedHost(host, port, screen, useTls))
+        binding.screenInput.setText(screen)
+        val existingPeer = hostStore.listForWifi(currentWifiKey)
+            .firstOrNull { it.host == host && it.port == port }
+            ?.peerName
+            .orEmpty()
+        // Optimistic remember; service also remembers on successful handshake / HNAM.
+        hostStore.remember(currentWifiKey, SavedHost(host, port, screen, useTls, peerName = existingPeer))
         refreshWifiAndHosts(selectLatest = false)
 
         setUiConnecting()
@@ -356,7 +419,13 @@ class MainActivity : AppCompatActivity() {
             "connected" -> {
                 connected = true
                 sessionActive = true
-                binding.statusText.text = getString(R.string.status_connected)
+                val peer = parts.getOrNull(4).orEmpty().ifBlank { connectedPeerName }
+                if (peer.isNotBlank()) {
+                    connectedPeerName = peer
+                    binding.statusText.text = getString(R.string.status_connected_peer, peer)
+                } else {
+                    binding.statusText.text = getString(R.string.status_connected)
+                }
                 binding.connectButton.isEnabled = false
                 binding.disconnectButton.isEnabled = true
                 binding.sendFilesButton.isEnabled = true
@@ -401,6 +470,7 @@ class MainActivity : AppCompatActivity() {
                 val reason = parts.getOrNull(1).orEmpty()
                 if (reason == "stopped" || !sessionActive) {
                     sessionActive = false
+                    connectedPeerName = ""
                     binding.statusText.text = getString(R.string.status_disconnected)
                     binding.connectButton.isEnabled = true
                     binding.disconnectButton.isEnabled = false
@@ -525,6 +595,25 @@ class MainActivity : AppCompatActivity() {
                 requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+    }
+
+    private fun maybeRequestLegacyStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestLegacyStorage.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+    }
+
+    private fun refreshReceiveFolderUi() {
+        val path = receiveFolderStore.displayPath()
+        binding.receiveFolderText.text = if (receiveFolderStore.isCustom()) {
+            path
+        } else {
+            getString(R.string.receive_folder_default_hint) + "\n" + path
+        }
+        binding.resetReceiveFolderButton.isEnabled = receiveFolderStore.isCustom()
     }
 
     companion object {

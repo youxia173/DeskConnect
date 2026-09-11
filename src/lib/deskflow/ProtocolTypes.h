@@ -426,6 +426,20 @@ extern const char *const kMsgCClipboard;
 extern const char *const kMsgCClipboardAck;
 
 /**
+ * @brief Server computer / screen name (DeskConnect companion)
+ *
+ * **Message Code**: `"HNAM"`
+ * **Direction**: Primary → Secondary
+ * **Format**: `"HNAM%s"`
+ * **Parameters**:
+ * - `$1`: Primary screen / computer name (string)
+ *
+ * Sent after a client is accepted so companions can label saved hosts as
+ * IP + device name. Desktop clients should parse and ignore if unused.
+ */
+extern const char *const kMsgCHostName;
+
+/**
  * @brief Screensaver state change
  *
  * **Message Code**: `"CSEC"`

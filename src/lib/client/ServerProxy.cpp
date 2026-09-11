@@ -339,6 +339,13 @@ ServerProxy::ConnectionResult ServerProxy::parseMessage(const uint8_t *code)
     secureInputNotification();
   }
 
+  else if (memcmp(code, kMsgCHostName, 4) == 0) {
+    // DeskConnect companion host-name advertisement; desktop clients ignore.
+    std::string hostName;
+    ProtocolUtil::readf(m_stream, kMsgCHostName + 4, &hostName);
+    LOG_DEBUG("server host name: %s", hostName.c_str());
+  }
+
   else if (memcmp(code, kMsgCClose, 4) == 0) {
     // server wants us to hangup
     LOG_VERBOSE("recv close");

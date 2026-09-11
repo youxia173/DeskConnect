@@ -180,6 +180,7 @@ object Msg {
     const val COUT = "COUT"
     const val CROP = "CROP"
     const val CSEC = "CSEC"
+    const val HNAM = "HNAM"
     const val DCLP = "DCLP"
     const val DDRG = "DDRG"
     const val DFTR = "DFTR"

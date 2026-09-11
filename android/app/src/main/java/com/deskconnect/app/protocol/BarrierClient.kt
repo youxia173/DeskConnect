@@ -18,6 +18,7 @@ interface BarrierClientListener {
     fun onLog(message: String)
     fun onClipboardText(text: String)
     fun onClipboardAck(clipboardId: Int) {}
+    fun onPeerHostName(name: String) {}
     fun onFileReceived(fileName: String, absolutePath: String)
     fun onFileProgress(message: String)
     fun onUntrustedServerFingerprint(fingerprintHex: String) {}
@@ -330,6 +331,17 @@ class BarrierClient(
                 log("recv clipboard ack id=$id")
                 listener.onClipboardAck(id)
             }
+            Msg.HNAM -> {
+                val name = try {
+                    body.asDataInput().readLengthString()
+                } catch (_: Exception) {
+                    ""
+                }
+                if (name.isNotBlank()) {
+                    log("server computer name: $name")
+                    listener.onPeerHostName(name)
+                }
+            }
             Msg.DCLP -> handleClipboardChunk(input)
             Msg.DDRG -> handleDragInfo(input)
             Msg.DFTR -> handleFileChunk(input)
@@ -356,6 +368,7 @@ class BarrierClient(
                 code != Msg.DCLP &&
                 code != Msg.CCLP &&
                 code != Msg.CLAK &&
+                code != Msg.HNAM &&
                 code != Msg.DFTR &&
                 code != Msg.DDRG
         if (needsNoop) {
@@ -484,10 +497,17 @@ class BarrierClient(
                     return
                 }
                 val name = receiveNames[receiveIndex]
-                val opened = fileStore.open(name)
-                receivePath = opened.first
-                receiveStream = opened.second
-                log("receiving \"$name\" ($receiveExpected bytes)")
+                try {
+                    val opened = fileStore.open(name)
+                    receivePath = opened.first
+                    receiveStream = opened.second
+                    log("receiving \"$name\" ($receiveExpected bytes)")
+                } catch (e: Exception) {
+                    receivePath = null
+                    receiveStream = null
+                    log("cannot save \"$name\": ${e.message}")
+                    listener.onFileProgress("save failed: ${e.message}")
+                }
             }
             ChunkType.DATA_CHUNK -> {
                 receiveStream?.write(payload)

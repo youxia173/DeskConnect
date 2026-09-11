@@ -3,7 +3,10 @@
     <string name="app_name">DeskConnect</string>
     <string name="host_hint">服务器 IP</string>
     <string name="port_hint">端口</string>
-    <string name="screen_hint">屏幕名（需在 PC 布局中存在）</string>
+    <string name="screen_hint">本机屏幕名（默认用手机设备名；需在电脑布局中存在或首次连接时添加）</string>
+    <string name="default_screen">Phone</string>
+    <string name="status_connected_peer">已连接 · %1$s</string>
+    <string name="peer_name_unknown">电脑</string>
     <string name="use_tls">使用 TLS 加密</string>
     <string name="client_fingerprint">本机指纹：%1$s</string>
     <string name="trust_fingerprint_title">信任服务器证书？</string>
@@ -72,5 +75,11 @@
     <string name="delete_saved_host">删除记忆</string>
     <string name="delete_saved_host_message">从 Wi‑Fi「%2$s」中删除 %1$s？</string>
     <string name="default_port">24800</string>
-    <string name="default_screen">Android</string>
+    <string name="receive_folder_title">电脑发来的文件保存位置</string>
+    <string name="receive_folder_change">更改文件夹</string>
+    <string name="receive_folder_reset">恢复默认</string>
+    <string name="receive_folder_default_hint">默认：系统「下载 / DeskConnect」（文件管理器里可直接看到）</string>
+    <string name="receive_folder_changed">已设置保存到：%1$s</string>
+    <string name="receive_folder_reset_done">已恢复为系统下载目录</string>
+    <string name="receive_folder_need_storage">需要存储权限才能写入下载目录</string>
 </resources>

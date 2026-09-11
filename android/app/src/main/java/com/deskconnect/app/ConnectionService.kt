@@ -26,7 +26,6 @@ import com.deskconnect.app.ui.ApplyRemoteClipboardActivity
 import com.deskconnect.app.ui.MainActivity
 import com.deskconnect.app.ui.SyncClipboardActivity
 import java.io.File
-import java.io.FileOutputStream
 import java.io.OutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -56,6 +55,8 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     private var lastRemoteClipboard: String? = null
     @Volatile
     private var lastSentClipboard: String? = null
+    @Volatile
+    private var lastPeerName: String = ""
     @Volatile
     private var notificationState: NotifState = NotifState.Connecting
 
@@ -106,13 +107,18 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
             ACTION_CONNECT -> {
                 val host = intent.getStringExtra(EXTRA_HOST).orEmpty()
                 val port = intent.getIntExtra(EXTRA_PORT, 24800)
-                val screen = intent.getStringExtra(EXTRA_SCREEN).orEmpty().ifBlank { "Android" }
+                val screen = intent.getStringExtra(EXTRA_SCREEN).orEmpty()
+                    .ifBlank { DeviceNameHelper.screenName(this) }
                 val useTls = intent.getBooleanExtra(EXTRA_USE_TLS, true)
                 val trusted = intent.getStringArrayListExtra(EXTRA_TRUSTED_FPS).orEmpty().toSet()
                 val wifiKey = intent.getStringExtra(EXTRA_WIFI_KEY)
                     ?.ifBlank { null }
                     ?: WifiNetworkHelper.currentWifiKey(this)
                 userStop.set(false)
+                lastPeerName = hostStore.listForWifi(wifiKey)
+                    .firstOrNull { it.host == host && it.port == port }
+                    ?.peerName
+                    .orEmpty()
                 session = SessionConfig(host, port, screen, useTls, trusted, wifiKey)
                 notificationState = NotifState.Connecting
                 startForegroundCompat()
@@ -279,21 +285,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     }
 
     override fun open(fileName: String): Pair<String, OutputStream> {
-        val safe = fileName.replace(Regex("[\\\\/:*?\"<>|]"), "_")
-        val dir = File(getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS), "DeskConnect")
-        if (!dir.exists()) dir.mkdirs()
-        var target = File(dir, safe)
-        var i = 1
-        while (target.exists()) {
-            val dot = safe.lastIndexOf('.')
-            target = if (dot > 0) {
-                File(dir, "${safe.substring(0, dot)} ($i)${safe.substring(dot)}")
-            } else {
-                File(dir, "$safe ($i)")
-            }
-            i++
-        }
-        return target.absolutePath to FileOutputStream(target)
+        return ReceiveFolderStore(this).open(fileName)
     }
 
     override fun onConnected(protocol: String, major: Int, minor: Int) {
@@ -302,10 +294,30 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
         session?.let { cfg ->
             hostStore.remember(
                 cfg.wifiKey,
-                SavedHost(cfg.host, cfg.port, cfg.screen, cfg.useTls)
+                SavedHost(cfg.host, cfg.port, cfg.screen, cfg.useTls, peerName = lastPeerName)
             )
         }
-        broadcast(ACTION_EVENT_STATUS, "connected|$protocol|$major|$minor")
+        val peer = lastPeerName
+        val status = if (peer.isNotBlank()) {
+            "connected|$protocol|$major|$minor|$peer"
+        } else {
+            "connected|$protocol|$major|$minor"
+        }
+        broadcast(ACTION_EVENT_STATUS, status)
+    }
+
+    override fun onPeerHostName(name: String) {
+        val clean = DeviceNameHelper.clean(name)
+        if (clean.isBlank()) return
+        lastPeerName = clean
+        session?.let { cfg ->
+            hostStore.remember(
+                cfg.wifiKey,
+                SavedHost(cfg.host, cfg.port, cfg.screen, cfg.useTls, peerName = clean)
+            )
+        }
+        broadcast(ACTION_EVENT_PEER_NAME, clean)
+        broadcast(ACTION_EVENT_LOG, "电脑设备名: $clean")
     }
 
     override fun onDisconnected(reason: String?) {
@@ -607,6 +619,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
         const val ACTION_EVENT_CLIPBOARD_SYNC_RESULT = "com.deskconnect.app.EVENT_CLIPBOARD_SYNC_RESULT"
         const val ACTION_EVENT_FILE = "com.deskconnect.app.EVENT_FILE"
         const val ACTION_EVENT_FINGERPRINT = "com.deskconnect.app.EVENT_FINGERPRINT"
+        const val ACTION_EVENT_PEER_NAME = "com.deskconnect.app.EVENT_PEER_NAME"
 
         const val EXTRA_HOST = "host"
         const val EXTRA_PORT = "port"

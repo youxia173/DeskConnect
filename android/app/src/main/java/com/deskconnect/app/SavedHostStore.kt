@@ -11,13 +11,18 @@ import org.json.JSONObject
 data class SavedHost(
     val host: String,
     val port: Int = 24800,
-    val screen: String = "Android",
+    val screen: String = "Phone",
     val useTls: Boolean = true,
+    /** DeskConnect computer name of the PC (server), when known. */
+    val peerName: String = "",
     val lastUsed: Long = System.currentTimeMillis(),
 ) {
     fun key(): String = "${host.trim()}|$port"
 
-    fun label(): String = if (port == 24800) host else "$host:$port"
+    fun label(): String {
+        val endpoint = if (port == 24800) host else "$host:$port"
+        return if (peerName.isNotBlank()) "$endpoint · $peerName" else endpoint
+    }
 }
 
 /**
@@ -34,8 +39,14 @@ class SavedHostStore(context: Context) {
 
     fun remember(wifiKey: String, host: SavedHost) {
         val list = listForWifi(wifiKey).toMutableList()
+        val existing = list.firstOrNull { it.key() == host.key() }
         list.removeAll { it.key() == host.key() }
-        list.add(0, host.copy(lastUsed = System.currentTimeMillis()))
+        val merged = host.copy(
+            peerName = host.peerName.ifBlank { existing?.peerName.orEmpty() },
+            screen = host.screen.ifBlank { existing?.screen.orEmpty() },
+            lastUsed = System.currentTimeMillis(),
+        )
+        list.add(0, merged)
         while (list.size > MAX_PER_WIFI) {
             list.removeAt(list.lastIndex)
         }
@@ -74,8 +85,9 @@ class SavedHostStore(context: Context) {
                         SavedHost(
                             host = host,
                             port = o.optInt("port", 24800),
-                            screen = o.optString("screen", "Android").ifBlank { "Android" },
+                            screen = o.optString("screen", "Phone").ifBlank { "Phone" },
                             useTls = o.optBoolean("tls", true),
+                            peerName = o.optString("peerName", ""),
                             lastUsed = o.optLong("lastUsed", 0L),
                         )
                     )
@@ -95,6 +107,7 @@ class SavedHostStore(context: Context) {
                     .put("port", h.port)
                     .put("screen", h.screen)
                     .put("tls", h.useTls)
+                    .put("peerName", h.peerName)
                     .put("lastUsed", h.lastUsed)
             )
         }
