@@ -64,6 +64,9 @@ extern "C"
 #ifdef HAVE_XI2
 #include <X11/extensions/XInput2.h>
 #endif
+#if HAVE_XFIXES
+#include <X11/extensions/Xfixes.h>
+#endif
 
 static int xi_opcode;
 
@@ -148,6 +151,10 @@ XWindowsScreen::XWindowsScreen(const char *displayName, bool isPrimary, IEventQu
     m_clipboard[id] = new XWindowsClipboard(m_display, m_window, id);
   }
 
+  if (m_isPrimary) {
+    startClipboardMonitor();
+  }
+
   // install event handlers
   m_events->addHandler(EventTypes::System, m_events->getSystemTarget(), [this](const auto &e) {
     handleSystemEvent(e);
@@ -164,6 +171,7 @@ XWindowsScreen::~XWindowsScreen()
 
   m_events->adoptBuffer(nullptr);
   m_events->removeHandler(EventTypes::System, m_events->getSystemTarget());
+  stopClipboardMonitor();
   for (auto clipboard : m_clipboard) {
     delete clipboard;
   }
@@ -466,7 +474,114 @@ bool XWindowsScreen::renderDelayedFilePaste()
 
 void XWindowsScreen::checkClipboards()
 {
-  // do nothing, we're always up to date
+  pollExternalClipboard();
+}
+
+void XWindowsScreen::startClipboardMonitor()
+{
+  if (!m_isPrimary || m_events == nullptr) {
+    return;
+  }
+
+#if HAVE_XFIXES
+  int errorBase = 0;
+  m_xfixes = (XFixesQueryExtension(m_display, &m_xfixesEventBase, &errorBase) != 0);
+  if (m_xfixes && m_clipboard[kClipboardClipboard] != nullptr) {
+    XFixesSelectSelectionInput(
+        m_display, m_window, m_clipboard[kClipboardClipboard]->getSelection(),
+        XFixesSetSelectionOwnerNotifyMask | XFixesSelectionWindowDestroyNotifyMask |
+            XFixesSelectionClientCloseNotifyMask
+    );
+    LOG_INFO("XFixes clipboard monitor enabled (Linux clipboard sync)");
+  } else {
+    LOG_INFO("XFixes unavailable; using clipboard poll for Linux sync");
+  }
+#endif
+
+  if (m_clipboardPollTimer == nullptr) {
+    // Clipboard managers often keep CLIPBOARD ownership, so SelectionClear
+    // never reaches us; poll content as a reliable fallback.
+    m_clipboardPollTimer = m_events->newTimer(0.4, nullptr);
+    m_events->addHandler(EventTypes::Timer, m_clipboardPollTimer, [this](const auto &) { pollExternalClipboard(); });
+  }
+}
+
+void XWindowsScreen::stopClipboardMonitor()
+{
+  if (m_events != nullptr && m_clipboardPollTimer != nullptr) {
+    m_events->removeHandler(EventTypes::Timer, m_clipboardPollTimer);
+    m_events->deleteTimer(m_clipboardPollTimer);
+  }
+  m_clipboardPollTimer = nullptr;
+}
+
+void XWindowsScreen::onClipboardOwnershipChanged(ClipboardID id)
+{
+  if (!m_isPrimary || id >= kClipboardEnd || m_clipboard[id] == nullptr) {
+    return;
+  }
+  const Window owner = XGetSelectionOwner(m_display, m_clipboard[id]->getSelection());
+  if (owner == m_window) {
+    return;
+  }
+  LOG_DEBUG("clipboard %u ownership changed (owner=0x%08lx)", static_cast<unsigned>(id), static_cast<unsigned long>(owner));
+  // Reset fingerprint so the next poll/push will treat content as new.
+  m_lastClipboardMarshall[id].clear();
+  sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
+}
+
+void XWindowsScreen::pollExternalClipboard()
+{
+  if (!m_isPrimary || m_clipboardPollBusy) {
+    return;
+  }
+  m_clipboardPollBusy = true;
+
+  // Android companion only consumes CLIPBOARD (id 0), not PRIMARY.
+  const ClipboardID id = kClipboardClipboard;
+  if (m_clipboard[id] == nullptr) {
+    m_clipboardPollBusy = false;
+    return;
+  }
+
+  const Window owner = XGetSelectionOwner(m_display, m_clipboard[id]->getSelection());
+  if (owner == m_window) {
+    // We own CLIPBOARD (e.g. after phone→PC sync). Track fingerprint so we
+    // do not echo our own data back out.
+    Clipboard probe;
+    if (getClipboard(id, &probe)) {
+      m_lastClipboardMarshall[id] = probe.marshall();
+    }
+    m_clipboardPollBusy = false;
+    return;
+  }
+
+  Clipboard probe;
+  if (!getClipboard(id, &probe)) {
+    m_clipboardPollBusy = false;
+    return;
+  }
+
+  bool hasText = false;
+  if (probe.open(0)) {
+    hasText = probe.has(IClipboard::Format::Text) && !probe.get(IClipboard::Format::Text).empty();
+    probe.close();
+  }
+  if (!hasText) {
+    m_clipboardPollBusy = false;
+    return;
+  }
+
+  const std::string data = probe.marshall();
+  if (data == m_lastClipboardMarshall[id]) {
+    m_clipboardPollBusy = false;
+    return;
+  }
+
+  m_lastClipboardMarshall[id] = data;
+  LOG_INFO("detected external CLIPBOARD change (%zu bytes); notifying server", data.size());
+  sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
+  m_clipboardPollBusy = false;
 }
 
 void XWindowsScreen::openScreensaver(bool notify)
@@ -1275,6 +1390,17 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
     // screen saver handled it
     return;
   }
+
+#if HAVE_XFIXES
+  if (m_xfixes && xevent->type == m_xfixesEventBase + XFixesSelectionNotify) {
+    const auto *sev = reinterpret_cast<XFixesSelectionNotifyEvent *>(xevent);
+    if (m_clipboard[kClipboardClipboard] != nullptr &&
+        sev->selection == m_clipboard[kClipboardClipboard]->getSelection()) {
+      onClipboardOwnershipChanged(kClipboardClipboard);
+    }
+    return;
+  }
+#endif
 
 #ifdef HAVE_XI2
   if (m_xi2detected) {

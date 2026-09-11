@@ -16,6 +16,7 @@
 
 #include <functional>
 #include <set>
+#include <string>
 #include <vector>
 
 #include <QString>
@@ -25,6 +26,7 @@
 class XWindowsClipboard;
 class XWindowsKeyState;
 class XWindowsScreenSaver;
+class EventQueueTimer;
 
 //! Implementation of IPlatformScreen for X11
 class XWindowsScreen : public PlatformScreen
@@ -73,6 +75,10 @@ public:
   void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles) override;
   void clearDelayedFilePaste() override;
   void checkClipboards() override;
+  void pollExternalClipboard();
+  void startClipboardMonitor();
+  void stopClipboardMonitor();
+  void onClipboardOwnershipChanged(ClipboardID id);
   void openScreensaver(bool notify) override;
   void closeScreensaver() override;
   void screensaver(bool activate) override;
@@ -259,6 +265,17 @@ private:
   // XRandR extension stuff
   bool m_xrandr = false;
   int m_xrandrEventBase;
+
+#if HAVE_XFIXES
+  bool m_xfixes = false;
+  int m_xfixesEventBase = 0;
+#endif
+
+  // Detect Linux clipboard changes even when we never owned CLIPBOARD
+  // (SelectionClear alone is insufficient under clipboard managers).
+  EventQueueTimer *m_clipboardPollTimer = nullptr;
+  std::string m_lastClipboardMarshall[kClipboardEnd];
+  bool m_clipboardPollBusy = false;
 
   IEventQueue *m_events = nullptr;
   deskflow::KeyMap m_keyMap;

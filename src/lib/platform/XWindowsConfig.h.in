@@ -22,5 +22,8 @@
 /* Define to 1 if you have the <X11/extensions/XInput2.h> header file. */
 #define HAVE_XI2 @HAVE_XI2@
 
+/* Define to 1 if you have the <X11/extensions/Xfixes.h> header file. */
+#define HAVE_XFIXES @HAVE_XFIXES@
+
 /* Define this if the XKB extension is available. */
 #define HAVE_XKB_EXTENSION @HAVE_XKB_EXTENSION@

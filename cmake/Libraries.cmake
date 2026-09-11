@@ -131,6 +131,7 @@ macro(configure_xorg_libs)
   check_include_files("X11/extensions/XTest.h" HAVE_X11_EXTENSIONS_XTEST_H)
   check_include_files("${XKBlib}" HAVE_X11_XKBLIB_H)
   check_include_files("X11/extensions/XInput2.h" HAVE_XI2)
+  check_include_files("X11/extensions/Xfixes.h" HAVE_XFIXES)
 
   if(NOT HAVE_X11_XKBLIB_H)
     message(FATAL_ERROR "Missing header: " ${XKBlib})
@@ -198,6 +199,13 @@ macro(configure_xorg_libs)
   # this was outside of the linux scope, not sure why, moving it back inside.
   if(HAVE_Xi)
     list(APPEND libs Xi)
+  endif()
+
+  check_library_exists("Xfixes" XFixesQueryExtension "" HAVE_Xfixes_LIB)
+  if(HAVE_XFIXES AND HAVE_Xfixes_LIB)
+    list(APPEND libs Xfixes)
+  else()
+    set(HAVE_XFIXES 0)
   endif()
 
   add_definitions(-DWINAPI_XWINDOWS=1)
