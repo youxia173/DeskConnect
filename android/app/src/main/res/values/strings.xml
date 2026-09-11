@@ -27,7 +27,9 @@
     <string name="status_connected">已连接</string>
     <string name="status_reconnecting">自动重连中… (#%1$d)</string>
     <string name="status_reconnecting_wait">自动重连 #%1$d，%2$d 秒后重试</string>
-    <string name="clipboard_hint">电脑→手机：自动同步。手机→电脑：复制后点通知栏「同步剪贴板」，成功会提示「同步成功」。</string>
+    <string name="clipboard_hint">电脑→手机：自动同步（收到时会短暂亮一下并提示）。手机→电脑：复制后点通知栏「同步剪贴板」。</string>
+    <string name="clipboard_received_from_pc">已从电脑同步剪贴板</string>
+    <string name="clipboard_apply_failed">写入手机剪贴板失败：%1$s</string>
     <string name="log_title">日志</string>
     <string name="notification_channel">DeskConnect 连接</string>
     <string name="notification_title">DeskConnect 已连接</string>

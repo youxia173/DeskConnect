@@ -328,6 +328,10 @@ private:
   void handleShapeChanged(BaseClientProxy *client);
   void handleClipboardGrabbed(const Event &event, BaseClientProxy *client);
   void handleClipboardChanged(const Event &event, BaseClientProxy *client);
+  //! Retry primary clipboard push after X11 selection owner is ready (for Android).
+  void schedulePrimaryClipboardRetry(ClipboardID id, uint32_t seqNum);
+  void schedulePrimaryClipboardRetryAt(ClipboardID id, uint32_t seqNum, int attempt, const double *delays, int delayCount);
+  void clearPrimaryClipboardRetryTimer();
   void handleKeyDownEvent(const Event &event);
   void handleKeyUpEvent(const Event &event);
   void handleKeyRepeatEvent(const Event &event);
@@ -439,6 +443,7 @@ private:
 
   // clipboard cache
   ClipboardInfo m_clipboards[kClipboardEnd];
+  EventQueueTimer *m_primaryClipboardRetryTimer = nullptr;
 
   // used in hello message sent to the client
   NetworkProtocol m_protocol = NetworkProtocol::Barrier;

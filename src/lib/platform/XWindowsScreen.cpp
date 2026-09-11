@@ -215,9 +215,11 @@ void XWindowsScreen::disable()
     XUnsetICFocus(m_ic);
   }
 
-  // unmap the hider/grab window.  this also ungrabs the mouse and
-  // keyboard if they're grabbed.
+  // Explicitly release grabs then unmap. Relying on unmap alone has left
+  // systems briefly without local keyboard/mouse when the event loop stalls.
+  releaseInputGrab();
   XUnmapWindow(m_display, m_window);
+  XFlush(m_display);
 
   // restore auto-repeat state
   if (!m_isPrimary && m_autoRepeat) {
@@ -253,9 +255,10 @@ void XWindowsScreen::enter()
   }
 #endif
 
-  // unmap the hider/grab window.  this also ungrabs the mouse and
-  // keyboard if they're grabbed.
+  // Restore local input as soon as the cursor returns to this screen.
+  releaseInputGrab();
   XUnmapWindow(m_display, m_window);
+  XFlush(m_display);
 
   // maybe call this if entering for the screensaver
   // set keyboard focus to root window.  the screensaver should then
@@ -283,16 +286,34 @@ bool XWindowsScreen::canLeave()
 {
   // raise and show the window, required to grab mouse and keyboard
   XMapRaised(m_display, m_window);
+  XFlush(m_display);
 
   // see if grabbing the mouse and keyboard, if primary, is possible
-  return !(m_isPrimary && !grabMouseAndKeyboard());
+  if (m_isPrimary && !grabMouseAndKeyboard()) {
+    // Never leave the fullscreen grab window mapped without a grab — it can
+    // swallow pointer events and make the desktop feel dead until something
+    // else unmaps it.
+    releaseInputGrab();
+    XUnmapWindow(m_display, m_window);
+    XFlush(m_display);
+    LOG_WARN("can't grab mouse/keyboard; staying on primary screen");
+    return false;
+  }
+  return true;
 }
 
 void XWindowsScreen::leave()
 {
-  // Keep the exit-edge position on the unused screen (do not jump to center).
-  m_parkX = m_xCursor;
-  m_parkY = m_yCursor;
+  // Under XGrabPointer, parking on the jump-edge (instead of center) can break
+  // relative tracking / edge switching on X11. Keep primary park at center;
+  // secondary still parks at the leave point for unused-monitor visibility.
+  if (m_isPrimary) {
+    m_parkX = m_xCenter;
+    m_parkY = m_yCenter;
+  } else {
+    m_parkX = m_xCursor;
+    m_parkY = m_yCursor;
+  }
 
   if (!m_isPrimary) {
     // restore the previous keyboard auto-repeat state.  if the user
@@ -308,12 +329,15 @@ void XWindowsScreen::leave()
     XMoveWindow(m_display, m_window, m_parkX, m_parkY);
   }
 
-  // raise and show the window
-  XMapRaised(m_display, m_window);
-
-  // grab the mouse and keyboard, if primary and possible
-  if (m_isPrimary && !grabMouseAndKeyboard()) {
-    XUnmapWindow(m_display, m_window);
+  // canLeave() already mapped + grabbed on primary; avoid a second grab race.
+  if (!m_inputGrabbed) {
+    XMapRaised(m_display, m_window);
+    if (m_isPrimary && !grabMouseAndKeyboard()) {
+      releaseInputGrab();
+      XUnmapWindow(m_display, m_window);
+      XFlush(m_display);
+      LOG_WARN("leave without input grab");
+    }
   }
 
   // save current focus
@@ -327,7 +351,6 @@ void XWindowsScreen::leave()
   // now warp the mouse.  we warp after showing the window so we're
   // guaranteed to get the mouse leave event and to prevent the
   // keyboard focus from changing under point-to-focus policies.
-  // Primary parks at the leave edge for relative tracking; secondary stays put.
   if (m_isPrimary) {
     LOG_VERBOSE("parking cursor on leave: %+d, %+d", m_parkX, m_parkY);
     warpCursor(m_parkX, m_parkY);
@@ -1656,21 +1679,30 @@ void XWindowsScreen::onMouseMove(const XMotionEvent &xmotion)
   m_yCursor = xmotion.y_root;
 
   if (xmotion.send_event) {
-    // we warped the mouse.  discard events until we
-    // find the matching sent event.  see
-    // warpCursorNoFlush() for where the events are
-    // sent.  we discard the matching sent event and
-    // can be sure we've skipped the warp event.
+    // we warped the mouse.  discard events until we find the matching
+    // sent event (see warpCursorNoFlush).  Do not use blocking XMaskEvent —
+    // that can freeze all input — but wait briefly so we still drain the
+    // warp bracket; returning immediately left markers/motions in the queue
+    // and broke switching / secondary cursor movement.
     XEvent xevent;
-    char cntr = 0;
-    do {
-      XMaskEvent(m_display, PointerMotionMask, &xevent);
-      if (cntr++ > 10) {
-        LOG_WARN("too many discarded events! %d", cntr);
+    int discarded = 0;
+    Stopwatch timer;
+    for (;;) {
+      if (XCheckMaskEvent(m_display, PointerMotionMask, &xevent) != 0) {
+        ++discarded;
+        if (xevent.xany.send_event || discarded >= 64) {
+          break;
+        }
+        continue;
+      }
+      if (discarded >= 64 || timer.getTime() >= 0.05) {
         break;
       }
-    } while (!xevent.xany.send_event);
-    cntr = 0;
+      Arch::sleep(0.001);
+    }
+    if (discarded >= 64) {
+      LOG_WARN("too many discarded warp motion events (%d)", discarded);
+    }
   } else if (m_isOnScreen) {
     // motion on primary screen
     sendEvent(EventTypes::PrimaryScreenMotionOnPrimary, MotionInfo::alloc(m_xCursor, m_yCursor));
@@ -2023,6 +2055,7 @@ bool XWindowsScreen::grabMouseAndKeyboard()
         Arch::sleep(0.05);
         if (timer.getTime() >= s_timeout) {
           LOG_VERBOSE("grab keyboard timed out");
+          m_inputGrabbed = false;
           return false;
         }
       }
@@ -2040,13 +2073,27 @@ bool XWindowsScreen::grabMouseAndKeyboard()
       Arch::sleep(0.05);
       if (timer.getTime() >= s_timeout) {
         LOG_VERBOSE("grab pointer timed out");
+        m_inputGrabbed = false;
         return false;
       }
     }
   } while (result != GrabSuccess);
 
   LOG_VERBOSE("grabbed pointer and keyboard");
+  m_inputGrabbed = true;
   return true;
+}
+
+void XWindowsScreen::releaseInputGrab()
+{
+  if (m_display == nullptr) {
+    m_inputGrabbed = false;
+    return;
+  }
+  // Always call ungrab — X allows it even if we are not the grabber.
+  XUngrabPointer(m_display, CurrentTime);
+  XUngrabKeyboard(m_display, CurrentTime);
+  m_inputGrabbed = false;
 }
 
 void XWindowsScreen::refreshKeyboard(XEvent *event)

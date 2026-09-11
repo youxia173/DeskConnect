@@ -166,6 +166,7 @@ Server::~Server()
   m_events->removeHandler(PrimaryScreenFakeInputEnd, m_inputFilter);
   m_events->removeHandler(Timer, this);
   stopSwitch();
+  clearPrimaryClipboardRetryTimer();
 
   try {
     // force immediate disconnection of secondary clients
@@ -459,22 +460,38 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
   // since that's a waste of time we skip that and just warp the
   // mouse.
   if (m_active != dst) {
+    // Refresh primary clipboard cache BEFORE leave/grab. Doing this after
+    // XGrabPointer/Keyboard stalls the event loop while local input is held,
+    // which feels like a frozen keyboard/mouse until the clipboard work ends.
+    if (m_active == m_primaryClient && m_enableClipboard) {
+      for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
+        ClipboardInfo &clipboard = m_clipboards[id];
+        if (clipboard.m_clipboardOwner != getName(m_primaryClient)) {
+          continue;
+        }
+        if (!m_primaryClient->getClipboard(id, &clipboard.m_clipboard)) {
+          continue;
+        }
+        std::string data = clipboard.m_clipboard.marshall();
+        if (data.size() > m_maximumClipboardSize * 1024) {
+          LOG_WARN(
+              "not caching clipboard %u before switch; size %zu exceeds limit %zu KB", static_cast<unsigned>(id),
+              data.size(), m_maximumClipboardSize
+          );
+          continue;
+        }
+        if (data != clipboard.m_clipboardData) {
+          clipboard.m_clipboardData = std::move(data);
+          LOG_DEBUG("refreshed clipboard %u before leaving primary", static_cast<unsigned>(id));
+        }
+      }
+    }
+
     // leave active screen
     if (!m_active->leave()) {
       // cannot leave screen
       LOG_WARN("can't leave screen");
       return;
-    }
-
-    // update the primary client's clipboards if we're leaving the
-    // primary screen.
-    if (m_active == m_primaryClient && m_enableClipboard) {
-      for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
-        const ClipboardInfo &clipboard = m_clipboards[id];
-        if (clipboard.m_clipboardOwner == getName(m_primaryClient)) {
-          onClipboardChanged(m_primaryClient, id, clipboard.m_clipboardSeqNum);
-        }
-      }
     }
 
 #if defined(__APPLE__)
@@ -1197,12 +1214,17 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
   clipboard.m_clipboardOwner = getName(grabber);
   clipboard.m_clipboardSeqNum = info->m_sequenceNumber;
 
-  // clear the clipboard data (since it's not known at this point)
-  if (clipboard.m_clipboard.open(0)) {
-    clipboard.m_clipboard.empty();
-    clipboard.m_clipboard.close();
+  // Remote clients send data after the grab via ClipboardChanged. Primary
+  // (especially Linux X11) needs an immediate ConvertSelection — do not wipe
+  // the cache first or an empty failed read looks "unchanged" and never pushes
+  // to companion clients like Android.
+  if (grabber != m_primaryClient) {
+    if (clipboard.m_clipboard.open(0)) {
+      clipboard.m_clipboard.empty();
+      clipboard.m_clipboard.close();
+    }
+    clipboard.m_clipboardData = clipboard.m_clipboard.marshall();
   }
-  clipboard.m_clipboardData = clipboard.m_clipboard.marshall();
 
   // tell all other screens to take ownership of clipboard.  tell the
   // grabber that it's clipboard isn't dirty.
@@ -1222,7 +1244,54 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
   // Remote clients still deliver data via ClipboardChanged after DCLP.
   if (grabber == m_primaryClient) {
     onClipboardChanged(m_primaryClient, info->m_id, clipboard.m_clipboardSeqNum);
+    // On Linux X11, SelectionClear often races the new owner's ConvertSelection
+    // reply — the first read can be empty and Android would never get text.
+    schedulePrimaryClipboardRetry(info->m_id, clipboard.m_clipboardSeqNum);
   }
+}
+
+void Server::clearPrimaryClipboardRetryTimer()
+{
+  if (m_primaryClipboardRetryTimer == nullptr) {
+    return;
+  }
+  m_events->removeHandler(EventTypes::Timer, m_primaryClipboardRetryTimer);
+  m_events->deleteTimer(m_primaryClipboardRetryTimer);
+  m_primaryClipboardRetryTimer = nullptr;
+}
+
+void Server::schedulePrimaryClipboardRetry(ClipboardID id, uint32_t seqNum)
+{
+  clearPrimaryClipboardRetryTimer();
+  // Linux ConvertSelection often needs >50ms; try a few spaced retries.
+  static const double kDelaysSec[] = {0.1, 0.25, 0.5};
+  schedulePrimaryClipboardRetryAt(id, seqNum, 0, kDelaysSec, 3);
+}
+
+void Server::schedulePrimaryClipboardRetryAt(
+    ClipboardID id, uint32_t seqNum, int attempt, const double *delays, int delayCount
+)
+{
+  if (attempt >= delayCount) {
+    return;
+  }
+  clearPrimaryClipboardRetryTimer();
+  m_primaryClipboardRetryTimer = m_events->newOneShotTimer(delays[attempt], nullptr);
+  m_events->addHandler(EventTypes::Timer, m_primaryClipboardRetryTimer, [this, id, seqNum, attempt, delays, delayCount](const auto &) {
+    clearPrimaryClipboardRetryTimer();
+    if (m_primaryClient == nullptr || !m_enableClipboard) {
+      return;
+    }
+    const ClipboardInfo &clipboard = m_clipboards[id];
+    if (clipboard.m_clipboardOwner != getName(m_primaryClient) || clipboard.m_clipboardSeqNum != seqNum) {
+      return;
+    }
+    LOG_DEBUG(
+        "retry primary clipboard %u push (seq=%u, attempt=%d)", static_cast<unsigned>(id), seqNum, attempt + 1
+    );
+    onClipboardChanged(m_primaryClient, id, seqNum);
+    schedulePrimaryClipboardRetryAt(id, seqNum, attempt + 1, delays, delayCount);
+  });
 }
 
 void Server::handleClipboardChanged(const Event &event, BaseClientProxy *client)
@@ -1463,7 +1532,11 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
   assert(sender == m_clients.find(clipboard.m_clipboardOwner)->second);
 
   // get data
-  sender->getClipboard(id, &clipboard.m_clipboard);
+  if (!sender->getClipboard(id, &clipboard.m_clipboard)) {
+    LOG_DEBUG("clipboard %u getClipboard failed from \"%s\"", static_cast<unsigned>(id), getName(sender).c_str());
+    // Retries are scheduled by handleClipboardGrabbed / schedulePrimaryClipboardRetry.
+    return;
+  }
 
   std::string data = clipboard.m_clipboard.marshall();
   if (data.size() > m_maximumClipboardSize * 1024) {
@@ -1471,6 +1544,21 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
         "not sending clipboard data, size %zu bytes exceeds limit %zu KB", data.size(), m_maximumClipboardSize
     );
     return;
+  }
+
+  // Primary Linux may report an empty marshall before ConvertSelection completes.
+  // Do not treat that as a successful update (would block retries / wipe peers).
+  if (sender == m_primaryClient) {
+    bool hasText = false;
+    if (clipboard.m_clipboard.open(0)) {
+      hasText = clipboard.m_clipboard.has(IClipboard::Format::Text) &&
+                !clipboard.m_clipboard.get(IClipboard::Format::Text).empty();
+      clipboard.m_clipboard.close();
+    }
+    if (!hasText) {
+      LOG_DEBUG("primary clipboard %u has no text yet; waiting for retry", static_cast<unsigned>(id));
+      return;
+    }
   }
 
   auto ackClipboardToSender = [this, sender, id]() {
@@ -1513,6 +1601,7 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     }
     // ClientProxy1_6::setClipboard only transmits when dirty.
     client->setClipboardDirty(id, true);
+    LOG_INFO("pushing clipboard %u to \"%s\" (%zu bytes)", static_cast<unsigned>(id), getName(client).c_str(), data.size());
     client->setClipboard(id, &clipboard.m_clipboard);
     client->setClipboardDirty(id, false);
   }

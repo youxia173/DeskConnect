@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 
-#include "platform/XWindowsMouseLocator.h"
-
+// Qt / Settings before X11: Xlib #define None/Bool/Status breaks Settings.h enums.
 #include "base/EventTypes.h"
 #include "base/IEventQueue.h"
 #include "base/Log.h"
 #include "common/Settings.h"
+
+#include "platform/XWindowsMouseLocator.h"
 
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>

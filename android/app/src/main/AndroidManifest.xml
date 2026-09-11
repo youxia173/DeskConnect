@@ -43,6 +43,15 @@
             android:taskAffinity=""
             android:theme="@style/Theme.DeskConnect.Transparent" />
 
+        <activity
+            android:name=".ui.ApplyRemoteClipboardActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:finishOnTaskLaunch="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.DeskConnect.Transparent" />
+
         <service
             android:name=".ConnectionService"
             android:exported="false"

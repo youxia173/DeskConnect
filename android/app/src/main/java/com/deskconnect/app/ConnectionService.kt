@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import com.deskconnect.app.protocol.BarrierClient
 import com.deskconnect.app.protocol.BarrierClientListener
 import com.deskconnect.app.protocol.ReceivedFileStore
+import com.deskconnect.app.ui.ApplyRemoteClipboardActivity
 import com.deskconnect.app.ui.MainActivity
 import com.deskconnect.app.ui.SyncClipboardActivity
 import java.io.File
@@ -292,9 +293,17 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
         applyingRemoteClipboard.set(true)
         mainHandler.post {
             try {
-                clipboard?.setPrimaryClip(ClipData.newPlainText("DeskConnect", text))
+                // Prefer a focused activity: many Android 10+ builds ignore or block
+                // setPrimaryClip from a background / FGS-only context.
+                ApplyRemoteClipboardActivity.start(this, text)
+            } catch (e: Exception) {
+                try {
+                    clipboard?.setPrimaryClip(ClipData.newPlainText("DeskConnect", text))
+                } catch (_: Exception) {
+                    broadcast(ACTION_EVENT_LOG, "apply remote clipboard failed: ${e.message}")
+                }
             } finally {
-                mainHandler.postDelayed({ applyingRemoteClipboard.set(false) }, 800)
+                mainHandler.postDelayed({ applyingRemoteClipboard.set(false) }, 1200)
             }
         }
     }

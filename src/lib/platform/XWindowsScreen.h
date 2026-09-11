@@ -129,6 +129,7 @@ private:
   void openIM();
 
   bool grabMouseAndKeyboard();
+  void releaseInputGrab();
   void onKeyPress(XKeyEvent &);
   void onKeyRelease(XKeyEvent &, bool isRepeat);
   bool onHotKey(const XKeyEvent &, bool isRepeat);
@@ -182,6 +183,9 @@ private:
 
   // true if mouse has entered the screen
   bool m_isOnScreen;
+
+  // true while XGrabPointer/XGrabKeyboard are held (primary off-screen)
+  bool m_inputGrabbed = false;
 
   uint32_t m_activeSides = 0;
   // screen shape stuff
