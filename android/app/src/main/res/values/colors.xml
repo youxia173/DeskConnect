@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dc_primary">#1565C0</color>
+    <color name="dc_primary_dark">#0D47A1</color>
+    <color name="dc_on_primary">#FFFFFF</color>
+    <color name="dc_surface">#F5F7FA</color>
+    <color name="dc_on_surface">#1A1C1E</color>
+    <color name="dc_outline">#C5CAD3</color>
+</resources>

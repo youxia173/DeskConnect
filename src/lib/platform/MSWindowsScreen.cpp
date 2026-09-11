@@ -1520,12 +1520,18 @@ void MSWindowsScreen::onClipboardChange()
   // now notify client that somebody changed the clipboard (unless
   // we're the owner).
   if (!MSWindowsClipboard::isOwnedByDeskflow()) {
+    // Always notify on external clipboard updates. Previously we only fired
+    // when m_ownClipboard was true (lost ownership). That skipped the common
+    // case where DeskConnect never owned the clipboard, so companion clients
+    // (e.g. Android) never received PC copy events.
     if (m_ownClipboard) {
       LOG_DEBUG("clipboard changed: lost ownership");
-      m_ownClipboard = false;
-      sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardClipboard);
-      sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardSelection);
+    } else {
+      LOG_DEBUG("clipboard changed: external update");
     }
+    m_ownClipboard = false;
+    sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardClipboard);
+    sendClipboardEvent(EventTypes::ClipboardGrabbed, kClipboardSelection);
   } else if (!m_ownClipboard) {
     LOG_DEBUG("clipboard changed: %s owned", kAppId);
     m_ownClipboard = true;

@@ -67,3 +67,16 @@ node_modules/
 *.msi
 *.msix
 /out/
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+*.apk
+*.aab
+*.ap_
+*.dex

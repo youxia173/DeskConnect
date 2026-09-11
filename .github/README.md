@@ -27,4 +27,3 @@
 ## 许可证
 
 - Deskflow 衍生代码：GPL-2.0
-- `kdeconnect-kde/`：保留其原有许可证

@@ -78,7 +78,7 @@ sudo ./install.sh
 |------|------|
 | `src/`、`cmake/`、`deploy/` 等 | 产品源码（品牌为 DeskConnect） |
 | `deploy/linux/make-portable.sh` | Linux 便携包 / `/opt` 安装打包脚本 |
-| `kdeconnect-kde/` | KDE Connect 桌面端源码，供后续参考，未接入当前构建 |
+| `android/` | DeskConnect Android 伴侣客户端（明文协议第一版） |
 | `docs/` | 上游开发文档 |
 | `dist/` | 本地打包输出（不入库） |
 | `.githooks/` | Git 钩子（提交时自动去掉 Cursor co-author） |
@@ -122,4 +122,3 @@ QTDIR=/path/to/Qt/6.8.x/gcc_64 ./deploy/linux/make-portable.sh
 ## 许可证
 
 - Deskflow 衍生代码：GPL-2.0（见 `LICENSE`、`LICENSES/`）
-- `kdeconnect-kde/`：保留其原有许可证

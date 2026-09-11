@@ -410,6 +410,22 @@ extern const char *const kMsgCLeave;
 extern const char *const kMsgCClipboard;
 
 /**
+ * @brief Clipboard sync acknowledgment (DeskConnect companion)
+ *
+ * **Message Code**: `"CLAK"`
+ * **Direction**: Primary → Secondary
+ * **Format**: `"CLAK%1i"`
+ * **Parameters**:
+ * - `$1`: Clipboard id (1 byte)
+ *
+ * Sent after the server successfully receives and applies clipboard data
+ * from a secondary/companion client, so the companion can confirm sync.
+ *
+ * @see kMsgCClipboard, kMsgDClipboard
+ */
+extern const char *const kMsgCClipboardAck;
+
+/**
  * @brief Screensaver state change
  *
  * **Message Code**: `"CSEC"`

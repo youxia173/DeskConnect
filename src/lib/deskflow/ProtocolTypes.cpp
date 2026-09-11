@@ -18,6 +18,7 @@ const char *const kMsgCClose = "CBYE";
 const char *const kMsgCEnter = "CINN%2i%2i%4i%2i";
 const char *const kMsgCLeave = "COUT";
 const char *const kMsgCClipboard = "CCLP%1i%4i";
+const char *const kMsgCClipboardAck = "CLAK%1i";
 const char *const kMsgCScreenSaver = "CSEC%1i";
 const char *const kMsgCResetOptions = "CROP";
 const char *const kMsgCInfoAck = "CIAK";

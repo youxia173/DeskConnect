@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/hostSelectButton"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="start|center_vertical"
+        android:textAllCaps="false"
+        android:maxLines="1"
+        app:icon="@android:drawable/ic_menu_mylocation"
+        app:iconGravity="start"
+        app:iconPadding="8dp" />
+
+    <ImageButton
+        android:id="@+id/hostDeleteButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/delete_saved_host"
+        android:src="@android:drawable/ic_menu_delete" />
+</LinearLayout>

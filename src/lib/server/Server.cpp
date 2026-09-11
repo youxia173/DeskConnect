@@ -1215,8 +1215,12 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
     }
   }
 
-  if (grabber == m_primaryClient && m_active != m_primaryClient) {
-    LOG_DEBUG("clipboard grabbed while active screen was changed, resending clipboard data");
+  // Primary (Windows/macOS) only emits ClipboardGrabbed when the user copies;
+  // ClipboardChanged is not raised. Deskflow historically delayed the data
+  // push until leaving the primary screen. Companion clients (e.g. Android)
+  // may never become active, so push primary clipboard contents immediately.
+  // Remote clients still deliver data via ClipboardChanged after DCLP.
+  if (grabber == m_primaryClient) {
     onClipboardChanged(m_primaryClient, info->m_id, clipboard.m_clipboardSeqNum);
   }
 }
@@ -1469,9 +1473,21 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     return;
   }
 
-  // ignore if data hasn't changed
+  auto ackClipboardToSender = [this, sender, id]() {
+    if (sender == m_primaryClient) {
+      return;
+    }
+    // Companion clients (e.g. Android) wait for CLAK to confirm PC applied clipboard.
+    if (auto *client = dynamic_cast<ClientProxy *>(const_cast<BaseClientProxy *>(sender))) {
+      LOG_DEBUG("clipboard ack to \"%s\" id=%u", getName(sender).c_str(), id);
+      ProtocolUtil::writef(client->getStream(), kMsgCClipboardAck, id);
+    }
+  };
+
+  // ignore if data hasn't changed — still ACK remote sync attempts
   if (data == clipboard.m_clipboardData) {
     LOG_DEBUG("ignored screen \"%s\" update of clipboard %d (unchanged)", clipboard.m_clipboardOwner.c_str(), id);
+    ackClipboardToSender();
     return;
   }
 
@@ -1486,14 +1502,22 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     m_fileSendFromClipboard = false;
   }
 
-  // tell all clients except the sender that the clipboard is dirty
+  // Push clipboard to every client except the sender. Companion clients
+  // (e.g. Android) may never become the active input screen, so dirty-on-
+  // enter alone would never deliver text clipboard updates to them.
   for (ClientList::const_iterator index = m_clients.begin(); index != m_clients.end(); ++index) {
     BaseClientProxy *client = index->second;
-    client->setClipboardDirty(id, client != sender);
+    if (client == sender) {
+      client->setClipboardDirty(id, false);
+      continue;
+    }
+    // ClientProxy1_6::setClipboard only transmits when dirty.
+    client->setClipboardDirty(id, true);
+    client->setClipboard(id, &clipboard.m_clipboard);
+    client->setClipboardDirty(id, false);
   }
 
-  // send the new clipboard to the active screen
-  m_active->setClipboard(id, &clipboard.m_clipboard);
+  ackClipboardToSender();
 }
 
 void Server::onScreensaver(bool activated)
