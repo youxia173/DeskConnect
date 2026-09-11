@@ -325,19 +325,25 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
         broadcast(ACTION_EVENT_CLIPBOARD, text)
         applyingRemoteClipboard.set(true)
         mainHandler.post {
+            // Writing the clipboard is allowed without window focus (only reading
+            // is restricted on Android 10+), and starting an activity from a
+            // background service is silently dropped — so write directly and keep
+            // the focused activity only as a fallback for OEMs that refuse it.
+            var applied = false
             try {
-                // Prefer a focused activity: many Android 10+ builds ignore or block
-                // setPrimaryClip from a background / FGS-only context.
-                ApplyRemoteClipboardActivity.start(this, text)
+                clipboard?.setPrimaryClip(ClipData.newPlainText("DeskConnect", text))
+                applied = true
             } catch (e: Exception) {
-                try {
-                    clipboard?.setPrimaryClip(ClipData.newPlainText("DeskConnect", text))
-                } catch (_: Exception) {
-                    broadcast(ACTION_EVENT_LOG, "apply remote clipboard failed: ${e.message}")
-                }
-            } finally {
-                mainHandler.postDelayed({ applyingRemoteClipboard.set(false) }, 1200)
+                broadcast(ACTION_EVENT_LOG, "apply remote clipboard failed: ${e.message}")
             }
+            if (!applied) {
+                try {
+                    ApplyRemoteClipboardActivity.start(this, text)
+                } catch (e: Exception) {
+                    broadcast(ACTION_EVENT_LOG, "apply via focus activity failed: ${e.message}")
+                }
+            }
+            mainHandler.postDelayed({ applyingRemoteClipboard.set(false) }, 1200)
         }
     }
 

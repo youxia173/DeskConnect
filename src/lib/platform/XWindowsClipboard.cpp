@@ -273,6 +273,7 @@ bool XWindowsClipboard::empty()
 
   // save time
   m_timeOwned = m_time;
+  m_cacheTime = m_timeOwned;
   m_timeLost = 0;
 
   // we're the owner now
@@ -414,6 +415,24 @@ void XWindowsClipboard::checkCache() const
   }
   m_checkCache = false;
 
+  // While we own the selection m_data/m_added is the authoritative content
+  // (it is what we hand to other X clients on SelectionRequest). Converting
+  // the selection from ourselves can never complete: the nested wait loop in
+  // CICCCMGetClipboard does not answer SelectionRequest, so every target runs
+  // into the 250ms timeout and the stale-time check below would then wipe the
+  // data we just published.
+  if (m_owner) {
+    if (XGetSelectionOwner(m_display, m_selection) == m_window) {
+      return;
+    }
+    // Ownership went away without a SelectionClear reaching us; drop the stale
+    // cache and read the new owner's data below.
+    auto *self = const_cast<XWindowsClipboard *>(this);
+    self->m_owner = false;
+    self->m_timeLost = m_time;
+    clearCache();
+  }
+
   // get the time the clipboard ownership was taken by the current
   // owner.
   if (m_motif) {
@@ -452,7 +471,7 @@ void XWindowsClipboard::fillCache() const
 {
   // get the selection data if not already cached
   checkCache();
-  if (!m_cached) {
+  if (!m_cached && !m_owner) {
     const_cast<XWindowsClipboard *>(this)->doFillCache();
   }
 }

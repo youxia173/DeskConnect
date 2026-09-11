@@ -410,7 +410,15 @@ bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
 
   if (clipboard != nullptr) {
     // save clipboard data
-    return Clipboard::copy(m_clipboard[id], clipboard, timestamp);
+    if (!Clipboard::copy(m_clipboard[id], clipboard, timestamp)) {
+      return false;
+    }
+    // Remember what we published so the poll below does not send our own
+    // data back to the peer that just gave it to us.
+    if (id < kClipboardEnd) {
+      m_lastClipboardMarshall[id] = IClipboard::marshall(clipboard);
+    }
+    return true;
   } else {
     // assert clipboard ownership
     if (!m_clipboard[id]->open(timestamp)) {
@@ -515,8 +523,16 @@ void XWindowsScreen::startClipboardMonitor()
 
   if (m_clipboardPollTimer == nullptr) {
     // Clipboard managers often keep CLIPBOARD ownership, so SelectionClear
-    // never reaches us; poll content as a reliable fallback.
-    m_clipboardPollTimer = m_events->newTimer(0.4, nullptr);
+    // never reaches us; poll content as a fallback. A poll is a full ICCCM
+    // read (~100ms of blocking X round trips), so keep it rare when XFixes
+    // already reports every ownership change.
+    double pollInterval = 0.4;
+#if HAVE_XFIXES
+    if (m_xfixes) {
+      pollInterval = 2.0;
+    }
+#endif
+    m_clipboardPollTimer = m_events->newTimer(pollInterval, nullptr);
     m_events->addHandler(EventTypes::Timer, m_clipboardPollTimer, [this](const auto &) { pollExternalClipboard(); });
   }
 }
@@ -540,8 +556,9 @@ void XWindowsScreen::onClipboardOwnershipChanged(ClipboardID id)
     return;
   }
   LOG_DEBUG("clipboard %u ownership changed (owner=0x%08lx)", static_cast<unsigned>(id), static_cast<unsigned long>(owner));
-  // Reset fingerprint so the next poll/push will treat content as new.
-  m_lastClipboardMarshall[id].clear();
+  // Keep the content fingerprint: clipboard managers routinely take ownership
+  // of text we just applied from a peer, and re-announcing it would bounce the
+  // same text back to that peer.
   sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
 }
 
@@ -561,12 +578,9 @@ void XWindowsScreen::pollExternalClipboard()
 
   const Window owner = XGetSelectionOwner(m_display, m_clipboard[id]->getSelection());
   if (owner == m_window) {
-    // We own CLIPBOARD (e.g. after phone→PC sync). Track fingerprint so we
-    // do not echo our own data back out.
-    Clipboard probe;
-    if (getClipboard(id, &probe)) {
-      m_lastClipboardMarshall[id] = probe.marshall();
-    }
+    // We own CLIPBOARD (e.g. right after a phone→PC sync): the content is
+    // whatever we published, so there is nothing external to detect and the
+    // fingerprint is already up to date from setClipboard().
     m_clipboardPollBusy = false;
     return;
   }

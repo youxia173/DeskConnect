@@ -1,4 +1,4 @@
-﻿[SEE ALSO]
+[SEE ALSO]
 deskflow(1), deskconnect-core(1)
 
 All documentation is on the web, so please point your browser at
