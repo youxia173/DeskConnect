@@ -213,6 +213,11 @@ ServerProxy::ConnectionResult ServerProxy::parseHandshakeMessage(const uint8_t *
     return Disconnect;
   } else if (memcmp(code, kMsgDLanguageSynchronisation, 4) == 0) {
     setServerLanguages();
+  } else if (memcmp(code, kMsgCHostName, 4) == 0) {
+    // Sent by server immediately after adopt, before DSET; must accept in handshake.
+    std::string hostName;
+    ProtocolUtil::readf(m_stream, kMsgCHostName + 4, &hostName);
+    LOG_DEBUG("server host name: %s", hostName.c_str());
   } else {
     return Unknown;
   }
