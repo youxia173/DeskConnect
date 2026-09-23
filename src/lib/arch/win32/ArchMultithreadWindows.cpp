@@ -13,6 +13,7 @@
 #include "arch/Arch.h"
 #include "arch/ArchException.h"
 
+#include <atomic>
 #include <process.h>
 
 //
@@ -36,7 +37,7 @@ public:
   ~ArchThreadImpl();
 
 public:
-  int m_refCount;
+  std::atomic<int> m_refCount;
   HANDLE m_thread;
   DWORD m_id;
   IArchMultithread::ThreadFunc m_func;
@@ -389,10 +390,14 @@ void ArchMultithreadWindows::setPriorityOfThread(ArchThread thread, int n)
 void ArchMultithreadWindows::testCancelThread()
 {
   // find current thread
-  std::scoped_lock lock{m_threadMutex};
-  ArchThreadImpl *thread = findNoRefOrInsert(GetCurrentThreadId());
+  ArchThreadImpl *thread;
+  {
+    std::scoped_lock lock{m_threadMutex};
+    thread = findNoRefOrInsert(GetCurrentThreadId());
+  }
 
-  // test cancel on thread
+  // The current thread keeps its own reference alive. The cancellation helper
+  // locks m_threadMutex itself, so do not hold it across this call.
   testCancelThreadImpl(thread);
 }
 
@@ -554,7 +559,7 @@ void ArchMultithreadWindows::erase(ArchThreadImpl *thread)
 void ArchMultithreadWindows::refThread(ArchThreadImpl *thread)
 {
   assert(thread != nullptr);
-  assert(findNoRef(thread->m_id) != nullptr);
+  assert(thread->m_refCount.load() > 0);
   ++thread->m_refCount;
 }
 

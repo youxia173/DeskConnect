@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace deskflow {
 
@@ -36,6 +37,22 @@ constexpr double kMinPumpIntervalSec = 0.001;
 // socket once this much is still pending and let the link set the real pace.
 constexpr uint32_t kMaxQueuedOutputBytes = 128 * 1024;
 constexpr double kDrainPollIntervalSec = 0.004;
+
+bool validOffers(const std::vector<FileOffer> &offers, uint64_t &total)
+{
+  if (offers.size() > std::numeric_limits<uint16_t>::max()) {
+    return false;
+  }
+  total = 0;
+  for (const auto &offer : offers) {
+    if (offer.size > static_cast<uint64_t>(std::numeric_limits<qint64>::max()) ||
+        offer.size > std::numeric_limits<uint64_t>::max() - total) {
+      return false;
+    }
+    total += offer.size;
+  }
+  return encodeDragInfo(offers).size() <= PROTOCOL_MAX_STRING_LENGTH;
+}
 } // namespace
 
 FileSendSession::~FileSendSession()
@@ -121,8 +138,9 @@ bool FileSendSession::start(
 
   const uint64_t maxBytes = maxTransferBytes();
   uint64_t total = 0;
-  for (const auto &offer : offers) {
-    total += offer.size;
+  if (!validOffers(offers, total)) {
+    LOG_ERR("file transfer: invalid file list or size");
+    return false;
   }
   if (maxBytes > 0 && total > maxBytes) {
     LOG_WARN(
@@ -221,6 +239,11 @@ bool FileSendSession::openCurrentFile()
   m_file.setFileName(QString::fromStdString(offer.localPath));
   if (!m_file.open(QIODevice::ReadOnly)) {
     LOG_ERR("failed to open file for transfer: %s", offer.localPath.c_str());
+    return false;
+  }
+  if (m_file.size() < 0 || static_cast<uint64_t>(m_file.size()) != offer.size) {
+    LOG_ERR("file size changed before transfer: %s", offer.localPath.c_str());
+    m_file.close();
     return false;
   }
   m_sent = 0;
@@ -410,8 +433,8 @@ bool writeFileOffersToStream(IStream *stream, const std::vector<FileOffer> &offe
 
   const uint64_t maxBytes = maxTransferBytes();
   uint64_t total = 0;
-  for (const auto &offer : offers) {
-    total += offer.size;
+  if (!validOffers(offers, total)) {
+    return false;
   }
   if (maxBytes > 0 && total > maxBytes) {
     LOG_WARN(
@@ -438,7 +461,7 @@ bool writeFileOffersToStream(IStream *stream, const std::vector<FileOffer> &offe
 
     uint64_t sent = 0;
     while (sent < offer.size) {
-      const QByteArray chunk = file.read(kFileChunkSize);
+      const QByteArray chunk = file.read(static_cast<qint64>(std::min<uint64_t>(kFileChunkSize, offer.size - sent)));
       if (chunk.isEmpty() && sent < offer.size) {
         LOG_ERR("unexpected EOF transferring %s", offer.localPath.c_str());
         return false;

@@ -143,6 +143,7 @@ private:
   bool m_readable;
   bool m_writable;
   bool m_connected;
+  bool m_readPaused = false;
   Mutex m_mutex;
   ArchSocket m_socket;
   IEventQueue *m_events;

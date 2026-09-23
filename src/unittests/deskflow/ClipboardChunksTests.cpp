@@ -285,4 +285,42 @@ void ClipboardChunksTests::assembleRejectsExpectedSizeBeyondLimit()
   QVERIFY(!state.active);
 }
 
+void ClipboardChunksTests::assembleLargeImage()
+{
+  MemoryStream stream;
+  constexpr size_t imageSize = 64 * 1024 * 1024;
+  std::string cached;
+  ClipboardID id = 0;
+  uint32_t seq = 0;
+  ClipboardChunkAssemblyState state;
+  stream.push(encodeClipboardMsg(0, 9, ChunkType::DataStart, std::to_string(imageSize)));
+  QCOMPARE(ClipboardChunk::assemble(&stream, cached, id, seq, state, imageSize), TransferState::Started);
+  const std::string chunk(64 * 1024, '\x9a');
+  for (size_t sent = 0; sent < imageSize; sent += chunk.size()) {
+    stream.push(encodeClipboardMsg(0, 9, ChunkType::DataChunk, chunk));
+    QCOMPARE(ClipboardChunk::assemble(&stream, cached, id, seq, state, imageSize), TransferState::InProgress);
+  }
+  stream.push(encodeClipboardMsg(0, 9, ChunkType::DataEnd, ""));
+  QCOMPARE(ClipboardChunk::assemble(&stream, cached, id, seq, state, imageSize), TransferState::Finished);
+  QCOMPARE(cached.size(), imageSize);
+  QVERIFY(std::all_of(cached.begin(), cached.end(), [](char c) { return c == '\x9a'; }));
+}
+
+void ClipboardChunksTests::assembleRejectsMixedTransfers()
+{
+  for (bool wrongId : {false, true}) {
+    MemoryStream stream;
+    std::string cached;
+    ClipboardID id = 0;
+    uint32_t seq = 0;
+    ClipboardChunkAssemblyState state;
+    stream.push(encodeClipboardMsg(0, 7, ChunkType::DataStart, "1"));
+    stream.push(encodeClipboardMsg(wrongId ? 1 : 0, wrongId ? 7 : 8, ChunkType::DataChunk, "A"));
+    QCOMPARE(ClipboardChunk::assemble(&stream, cached, id, seq, state, 4), TransferState::Started);
+    QCOMPARE(ClipboardChunk::assemble(&stream, cached, id, seq, state, 4), TransferState::Error);
+    QVERIFY(cached.empty());
+    QVERIFY(!state.active);
+  }
+}
+
 QTEST_MAIN(ClipboardChunksTests)

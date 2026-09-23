@@ -496,6 +496,7 @@ private:
   bool m_enableClipboard = true;
 
   deskflow::FileReceiveSession m_fileReceive;
+  std::string m_fileReceiveSource;
   deskflow::FileSendSession m_fileSend;
   deskflow::TransferProgressReporter m_sendProgress;
   deskflow::TransferProgressReporter m_recvProgress;

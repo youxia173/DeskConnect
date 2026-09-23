@@ -98,10 +98,37 @@ std::string MSWindowsClipboardBitmapConverter::toIClipboard(HANDLE data) const
   if (src == nullptr) {
     return std::string();
   }
-  uint32_t srcSize = (uint32_t)GlobalSize(data);
+  const size_t srcSize = GlobalSize(data);
+  if (srcSize < sizeof(BITMAPINFOHEADER)) {
+    GlobalUnlock(data);
+    return {};
+  }
 
   // check image type
   const BITMAPINFO *bitmap = static_cast<const BITMAPINFO *>(src);
+  const auto &header = bitmap->bmiHeader;
+  const auto depth = header.biBitCount;
+  if (header.biSize < sizeof(BITMAPINFOHEADER) || header.biSize > srcSize || header.biWidth <= 0 ||
+      header.biHeight == 0 || header.biHeight == std::numeric_limits<LONG>::min() || header.biPlanes != 1 ||
+      (depth != 1 && depth != 4 && depth != 8 && depth != 16 && depth != 24 && depth != 32) ||
+      (header.biCompression != BI_RGB && header.biCompression != BI_BITFIELDS)) {
+    GlobalUnlock(data);
+    return {};
+  }
+  const uint64_t height = static_cast<uint64_t>(std::abs(static_cast<int64_t>(header.biHeight)));
+  const uint64_t stride = ((static_cast<uint64_t>(header.biWidth) * depth + 31) / 32) * 4;
+  uint64_t pixelOffset = header.biSize;
+  // V4/V5 headers already contain their channel masks.
+  if (header.biCompression == BI_BITFIELDS && header.biSize == sizeof(BITMAPINFOHEADER)) {
+    pixelOffset += 3 * sizeof(DWORD);
+  }
+  const uint64_t colors = header.biClrUsed != 0 ? header.biClrUsed : (depth < 16 ? (1ull << depth) : 0);
+  pixelOffset += colors * sizeof(RGBQUAD);
+  if (pixelOffset > srcSize || stride * height > srcSize - pixelOffset) {
+    LOG_WARN("truncated clipboard bitmap");
+    GlobalUnlock(data);
+    return {};
+  }
   LOG(
       (CLOG_INFO "bitmap: %dx%d %d", bitmap->bmiHeader.biWidth, bitmap->bmiHeader.biHeight,
        (int)bitmap->bmiHeader.biBitCount)
@@ -142,18 +169,7 @@ std::string MSWindowsClipboardBitmapConverter::toIClipboard(HANDLE data) const
   }
 
   // find the start of the pixel data
-  const char *srcBits = (const char *)bitmap + bitmap->bmiHeader.biSize;
-  if (bitmap->bmiHeader.biBitCount >= 16) {
-    if (bitmap->bmiHeader.biCompression == BI_BITFIELDS &&
-        (bitmap->bmiHeader.biBitCount == 16 || bitmap->bmiHeader.biBitCount == 32)) {
-      srcBits += 3 * sizeof(DWORD);
-    }
-  } else if (bitmap->bmiHeader.biClrUsed != 0) {
-    srcBits += bitmap->bmiHeader.biClrUsed * sizeof(RGBQUAD);
-  } else {
-    // http://msdn.microsoft.com/en-us/library/ke55d167(VS.80).aspx
-    srcBits += (1i64 << bitmap->bmiHeader.biBitCount) * sizeof(RGBQUAD);
-  }
+  const char *srcBits = static_cast<const char *>(src) + pixelOffset;
 
   // copy source image to destination image
   HDC dstDC = CreateCompatibleDC(dc);

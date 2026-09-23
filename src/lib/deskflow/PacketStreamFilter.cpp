@@ -130,14 +130,23 @@ bool PacketStreamFilter::readMore()
 
   // read more data
   char buffer[4096];
+  uint32_t bytesRead = 0;
   uint32_t n = getStream()->read(buffer, sizeof(buffer));
   while (n > 0) {
     m_buffer.write(buffer, n);
+    bytesRead += n;
 
     // if we don't yet have the next packet size then get it, if possible.
     // Note that we can't wait for whole pending data to arrive because it may be huge in
     // case of malicious or erroneous peer.
     if (!readPacketSize()) {
+      break;
+    }
+
+    // Yield to packet consumers and timers even if the peer continuously
+    // fills the socket. Otherwise a fast transfer can starve all input.
+    if (bytesRead >= 256 * 1024) {
+      m_events->addEvent(Event(EventTypes::StreamInputReady, getStream()->getEventTarget()));
       break;
     }
 

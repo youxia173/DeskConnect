@@ -353,7 +353,10 @@ void Client::setOptions(const OptionsList &options)
     } else if (id == kOptionClipboardSharingSize) {
       index++;
       if (index != options.end()) {
-        m_maximumClipboardSize = *index;
+        m_maximumClipboardSize = *index > 0 ? static_cast<size_t>(*index) : 0;
+        // Clipboard size is a server option. Using the client's unrelated
+        // saved server setting here rejects images the server allows.
+        m_maximumClipboardReceiveSize = m_maximumClipboardSize * 1024;
       }
     } else if (id == kOptionRelativeMouseMoves) {
       index++;
@@ -406,7 +409,7 @@ void Client::sendClipboard(ClipboardID id)
   if (m_timeClipboard[id] == 0 || clipboard.getTime() != m_timeClipboard[id]) {
     // marshall the data
     std::string data = clipboard.marshall();
-    if (data.size() >= m_maximumClipboardSize * 1024) {
+    if (data.size() > m_maximumClipboardSize * 1024) {
       LOG_WARN("not sending clipboard data, exceeds limit: %zu KB", m_maximumClipboardSize);
       return;
     }

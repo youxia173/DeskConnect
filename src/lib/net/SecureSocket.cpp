@@ -19,6 +19,7 @@
 #include "net/TSocketMultiplexerMethodJob.h"
 #include <net/SslLogger.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <iterator>
@@ -98,6 +99,11 @@ ISocketMultiplexerJob *SecureSocket::newJob()
     return nullptr;
   }
 
+  if (m_writeRetry) {
+    return new TSocketMultiplexerMethodJob<SecureSocket>(
+        this, &SecureSocket::serviceWriteRetry, getSocket(), m_writeNeedsRead, !m_writeNeedsRead
+    );
+  }
   return TCPSocket::newJob();
 }
 
@@ -118,7 +124,11 @@ void SecureSocket::secureAccept()
 TCPSocket::JobResult SecureSocket::doRead()
 {
   using enum JobResult;
-  static uint8_t buffer[4096];
+  // SSL_write WANT_WRITE must be retried before any other TLS I/O.
+  if (m_writeRetry || isFatal()) {
+    return Retry;
+  }
+  uint8_t buffer[16 * 1024];
   static const auto bufferSize = std::size(buffer);
   memset(buffer, 0, bufferSize);
   int bytesRead = 0;
@@ -184,10 +194,17 @@ TCPSocket::JobResult SecureSocket::doWrite()
   if (m_writeRetry) {
     bufferSize = m_writeRetrySize;
   } else {
-    bufferSize = m_outputBuffer.getSize();
+    bufferSize = static_cast<int>(std::min<uint32_t>(m_outputBuffer.getSize(), 64 * 1024));
     if (bufferSize != 0) {
       if (bufferSize > m_writeStaticBufferSize) {
-        m_writeStaticBuffer = realloc(m_writeStaticBuffer, bufferSize);
+        void *allocated = realloc(m_writeStaticBuffer, bufferSize);
+        if (allocated == nullptr) {
+          LOG_ERR("failed to allocate TLS write buffer");
+          isFatal(true);
+          disconnect();
+          return Break;
+        }
+        m_writeStaticBuffer = allocated;
         m_writeStaticBufferSize = bufferSize;
       }
       memcpy(m_writeStaticBuffer, m_outputBuffer.peek(bufferSize), bufferSize);
@@ -225,8 +242,9 @@ int SecureSocket::secureRead(void *buffer, int size, int &read)
 {
   std::scoped_lock ssl_lock{ssl_mutex_};
 
-  if (m_ssl->m_ssl != nullptr) {
+  if (m_ssl && m_ssl->m_ssl != nullptr && !isFatal()) {
     LOG_VERBOSE("reading secure socket");
+    ERR_clear_error();
     read = SSL_read(m_ssl->m_ssl, buffer, size);
 
     int retry = 0;
@@ -252,17 +270,19 @@ int SecureSocket::secureWrite(const void *buffer, int size, int &wrote)
 {
   std::scoped_lock ssl_lock{ssl_mutex_};
 
-  if (m_ssl->m_ssl != nullptr) {
+  if (m_ssl && m_ssl->m_ssl != nullptr && !isFatal()) {
     LOG_VERBOSE("writing secure socket: %p", this);
 
+    ERR_clear_error();
     wrote = SSL_write(m_ssl->m_ssl, buffer, size);
 
     int retry = 0;
 
     // Check result will cleanup the connection in the case of a fatal
-    checkResult(wrote, retry);
+    const int error = checkResult(wrote, retry);
 
     if (retry) {
+      m_writeNeedsRead = error == SSL_ERROR_WANT_READ;
       return 0;
     }
 
@@ -380,17 +400,23 @@ void SecureSocket::createSSL()
 
 void SecureSocket::freeSSL()
 {
-  std::scoped_lock ssl_lock{ssl_mutex_};
-
-  isFatal(true);
   // take socket from multiplexer ASAP otherwise the race condition
   // could cause events to get called on a dead object. TCPSocket
   // will do this, too, but the double-call is harmless
   setJob(nullptr);
+  // The multiplexer takes ssl_mutex_ while running a job. Remove the job
+  // before taking that lock, otherwise close and I/O can deadlock.
+  std::scoped_lock ssl_lock{ssl_mutex_};
+  const bool wasFatal = isFatal();
+  isFatal(true);
+  m_secureReady = false;
+  m_writeRetry = false;
   if (m_ssl) {
     if (m_ssl->m_ssl != nullptr) {
       SSL_set_quiet_shutdown(m_ssl->m_ssl, 1);
-      SSL_shutdown(m_ssl->m_ssl);
+      if (!wasFatal) {
+        SSL_shutdown(m_ssl->m_ssl);
+      }
 
       SSL_free(m_ssl->m_ssl);
       m_ssl->m_ssl = nullptr;
@@ -413,6 +439,7 @@ int SecureSocket::secureAccept(int socket)
   SSL_set_fd(m_ssl->m_ssl, socket);
 
   LOG_VERBOSE("accepting secure socket");
+  ERR_clear_error();
   int r = SSL_accept(m_ssl->m_ssl);
 
   static int retry;
@@ -471,6 +498,7 @@ int SecureSocket::secureConnect(int socket)
 
   LOG_VERBOSE("connecting secure socket");
 
+  ERR_clear_error();
   int r = SSL_connect(m_ssl->m_ssl);
 
   static int retry;
@@ -530,11 +558,12 @@ bool SecureSocket::showCertificate() const
   return true;
 }
 
-void SecureSocket::checkResult(int status, int &retry)
+int SecureSocket::checkResult(int status, int &retry)
 {
   // ssl errors are a little quirky. the "want" errors are normal and
   // should result in a retry.
-  switch (auto errorCode = SSL_get_error(m_ssl->m_ssl, status); errorCode) {
+  const int errorCode = SSL_get_error(m_ssl->m_ssl, status);
+  switch (errorCode) {
   case SSL_ERROR_NONE:
     retry = 0;
     // operation completed
@@ -604,6 +633,24 @@ void SecureSocket::checkResult(int status, int &retry)
     SslLogger::logError();
     disconnect();
   }
+  return errorCode;
+}
+
+ISocketMultiplexerJob *SecureSocket::serviceWriteRetry(ISocketMultiplexerJob *job, bool read, bool write, bool error)
+{
+  Lock lock(&getMutex());
+  if (error) {
+    isFatal(true);
+    disconnect();
+    return nullptr;
+  }
+  if (!(m_writeNeedsRead ? read : write)) {
+    return job;
+  }
+  if (doWrite() == JobResult::Break) {
+    return nullptr;
+  }
+  return newJob();
 }
 
 void SecureSocket::disconnect()

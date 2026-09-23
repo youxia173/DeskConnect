@@ -313,7 +313,7 @@ QVariant Settings::defaultValue(const QString &key)
     return 250;
 
   if (key == Server::ClipboardSize)
-    return 32; // 32 MiB (screenshots as DIB often exceed the old 3 MiB default)
+    return 128; // Uncompressed high-DPI / multi-monitor screenshots can exceed 32 MiB.
 
   if (key == FileTransfer::MaxSizeMb)
     return 10240; // ~10 GiB default for large cross-PC copies

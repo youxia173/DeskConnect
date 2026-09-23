@@ -22,19 +22,83 @@ namespace {
 
 QString normalizeSsid(QString ssid)
 {
-  return ssid.trimmed();
+  // WLAN / netsh sometimes include quotes or trailing NULs.
+  ssid.remove(QChar(u'\0'));
+  ssid = ssid.trimmed();
+  if (ssid.startsWith(QLatin1Char('"')) && ssid.endsWith(QLatin1Char('"')) && ssid.size() >= 2) {
+    ssid = ssid.mid(1, ssid.size() - 2).trimmed();
+  }
+  if (ssid.compare(QStringLiteral("<unknown ssid>"), Qt::CaseInsensitive) == 0 ||
+      ssid.compare(QStringLiteral("unknown ssid"), Qt::CaseInsensitive) == 0) {
+    return {};
+  }
+  return ssid;
 }
 
 #if defined(Q_OS_WIN)
+QString windowsSsidFromNetsh()
+{
+  QProcess process;
+  process.setProcessChannelMode(QProcess::MergedChannels);
+  process.start(
+      QStringLiteral("netsh"),
+      {QStringLiteral("wlan"), QStringLiteral("show"), QStringLiteral("interfaces")}
+  );
+  if (!process.waitForFinished(2000) || process.exitStatus() != QProcess::NormalExit) {
+    return {};
+  }
+
+  const auto output = QString::fromLocal8Bit(process.readAllStandardOutput());
+  const auto lines = output.split(QRegularExpression(QStringLiteral("[\r\n]+")), Qt::SkipEmptyParts);
+  static const QRegularExpression ssidRe(
+      QStringLiteral(R"(^SSID\s*:?\s*(.+)$)"), QRegularExpression::CaseInsensitiveOption
+  );
+
+  bool sectionConnected = false;
+  QString firstSsid;
+  for (const auto &raw : lines) {
+    const auto line = raw.trimmed();
+    if (line.contains(QStringLiteral("名称")) ||
+        (line.startsWith(QStringLiteral("Name"), Qt::CaseInsensitive) && line.contains(QLatin1Char(':')))) {
+      sectionConnected = false;
+      continue;
+    }
+    if (line.contains(QStringLiteral("状态")) || line.startsWith(QStringLiteral("State"), Qt::CaseInsensitive)) {
+      sectionConnected = line.contains(QStringLiteral("已连接")) ||
+                         line.contains(QStringLiteral("connected"), Qt::CaseInsensitive);
+      continue;
+    }
+    if (line.contains(QStringLiteral("BSSID"), Qt::CaseInsensitive)) {
+      continue;
+    }
+    const auto match = ssidRe.match(line);
+    if (!match.hasMatch()) {
+      continue;
+    }
+    const auto ssid = normalizeSsid(match.captured(1));
+    if (ssid.isEmpty()) {
+      continue;
+    }
+    if (firstSsid.isEmpty()) {
+      firstSsid = ssid;
+    }
+    if (sectionConnected) {
+      return ssid;
+    }
+  }
+  return firstSsid;
+}
+
 QString windowsCurrentSsid()
 {
   HANDLE client = nullptr;
   DWORD negotiatedVersion = 0;
   if (WlanOpenHandle(2, nullptr, &negotiatedVersion, &client) != ERROR_SUCCESS) {
-    return {};
+    return windowsSsidFromNetsh();
   }
 
   QString result;
+  ULONG bestSignal = 0;
   PWLAN_INTERFACE_INFO_LIST interfaces = nullptr;
   if (WlanEnumInterfaces(client, nullptr, &interfaces) == ERROR_SUCCESS && interfaces) {
     for (DWORD i = 0; i < interfaces->dwNumberOfItems; ++i) {
@@ -54,22 +118,35 @@ QString windowsCurrentSsid()
       }
 
       const auto &ssid = attrs->wlanAssociationAttributes.dot11Ssid;
+      QString candidate;
       if (ssid.uSSIDLength > 0) {
-        result = QString::fromUtf8(reinterpret_cast<const char *>(ssid.ucSSID), static_cast<int>(ssid.uSSIDLength));
-        if (result.contains(QChar::ReplacementCharacter)) {
-          result = QString::fromLatin1(reinterpret_cast<const char *>(ssid.ucSSID), static_cast<int>(ssid.uSSIDLength));
+        candidate =
+            QString::fromUtf8(reinterpret_cast<const char *>(ssid.ucSSID), static_cast<int>(ssid.uSSIDLength));
+        if (candidate.contains(QChar::ReplacementCharacter)) {
+          candidate =
+              QString::fromLatin1(reinterpret_cast<const char *>(ssid.ucSSID), static_cast<int>(ssid.uSSIDLength));
         }
+        candidate = normalizeSsid(candidate);
       }
+      const auto signal = attrs->wlanAssociationAttributes.wlanSignalQuality;
       WlanFreeMemory(attrs);
-      if (!result.isEmpty()) {
-        break;
+      if (candidate.isEmpty()) {
+        continue;
+      }
+      // Prefer the strongest associated interface when several report connected.
+      if (result.isEmpty() || signal >= bestSignal) {
+        result = candidate;
+        bestSignal = signal;
       }
     }
     WlanFreeMemory(interfaces);
   }
 
   WlanCloseHandle(client, nullptr);
-  return normalizeSsid(result);
+  if (result.isEmpty()) {
+    return windowsSsidFromNetsh();
+  }
+  return result;
 }
 #endif
 
@@ -78,7 +155,11 @@ QString linuxCurrentSsid()
 {
   QProcess process;
   process.setProcessChannelMode(QProcess::MergedChannels);
-  process.start(QStringLiteral("nmcli"), {QStringLiteral("-t"), QStringLiteral("-f"), QStringLiteral("ACTIVE,SSID"), QStringLiteral("dev"), QStringLiteral("wifi")});
+  process.start(
+      QStringLiteral("nmcli"),
+      {QStringLiteral("-t"), QStringLiteral("-f"), QStringLiteral("ACTIVE,SSID"), QStringLiteral("dev"),
+       QStringLiteral("wifi")}
+  );
   if (process.waitForFinished(1500) && process.exitStatus() == QProcess::NormalExit) {
     const auto lines = QString::fromUtf8(process.readAllStandardOutput()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     for (const auto &line : lines) {

@@ -2102,8 +2102,7 @@ bool Server::removeClient(BaseClientProxy *client)
     m_fileSendFromClipboard = false;
   }
 
-  // Inbound receive has no per-client tag; drop it when any remote client leaves mid-transfer.
-  if (m_fileReceive.isActive()) {
+  if (m_fileReceive.isActive() && m_fileReceiveSource == getName(client)) {
     LOG_WARN("cancelling inbound file transfer after client \"%s\" disconnected", getName(client).c_str());
     m_fileReceive.reset();
     m_recvProgress.reset();
@@ -2467,10 +2466,16 @@ void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::
   auto names = deskflow::decodeDragInfo(info);
   if (names.size() != fileCount && fileCount != 0) {
     LOG_WARN("drag info count mismatch: header=%u decoded=%zu", fileCount, names.size());
+    return;
   }
   if (names.empty()) {
     return;
   }
+  if (m_fileReceive.isActive() && m_fileReceiveSource != getName(sender)) {
+    LOG_WARN("ignoring file offer from %s while receiving from %s", getName(sender).c_str(), m_fileReceiveSource.c_str());
+    return;
+  }
+  m_fileReceiveSource = getName(sender);
   LOG_INFO("drag info from \"%s\": %zu file(s)", getName(sender).c_str(), names.size());
   m_recvProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
     ipcSendToClient(
@@ -2487,7 +2492,7 @@ void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::
 void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data)
 {
   if (mark == ChunkType::FullSpeedAck) {
-    if (m_fileSend.isActive() && !m_fileSend.isFullSpeedForSession()) {
+    if (m_fileSend.isActive() && !m_fileSend.isFullSpeedForSession() && m_sentFilesTarget == getName(sender)) {
       LOG_INFO("full-speed ack from \"%s\", unlocking send limit", getName(sender).c_str());
       m_fileSend.setFullSpeedForSession();
       ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("fullSpeed|1"));
@@ -2500,6 +2505,9 @@ void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::strin
   }
   if (!m_fileReceive.isActive()) {
     LOG_WARN("file chunk from \"%s\" without drag info", getName(sender).c_str());
+    return;
+  }
+  if (m_fileReceiveSource != getName(sender)) {
     return;
   }
 

@@ -6,6 +6,14 @@ if(WIN32)
 endif()
 
 create_test(
+  NAME TransferTests
+  DEPENDS app
+  LIBS filetransfer arch base io mt net ${extra_libs}
+  SOURCE TransferTests.cpp
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
+
+create_test(
   NAME ClipboardTests
   DEPENDS app
   LIBS arch base io ${extra_libs}

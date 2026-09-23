@@ -117,19 +117,30 @@ void *TCPSocket::getEventTarget() const
 uint32_t TCPSocket::read(void *buffer, uint32_t n)
 {
   // copy data directly from our input buffer
-  Lock lock(&m_mutex);
-  if (uint32_t size = m_inputBuffer.getSize(); n > size) {
-    n = size;
-  }
-  if (buffer != nullptr && n != 0) {
-    memcpy(buffer, m_inputBuffer.peek(n), n);
-  }
-  m_inputBuffer.pop(n);
+  ISocketMultiplexerJob *resumeJob = nullptr;
+  {
+    Lock lock(&m_mutex);
+    if (uint32_t size = m_inputBuffer.getSize(); n > size) {
+      n = size;
+    }
+    if (buffer != nullptr && n != 0) {
+      memcpy(buffer, m_inputBuffer.peek(n), n);
+    }
+    m_inputBuffer.pop(n);
 
-  // if no more data and we cannot read or write then send disconnected
-  if (n > 0 && m_inputBuffer.getSize() == 0 && !m_readable && !m_writable) {
-    sendEvent(EventTypes::SocketDisconnected);
-    m_connected = false;
+    // if no more data and we cannot read or write then send disconnected
+    if (n > 0 && m_inputBuffer.getSize() == 0 && !m_readable && !m_writable) {
+      sendEvent(EventTypes::SocketDisconnected);
+      m_connected = false;
+    }
+    if (m_readPaused && m_inputBuffer.getSize() < s_maxInputBufferSize / 2) {
+      m_readPaused = false;
+      resumeJob = newJob();
+    }
+  }
+  // Never wait for the multiplexer while holding the socket lock.
+  if (resumeJob != nullptr) {
+    setJob(resumeJob);
   }
 
   return n;
@@ -389,11 +400,12 @@ ISocketMultiplexerJob *TCPSocket::newJob()
         this, &TCPSocket::serviceConnecting, m_socket, m_readable, m_writable
     );
   } else {
-    if (!(m_readable || (m_writable && (m_outputBuffer.getSize() > 0)))) {
+    if (!((m_readable && !m_readPaused) || (m_writable && (m_outputBuffer.getSize() > 0)))) {
       return nullptr;
     }
     return new TSocketMultiplexerMethodJob<TCPSocket>(
-        this, &TCPSocket::serviceConnected, m_socket, m_readable, m_writable && (m_outputBuffer.getSize() > 0)
+        this, &TCPSocket::serviceConnected, m_socket, m_readable && !m_readPaused,
+        m_writable && (m_outputBuffer.getSize() > 0)
     );
   }
 }
@@ -536,7 +548,7 @@ ISocketMultiplexerJob *TCPSocket::serviceConnected(ISocketMultiplexerJob *job, b
     }
   }
 
-  if (read && m_readable) {
+  if (read && m_readable && !m_readPaused) {
     try {
       readResult = doRead();
     } catch (ArchNetworkDisconnectedException &) {
@@ -552,6 +564,11 @@ ISocketMultiplexerJob *TCPSocket::serviceConnected(ISocketMultiplexerJob *job, b
 
   if (readResult == Break || writeResult == Break)
     return nullptr;
+
+  if (!m_readPaused && m_inputBuffer.getSize() >= s_maxInputBufferSize) {
+    m_readPaused = true;
+    return newJob();
+  }
 
   if (writeResult == New || readResult == New)
     return newJob();

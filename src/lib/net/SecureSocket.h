@@ -69,6 +69,7 @@ public:
   bool loadCertificate(const QString &filename);
 
 private:
+  friend class TransferTests;
   // SSL
   void initContext(bool server);
   void createSSL();
@@ -76,13 +77,14 @@ private:
   int secureAccept(int s);
   int secureConnect(int s);
   bool showCertificate() const;
-  void checkResult(int n, int &retry);
+  int checkResult(int n, int &retry);
   void disconnect();
   bool verifyCertFingerprint(const QString &FingerprintDatabasePath) const;
 
   ISocketMultiplexerJob *serviceConnect(ISocketMultiplexerJob *const socket, bool, bool, bool);
 
   ISocketMultiplexerJob *serviceAccept(ISocketMultiplexerJob *const socket, bool, bool, bool);
+  ISocketMultiplexerJob *serviceWriteRetry(ISocketMultiplexerJob *socket, bool, bool, bool);
 
   void handleTCPConnected(const Event &event);
 
@@ -98,6 +100,7 @@ private:
   SecurityLevel m_securityLevel = SecurityLevel::Encrypted;
 
   bool m_writeRetry = false;
+  bool m_writeNeedsRead = false;
   int m_writeRetrySize = 0;
   int m_writeStaticBufferSize = 0;
   void *m_writeStaticBuffer = nullptr;

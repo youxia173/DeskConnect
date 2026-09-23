@@ -154,14 +154,20 @@ private:
   void updateSendFilesAction();
   void onDuplicateInstanceConnected();
   void loadHostnameHistory();
+  //! Re-read current Wi-Fi and select the last host used on that network (client, stopped only).
+  void refreshHostnameForCurrentWifi();
+  void scheduleHostnameWifiRefresh();
+  void maybeAutoStartCore();
   void rememberSuccessfulHost();
   void removeSelectedHostnameFromHistory();
   [[nodiscard]] QString currentHostname() const;
   [[nodiscard]] static QMap<QString, QString> wifiHostMap();
   static void saveWifiHostMap(const QMap<QString, QString> &map);
+  static void bindHostToWifi(const QString &ssid, const QString &host);
   static void bindHostToCurrentWifi(const QString &host);
   static void unbindHostFromWifiMap(const QString &host);
   [[nodiscard]] static QString hostForCurrentWifi();
+  [[nodiscard]] static QString hostForWifi(const QString &ssid);
 
   bool canRunCore() const;
 
@@ -227,6 +233,10 @@ private:
   // Network monitoring
   NetworkMonitor *m_networkMonitor = nullptr;
   QString m_currentIpAddress;
+  //! SSID observed when the user started this core session (client).
+  QString m_ssidWhenStarted;
+  //! Last SSID used when applying the hostname field (to avoid wiping typed IPs).
+  QString m_lastHostnameWifiSsid;
 
   // Server IP strategy optimization
   QStringList m_serverStartIPs;

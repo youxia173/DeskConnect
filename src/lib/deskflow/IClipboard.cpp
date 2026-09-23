@@ -68,7 +68,8 @@ void IClipboard::unmarshall(IClipboard *clipboard, const std::string_view &data,
         break;
       }
       // get the format id
-      auto format = static_cast<IClipboard::Format>(readUInt32(index));
+      const uint32_t formatId = readUInt32(index);
+      auto format = static_cast<IClipboard::Format>(formatId);
       index += 4;
 
       // get the size of the format data
@@ -84,7 +85,7 @@ void IClipboard::unmarshall(IClipboard *clipboard, const std::string_view &data,
       // save the data if it's a known format.  if either the client
       // or server supports more clipboard formats than the other
       // then one of them will get a format >= TotalFormats here.
-      if (format < IClipboard::Format::TotalFormats) {
+      if (formatId < static_cast<uint32_t>(IClipboard::Format::TotalFormats) && format != Format::Files) {
         if (hasBitmap && format == IClipboard::Format::HTML) {
           LOG_DEBUG("skipping HTML clipboard on unmarshall; bitmap present");
         } else {
@@ -117,8 +118,12 @@ std::string IClipboard::marshall(const IClipboard *clipboard)
   // FIXME -- use current time
   if (clipboard->open(0)) {
 
-    const bool hasBitmap =
-        clipboard->has(Format::Bitmap) && !clipboard->get(Format::Bitmap).empty();
+    // Fetch each representation only once: get() can copy or decode a large
+    // native image, so repeatedly probing it multiplies memory use and latency.
+    if (clipboard->has(Format::Bitmap)) {
+      formatData[static_cast<int>(Format::Bitmap)] = clipboard->get(Format::Bitmap);
+    }
+    const bool hasBitmap = !formatData[static_cast<int>(Format::Bitmap)].empty();
 
     // compute size of marshalled data
     uint32_t size = 4;
@@ -134,9 +139,11 @@ std::string IClipboard::marshall(const IClipboard *clipboard)
         LOG_DEBUG("skipping HTML clipboard on marshall; bitmap present");
         continue;
       }
-      if (clipboard->has(eFormat) && !clipboard->get(eFormat).empty()) {
-        ++numFormats;
+      if (eFormat != Format::Bitmap && clipboard->has(eFormat)) {
         formatData[format] = clipboard->get(eFormat);
+      }
+      if (!formatData[format].empty()) {
+        ++numFormats;
         size += 4 + 4 + (uint32_t)formatData[format].size();
       }
     }
@@ -183,15 +190,23 @@ bool IClipboard::copy(IClipboard *dst, const IClipboard *src, Time time)
   if (src->open(time)) {
     if (dst->open(time)) {
       if (dst->empty()) {
-        const bool hasBitmap = src->has(Format::Bitmap) && !src->get(Format::Bitmap).empty();
+        const auto bitmap = src->has(Format::Bitmap) ? src->get(Format::Bitmap) : std::string();
+        const bool hasBitmap = !bitmap.empty();
         for (int32_t format = 0; format != static_cast<int>(Format::TotalFormats); ++format) {
           auto eFormat = (IClipboard::Format)format;
           if (hasBitmap && eFormat == Format::HTML) {
             LOG_DEBUG("skipping HTML clipboard on copy; bitmap present");
             continue;
           }
-          if (src->has(eFormat) && !src->get(eFormat).empty()) {
-            dst->add(eFormat, src->get(eFormat));
+          if (eFormat == Format::Bitmap) {
+            if (hasBitmap) {
+              dst->add(eFormat, bitmap);
+            }
+          } else if (src->has(eFormat)) {
+            const auto value = src->get(eFormat);
+            if (!value.empty()) {
+              dst->add(eFormat, value);
+            }
           }
         }
         success = true;

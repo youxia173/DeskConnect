@@ -230,4 +230,28 @@ void ClipboardTests::equalClipboards()
   clipboard2.close();
 }
 
+void ClipboardTests::ignoresInvalidAndLocalOnlyWireFormats()
+{
+  for (uint32_t format : {UINT32_MAX, static_cast<uint32_t>(IClipboard::Format::Files)}) {
+    std::string data;
+    auto append = [&data](uint32_t value) {
+      for (int shift = 24; shift >= 0; shift -= 8)
+        data.push_back(static_cast<char>(value >> shift));
+    };
+    append(2);
+    append(format);
+    append(1);
+    data += 'x';
+    append(static_cast<uint32_t>(IClipboard::Format::Text));
+    append(2);
+    data += "ok";
+    Clipboard clipboard;
+    clipboard.unmarshall(data, 0);
+    clipboard.open(0);
+    QCOMPARE(clipboard.get(IClipboard::Format::Text), std::string("ok"));
+    QVERIFY(!clipboard.has(IClipboard::Format::Files));
+    clipboard.close();
+  }
+}
+
 QTEST_MAIN(ClipboardTests)

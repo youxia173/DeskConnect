@@ -198,4 +198,26 @@ void MSWindowsClipboardTests::preservesHealthyMacV5Bitmap()
   GlobalFree(handle);
 }
 
+void MSWindowsClipboardTests::rejectsTruncatedBitmap()
+{
+  MSWindowsClipboardBitmapConverter converter;
+  for (size_t size : {size_t(1), sizeof(BITMAPINFOHEADER)}) {
+    const auto handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, size);
+    QVERIFY(handle != nullptr);
+    if (size == sizeof(BITMAPINFOHEADER)) {
+      auto *header = static_cast<BITMAPINFOHEADER *>(GlobalLock(handle));
+      QVERIFY(header != nullptr);
+      header->biSize = sizeof(BITMAPINFOHEADER);
+      header->biWidth = 3840;
+      header->biHeight = 2160;
+      header->biPlanes = 1;
+      header->biBitCount = 32;
+      GlobalUnlock(handle);
+    }
+    const auto result = converter.toIClipboard(handle);
+    GlobalFree(handle);
+    QVERIFY(result.empty());
+  }
+}
+
 QTEST_MAIN(MSWindowsClipboardTests)

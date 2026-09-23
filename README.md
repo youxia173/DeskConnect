@@ -93,10 +93,21 @@ sudo ./install.sh
 
 ### Windows
 
-用 Visual Studio 2022 + Qt 6（MSVC）配置并编译 Release，运行：
+详见 [`docs/windows-build.md`](docs/windows-build.md)。
 
-```text
-build/bin/Release/DeskConnect.exe
+发版前先改 `CMakeLists.txt` 的 `DESKFLOW_VERSION_PATCH`，再编 Release。
+
+**只要这两样：**
+
+- 本机运行：`build/bin/Release/DeskConnect.exe`
+- 安装包：`build/deskflow-<版本>-win-x64.msi`
+
+便携 zip/7z、旧版本包、临时目录都不需要保留。
+
+```powershell
+cmake -S . -B build
+cmake --build build --config Release --target deskflow -j 8
+cmake --build build --config Release --target package -j 8
 ```
 
 ### Linux

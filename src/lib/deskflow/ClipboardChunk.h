@@ -23,6 +23,8 @@ struct ClipboardChunkAssemblyState
 {
   size_t expectedSize = 0;
   bool active = false;
+  ClipboardID id = 0;
+  uint32_t sequence = 0;
 };
 
 class ClipboardChunk : public Chunk

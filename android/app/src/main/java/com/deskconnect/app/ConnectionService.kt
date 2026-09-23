@@ -105,6 +105,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_CONNECT -> {
+                sessionActiveFlag.set(true)
                 val host = intent.getStringExtra(EXTRA_HOST).orEmpty()
                 val port = intent.getIntExtra(EXTRA_PORT, 24800)
                 val screen = intent.getStringExtra(EXTRA_SCREEN).orEmpty()
@@ -156,6 +157,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
 
     override fun onDestroy() {
         userStop.set(true)
+        sessionActiveFlag.set(false)
         wakeReconnectWait()
         clipboard?.removePrimaryClipChangedListener(clipboardListener)
         clientRef.getAndSet(null)?.disconnect()
@@ -208,6 +210,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
                 }
             } finally {
                 loopRunning.set(false)
+                sessionActiveFlag.set(false)
                 notificationState = NotifState.Idle
                 broadcast(ACTION_EVENT_STATUS, "disconnected|stopped")
                 stopForeground(STOP_FOREGROUND_REMOVE)
@@ -476,6 +479,9 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     }
 
     private fun broadcast(action: String, payload: String) {
+        if (action == ACTION_EVENT_LOG) {
+            SessionLog.append(payload)
+        }
         sendBroadcast(
             Intent(action).setPackage(packageName).putExtra(EXTRA_PAYLOAD, payload)
         )
@@ -605,6 +611,10 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     }
 
     companion object {
+        private val sessionActiveFlag = AtomicBoolean(false)
+
+        fun isSessionActive(): Boolean = sessionActiveFlag.get()
+
         const val ACTION_CONNECT = "com.deskconnect.app.CONNECT"
         const val ACTION_DISCONNECT = "com.deskconnect.app.DISCONNECT"
         const val ACTION_SEND_CLIPBOARD = "com.deskconnect.app.SEND_CLIPBOARD"

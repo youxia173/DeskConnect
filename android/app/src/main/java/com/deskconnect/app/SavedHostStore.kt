@@ -3,6 +3,7 @@ package com.deskconnect.app
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import org.json.JSONArray
@@ -153,17 +154,48 @@ object WifiNetworkHelper {
 
     @Suppress("DEPRECATION")
     private fun readSsid(context: Context): String? {
+        // connectionInfo is often stale right after a Wi-Fi switch. Prefer the
+        // active network's WifiInfo, then fall back to WifiManager.
+        val fromCapabilities = readSsidFromCapabilities(context)
+        if (isRealSsid(fromCapabilities)) return fromCapabilities
         return try {
             val wifi = context.applicationContext.getSystemService(WifiManager::class.java) ?: return null
-            val info = wifi.connectionInfo ?: return null
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // May be unknown without location / nearby-wifi permission.
-                info.ssid
-            } else {
-                info.ssid
-            }
+            wifi.connectionInfo?.ssid
         } catch (_: Exception) {
             null
         }
+    }
+
+    private fun readSsidFromCapabilities(context: Context): String? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+        val cm = context.getSystemService(ConnectivityManager::class.java) ?: return null
+        val active = cm.activeNetwork
+        val networks = buildList {
+            if (active != null) add(active)
+            cm.allNetworks.forEach { network ->
+                if (network != active) add(network)
+            }
+        }
+        for (network in networks) {
+            val caps = cm.getNetworkCapabilities(network) ?: continue
+            if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) continue
+            val info = caps.transportInfo as? WifiInfo ?: continue
+            val ssid = ssidOf(info)
+            if (isRealSsid(ssid)) return ssid
+        }
+        return null
+    }
+
+    @Suppress("DEPRECATION")
+    private fun ssidOf(info: WifiInfo): String? = info.ssid
+
+    private fun isRealSsid(ssid: String?): Boolean {
+        if (ssid.isNullOrBlank()) return false
+        val clean = ssid.trim().removePrefix("\"").removeSuffix("\"")
+        if (clean.isEmpty()) return false
+        if (clean == WifiManager.UNKNOWN_SSID) return false
+        if (clean.equals("<unknown ssid>", true)) return false
+        if (clean.equals("unknown ssid", true)) return false
+        return true
     }
 }

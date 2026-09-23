@@ -41,6 +41,8 @@ void StreamChunker::cancel()
 {
   clearTimer();
   m_queue.clear();
+  m_stream = nullptr;
+  m_events = nullptr;
 }
 
 void StreamChunker::clearTimer()
@@ -60,6 +62,9 @@ void StreamChunker::sendClipboard(
     return;
   }
 
+  if (m_stream != nullptr && (m_stream != stream || m_events != events)) {
+    cancel();
+  }
   m_stream = stream;
   m_events = events;
 
@@ -67,6 +72,9 @@ void StreamChunker::sendClipboard(
   pending.data = std::move(data);
   pending.id = id;
   pending.sequence = sequence;
+  // Keep the in-flight transfer intact, but replace unsent snapshots of the
+  // same clipboard so repeated large captures do not accumulate in memory.
+  std::erase_if(m_queue, [id](const Pending &item) { return !item.started && item.id == id; });
   m_queue.push_back(std::move(pending));
 
   pump();
@@ -88,8 +96,9 @@ void StreamChunker::pump()
   }
 
   try {
+    size_t chunks = 0;
     while (!m_queue.empty()) {
-      if (m_stream->getOutputSize() >= g_maxQueuedOutputBytes) {
+      if (m_stream->getOutputSize() >= g_maxQueuedOutputBytes || chunks++ >= 16) {
         schedule();
         return;
       }

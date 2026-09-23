@@ -99,6 +99,11 @@ TransferState ClipboardChunk::assemble(
     reset();
     return Error;
   }
+  if (mark != ChunkType::DataStart && state.active && (state.id != id || state.sequence != sequence)) {
+    LOG_ERR("clipboard chunk belongs to a different transfer");
+    reset();
+    return Error;
+  }
 
   if (mark == ChunkType::DataStart) {
     bool ok = false;
@@ -112,6 +117,8 @@ TransferState ClipboardChunk::assemble(
     clearCachedData(dataCached);
     state.expectedSize = static_cast<size_t>(expected);
     state.active = true;
+    state.id = id;
+    state.sequence = sequence;
 
     if (state.expectedSize > maxDataSize) {
       LOG_ERR("clipboard size exceeds limit, size: %zu, limit: %zu", state.expectedSize, maxDataSize);

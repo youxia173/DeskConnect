@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="dc_primary">#1565C0</color>
-    <color name="dc_primary_dark">#0D47A1</color>
+    <color name="dc_primary">#0F6CBD</color>
+    <color name="dc_primary_dark">#0B4F8A</color>
     <color name="dc_on_primary">#FFFFFF</color>
-    <color name="dc_surface">#F5F7FA</color>
-    <color name="dc_on_surface">#1A1C1E</color>
-    <color name="dc_outline">#C5CAD3</color>
+    <color name="dc_surface">#EEF2F6</color>
+    <color name="dc_card">#FFFFFF</color>
+    <color name="dc_on_surface">#1B2430</color>
+    <color name="dc_muted">#5B6B7C</color>
+    <color name="dc_outline">#D5DEE8</color>
+    <color name="dc_status_off">#9AA7B5</color>
+    <color name="dc_status_connecting">#E39B2D</color>
+    <color name="dc_status_on">#2E9E5B</color>
 </resources>

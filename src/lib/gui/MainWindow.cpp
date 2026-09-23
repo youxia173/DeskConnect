@@ -378,11 +378,10 @@ void MainWindow::connectSlots()
   connect(&m_coreProcess, &CoreProcess::peerFingerprint, this, &MainWindow::handlePeerFingerprint);
   connect(&m_coreProcess, &CoreProcess::missingKeyboardLayouts, this, &MainWindow::handleMissingKeyboardLayouts);
 
-  if (Settings::value(Settings::Gui::AutoStartCore).toBool()) {
-    connect(ui->btnToggleCore, &QPushButton::clicked, m_actionStopCore, &QAction::trigger, Qt::UniqueConnection);
-  } else {
-    connect(ui->btnToggleCore, &QPushButton::clicked, m_actionStartCore, &QAction::trigger, Qt::UniqueConnection);
-  }
+  // Core is not running yet; always wire Start. processStateChanged rewires to Stop
+  // after a real start (including delayed auto-start). Do not pre-wire Stop just because
+  // AutoStartCore is true — auto-start may be skipped when this Wi-Fi has no host.
+  connect(ui->btnToggleCore, &QPushButton::clicked, m_actionStartCore, &QAction::trigger, Qt::UniqueConnection);
 
   connect(ui->btnRestartCore, &QPushButton::clicked, this, &MainWindow::resetCore);
 
@@ -412,7 +411,11 @@ void MainWindow::connectSlots()
 
   connect(ui->lineEditName, &QLineEdit::editingFinished, this, &MainWindow::setHostName);
 
-  connect(m_networkMonitor, &NetworkMonitor::ipAddressesChanged, this, &MainWindow::updateIpLabel);
+  connect(m_networkMonitor, &NetworkMonitor::ipAddressesChanged, this, [this](const QStringList &addresses) {
+    updateIpLabel(addresses);
+    // Client: local IP change usually means Wi-Fi changed — refresh remembered host when idle.
+    scheduleHostnameWifiRefresh();
+  });
 }
 
 void MainWindow::toggleLogVisible(bool visible)
@@ -535,6 +538,13 @@ void MainWindow::startCore()
     m_serverStartSuggestedIP = m_serverStartIPs.isEmpty() ? "" : m_serverStartIPs.first();
   }
 
+  if (m_coreProcess.mode() == CoreMode::Client) {
+    m_ssidWhenStarted = WifiInfo::currentSsid();
+    qDebug() << "client start on wifi" << m_ssidWhenStarted;
+  } else {
+    m_ssidWhenStarted.clear();
+  }
+
   m_actionStartCore->setVisible(false);
   m_actionRestartCore->setVisible(true);
   m_coreProcess.start();
@@ -546,6 +556,7 @@ void MainWindow::stopCore()
   m_coreProcess.stop();
   m_actionStartCore->setVisible(true);
   m_actionRestartCore->setVisible(false);
+  // Process stop is async; host refresh runs when state becomes Stopped (+ delayed retries).
 }
 
 void MainWindow::clearSettings()
@@ -663,7 +674,7 @@ void MainWindow::updateModeControls()
   if (ui->lblIpAddresses->isVisible())
     updateNetworkInfo();
 
-  if (isServer) {
+  if (isServer || isClient) {
     m_networkMonitor->startMonitoring();
   } else {
     m_networkMonitor->stopMonitoring();
@@ -746,6 +757,9 @@ void MainWindow::serverConnectionConfigureClient(const QString &clientName)
 
 void MainWindow::open()
 {
+  // Pick the host bound to the Wi-Fi that is connected right now (before auto-start).
+  scheduleHostnameWifiRefresh();
+
   if (!Settings::value(Settings::Gui::Autohide).toBool())
     showAndActivate();
   else if (deskflow::platform::isMac())
@@ -775,11 +789,8 @@ void MainWindow::open()
     qDebug() << "skipping check for new version, disabled";
   }
 
-  if (Settings::value(Settings::Gui::AutoStartCore).toBool()) {
-    if (ui->rbModeClient->isChecked() && currentHostname().isEmpty())
-      return;
-    startCore();
-  }
+  // Wait briefly for Wi-Fi SSID so we don't auto-connect using another network's IP.
+  QTimer::singleShot(600, this, &MainWindow::maybeAutoStartCore);
 }
 
 void MainWindow::createMenuBar()
@@ -1044,7 +1055,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
   if (m_saveOnExit) {
     Settings::setValue(Settings::Gui::WindowGeometry, geometry());
-    Settings::setValue(Settings::Gui::AutoStartCore, m_coreProcess.isStarted());
+    // Once the user has started the core, keep auto-reconnect on next launch.
+    // Do not clear the preference just because they quit while stopped.
+    if (m_coreProcess.isStarted()) {
+      Settings::setValue(Settings::Gui::AutoStartCore, true);
+    }
   }
   qDebug() << "quitting application";
 
@@ -1113,6 +1128,11 @@ void MainWindow::coreProcessStateChanged(ProcessState state)
     m_actionStartCore->setVisible(true);
     m_actionRestartCore->setVisible(false);
     m_actionStopCore->setEnabled(false);
+
+    if (state == Stopped) {
+      m_ssidWhenStarted.clear();
+      scheduleHostnameWifiRefresh();
+    }
   }
   updateModeControlLabels();
   updateSendFilesAction();
@@ -1276,6 +1296,7 @@ void MainWindow::showAndActivate()
   m_actionMinimize->setVisible(true);
   if (!wasVisible)
     restoreWindow();
+  refreshHostnameForCurrentWifi();
 }
 
 void MainWindow::showHostNameEditor()
@@ -1637,9 +1658,8 @@ void MainWindow::saveWifiHostMap(const QMap<QString, QString> &map)
   Settings::setValue(Settings::Client::RemoteHostByWifi, entries);
 }
 
-void MainWindow::bindHostToCurrentWifi(const QString &host)
+void MainWindow::bindHostToWifi(const QString &ssid, const QString &host)
 {
-  const auto ssid = WifiInfo::currentSsid();
   if (ssid.isEmpty() || host.isEmpty()) {
     return;
   }
@@ -1647,7 +1667,12 @@ void MainWindow::bindHostToCurrentWifi(const QString &host)
   auto map = wifiHostMap();
   map.insert(ssid, host);
   saveWifiHostMap(map);
-  qDebug() << "bound host" << host << "to wifi" << ssid;
+  qInfo() << "bound host" << host << "to wifi" << ssid;
+}
+
+void MainWindow::bindHostToCurrentWifi(const QString &host)
+{
+  bindHostToWifi(WifiInfo::currentSsid(), host);
 }
 
 void MainWindow::unbindHostFromWifiMap(const QString &host)
@@ -1669,30 +1694,108 @@ void MainWindow::unbindHostFromWifiMap(const QString &host)
   saveWifiHostMap(map);
 }
 
-QString MainWindow::hostForCurrentWifi()
+QString MainWindow::hostForWifi(const QString &ssid)
 {
-  const auto ssid = WifiInfo::currentSsid();
   if (ssid.isEmpty()) {
     return {};
   }
   return wifiHostMap().value(ssid);
 }
 
+QString MainWindow::hostForCurrentWifi()
+{
+  return hostForWifi(WifiInfo::currentSsid());
+}
+
+void MainWindow::refreshHostnameForCurrentWifi()
+{
+  if (m_coreProcess.mode() != CoreMode::Client) {
+    return;
+  }
+  using enum ProcessState;
+  if (m_coreProcess.processState() != Stopped) {
+    return;
+  }
+  loadHostnameHistory();
+}
+
+void MainWindow::scheduleHostnameWifiRefresh()
+{
+  if (m_coreProcess.mode() != CoreMode::Client) {
+    return;
+  }
+  // Immediate + delayed retries: after a Wi-Fi switch Windows may briefly report
+  // the old SSID / no SSID, and the remembered host map needs the new one.
+  refreshHostnameForCurrentWifi();
+  QTimer::singleShot(400, this, [this] { refreshHostnameForCurrentWifi(); });
+  QTimer::singleShot(1200, this, [this] { refreshHostnameForCurrentWifi(); });
+}
+
+void MainWindow::maybeAutoStartCore()
+{
+  using enum ProcessState;
+  if (m_coreProcess.processState() != Stopped) {
+    return;
+  }
+  if (!Settings::value(Settings::Gui::AutoStartCore).toBool()) {
+    return;
+  }
+
+  refreshHostnameForCurrentWifi();
+
+  if (ui->rbModeClient->isChecked()) {
+    const auto ssid = WifiInfo::currentSsid();
+    if (!ssid.isEmpty() && hostForWifi(ssid).isEmpty()) {
+      // Different Wi-Fi with no remembered IP — do not connect to another network's host.
+      qInfo() << "skip auto-start; no remembered host for wifi" << ssid;
+      return;
+    }
+    if (currentHostname().isEmpty()) {
+      return;
+    }
+  }
+
+  startCore();
+}
+
 void MainWindow::loadHostnameHistory()
 {
   const QSignalBlocker blocker(ui->comboHostname);
+  const auto typedHost = ui->comboHostname->currentText().trimmed();
+
   ui->comboHostname->clear();
 
   auto history = Settings::value(Settings::Client::RemoteHostHistory).toStringList();
   history.removeAll(QString());
   history.removeDuplicates();
 
-  auto currentHost = Settings::value(Settings::Client::RemoteHost).toString().trimmed();
-  const auto wifiHost = hostForCurrentWifi();
   const auto currentSsid = WifiInfo::currentSsid();
+  const auto wifiHost = hostForWifi(currentSsid);
+  const bool wifiChanged = currentSsid != m_lastHostnameWifiSsid;
+  m_lastHostnameWifiSsid = currentSsid;
+
+  QString currentHost;
+
   if (!wifiHost.isEmpty()) {
     currentHost = wifiHost;
-    qDebug() << "auto-selected host" << currentHost << "for wifi" << currentSsid;
+    history.removeAll(wifiHost);
+    history.prepend(wifiHost);
+    Settings::setValue(Settings::Client::RemoteHost, wifiHost);
+    qInfo() << "auto-selected host" << currentHost << "for wifi" << currentSsid;
+  } else if (!currentSsid.isEmpty()) {
+    if (wifiChanged) {
+      // Switched to a Wi-Fi with no remembered IP: leave empty.
+      qInfo() << "no remembered host for wifi" << currentSsid << "; leaving host empty";
+      currentHost.clear();
+      Settings::setValue(Settings::Client::RemoteHost);
+    } else {
+      // Same Wi-Fi — keep what the user already typed (do not wipe on refresh).
+      currentHost = typedHost;
+    }
+  } else {
+    currentHost = typedHost.isEmpty() ? Settings::value(Settings::Client::RemoteHost).toString().trimmed()
+                                      : typedHost;
+    qDebug() << "current wifi ssid unavailable; keeping host" << currentHost;
   }
 
   if (!currentHost.isEmpty() && !history.contains(currentHost)) {
@@ -1708,10 +1811,12 @@ void MainWindow::loadHostnameHistory()
     } else {
       ui->comboHostname->setEditText(currentHost);
     }
-  } else if (!history.isEmpty()) {
-    ui->comboHostname->setCurrentIndex(0);
   } else {
-    ui->comboHostname->clearEditText();
+    ui->comboHostname->setCurrentIndex(-1);
+    ui->comboHostname->setEditText(QString());
+    if (auto *edit = ui->comboHostname->lineEdit()) {
+      edit->clear();
+    }
   }
 
   if (!currentSsid.isEmpty()) {
@@ -1720,6 +1825,11 @@ void MainWindow::loadHostnameHistory()
            "Successfully connected addresses are remembered.\n"
            "Current Wi-Fi: %1")
             .arg(currentSsid)
+    );
+  } else {
+    ui->comboHostname->setToolTip(
+        tr("Hostname or IP address of the server computer.\n"
+           "Successfully connected addresses are remembered.")
     );
   }
 
@@ -1747,7 +1857,16 @@ void MainWindow::rememberSuccessfulHost()
 
   Settings::setValue(Settings::Client::RemoteHostHistory, history);
   Settings::setValue(Settings::Client::RemoteHost, host);
-  bindHostToCurrentWifi(host);
+
+  // Bind only to the Wi-Fi this session started on. If the user switched networks
+  // while connected/reconnecting, do not overwrite the new Wi-Fi's remembered IP.
+  const auto ssidNow = WifiInfo::currentSsid();
+  const auto ssidToBind = !m_ssidWhenStarted.isEmpty() ? m_ssidWhenStarted : ssidNow;
+  if (!ssidToBind.isEmpty() && (m_ssidWhenStarted.isEmpty() || ssidNow.isEmpty() || ssidNow == m_ssidWhenStarted)) {
+    bindHostToWifi(ssidToBind, host);
+  } else {
+    qInfo() << "skip wifi host bind; session wifi" << m_ssidWhenStarted << "current" << ssidNow << "host" << host;
+  }
 
   const QSignalBlocker blocker(ui->comboHostname);
   const auto existing = ui->comboHostname->findText(host);

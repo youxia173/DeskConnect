@@ -3,44 +3,83 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/dc_surface">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/dc_primary"
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+        app:title="@string/app_name"
+        app:titleTextColor="@color/dc_on_primary" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="20dp"
-            android:paddingTop="20dp"
-            android:paddingEnd="20dp"
-            android:paddingBottom="8dp">
+            android:paddingStart="16dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="16dp">
 
+            <!-- Status -->
+            <LinearLayout
+                android:id="@+id/statusCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_status_card"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:id="@+id/statusDot"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/bg_status_dot" />
+
+                    <TextView
+                        android:id="@+id/statusText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:text="@string/status_disconnected"
+                        android:textAppearance="?attr/textAppearanceHeadline6"
+                        android:textColor="@color/dc_on_surface"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/wifiLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:textColor="@color/dc_muted" />
+            </LinearLayout>
+
+            <!-- Saved hosts -->
             <TextView
-                android:id="@+id/wifiLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="?attr/textAppearanceBody2" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/permissionsButton"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="start|center_vertical"
-                android:text="@string/perm_guide_button"
-                android:textAllCaps="false" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="20dp"
                 android:text="@string/saved_hosts_title"
-                android:textAppearance="?attr/textAppearanceSubtitle2" />
+                android:textAppearance="?attr/textAppearanceSubtitle2"
+                android:textColor="@color/dc_muted" />
 
             <LinearLayout
                 android:id="@+id/savedHostsContainer"
@@ -56,13 +95,16 @@
                 android:layout_marginTop="4dp"
                 android:text="@string/saved_hosts_empty"
                 android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="@color/dc_muted"
                 android:visibility="gone" />
 
+            <!-- Connection form -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="@string/host_hint">
+                android:layout_marginTop="16dp"
+                android:hint="@string/host_hint"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/hostInput"
@@ -72,67 +114,44 @@
                     android:maxLines="1" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="@string/port_hint">
+                android:orientation="horizontal">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/portInput"
-                    android:layout_width="match_parent"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:maxLines="1"
-                    android:text="@string/default_port" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:hint="@string/port_hint"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:hint="@string/screen_hint">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/portInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:maxLines="1"
+                        android:text="@string/default_port" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/screenInput"
-                    android:layout_width="match_parent"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:maxLines="1"
-                    android:text="" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_weight="1.4"
+                    android:hint="@string/screen_hint_short"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/tlsSwitch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:checked="true"
-                android:text="@string/use_tls" />
-
-            <TextView
-                android:id="@+id/clientFingerprintText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textAppearance="?attr/textAppearanceBody2"
-                android:textIsSelectable="true" />
-
-            <TextView
-                android:id="@+id/statusText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/status_disconnected"
-                android:textAppearance="?attr/textAppearanceSubtitle1"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/clipboard_hint"
-                android:textAppearance="?attr/textAppearanceBody2" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/screenInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:maxLines="1" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -143,20 +162,31 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/connectButton"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="52dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:text="@string/connect" />
+                    android:text="@string/connect"
+                    android:textAllCaps="false" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/disconnectButton"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="52dp"
                     android:layout_weight="1"
                     android:enabled="false"
-                    android:text="@string/disconnect" />
+                    android:text="@string/disconnect"
+                    android:textAllCaps="false" />
             </LinearLayout>
+
+            <!-- Quick actions -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/quick_actions"
+                android:textAppearance="?attr/textAppearanceSubtitle2"
+                android:textColor="@color/dc_muted" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/sendFilesButton"
@@ -166,7 +196,9 @@
                 android:layout_marginTop="8dp"
                 android:enabled="false"
                 android:text="@string/send_files"
-                app:icon="@android:drawable/ic_menu_upload" />
+                android:textAllCaps="false"
+                app:icon="@android:drawable/ic_menu_upload"
+                app:iconGravity="textStart" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/syncClipboardButton"
@@ -175,79 +207,22 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:enabled="false"
-                android:text="@string/sync_clipboard" />
+                android:text="@string/sync_clipboard"
+                android:textAllCaps="false"
+                app:icon="@drawable/ic_sync_clipboard"
+                app:iconGravity="textStart" />
 
             <TextView
+                android:id="@+id/permissionsHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/receive_folder_title"
-                android:textAppearance="?attr/textAppearanceSubtitle2" />
-
-            <TextView
-                android:id="@+id/receiveFolderText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="20dp"
+                android:background="?attr/selectableItemBackground"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
                 android:textAppearance="?attr/textAppearanceBody2"
-                android:textIsSelectable="true" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/changeReceiveFolderButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/receive_folder_change"
-                    android:textAllCaps="false" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/resetReceiveFolderButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/receive_folder_reset"
-                    android:textAllCaps="false" />
-            </LinearLayout>
+                android:textColor="@color/dc_primary"
+                android:visibility="gone" />
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:text="@string/log_title"
-        android:textAppearance="?attr/textAppearanceSubtitle1" />
-
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/logScroll"
-        android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
-        android:background="@drawable/log_background"
-        android:fadeScrollbars="false"
-        android:fillViewport="true"
-        android:overScrollMode="always"
-        android:padding="12dp"
-        android:scrollbars="vertical">
-
-        <TextView
-            android:id="@+id/logText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:textIsSelectable="true"
-            android:textSize="12sp" />
     </androidx.core.widget.NestedScrollView>
 </LinearLayout>

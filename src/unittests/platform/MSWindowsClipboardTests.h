@@ -30,6 +30,7 @@ private Q_SLOTS:
   void isOwnedByDeskflow();
   void normalisesMalformedMacBitmap();
   void preservesHealthyMacV5Bitmap();
+  void rejectsTruncatedBitmap();
 
 private:
   Log m_log;

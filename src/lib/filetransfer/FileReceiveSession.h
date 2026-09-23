@@ -25,6 +25,8 @@ class FileReceiveSession
 public:
   using ProgressCallback = std::function<void(const TransferProgressInfo &)>;
 
+  ~FileReceiveSession() { reset(); }
+
   void reset();
 
   //! Handle DDRG basenames (expected order of following DFTR transfers).

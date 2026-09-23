@@ -11,6 +11,7 @@
 #include <QString>
 
 #include <algorithm>
+#include <limits>
 
 namespace deskflow {
 
@@ -39,6 +40,11 @@ bool FileReceiveSession::begin(
   if (names.empty()) {
     return false;
   }
+  for (const auto &name : names) {
+    if (name.empty() || sanitizeFileName(name) != name) {
+      return false;
+    }
+  }
   m_receiveDir = ensureReceiveDirectory();
   if (m_receiveDir.empty()) {
     return false;
@@ -60,7 +66,10 @@ bool FileReceiveSession::openNextFile(uint64_t expectedSize)
     LOG_ERR("file transfer: unexpected extra file");
     return false;
   }
-  if (m_maxTotalBytes > 0 && m_totalWritten + expectedSize > m_maxTotalBytes) {
+  if (expectedSize > static_cast<uint64_t>(std::numeric_limits<qint64>::max()) ||
+      expectedSize > std::numeric_limits<uint64_t>::max() - m_totalWritten ||
+      (m_maxTotalBytes > 0 &&
+       (m_totalWritten > m_maxTotalBytes || expectedSize > m_maxTotalBytes - m_totalWritten))) {
     LOG_ERR("file transfer exceeds size limit");
     return false;
   }
@@ -73,8 +82,10 @@ bool FileReceiveSession::openNextFile(uint64_t expectedSize)
 
   // QFile handles UTF-8 paths on Windows; std::ofstream does not.
   m_out.setFileName(QString::fromUtf8(m_currentPath.data(), static_cast<qsizetype>(m_currentPath.size())));
-  if (!m_out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+  if (!m_out.open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
     LOG_ERR("file transfer: failed to open %s for write", m_currentPath.c_str());
+    // We do not own this path when exclusive creation fails.
+    m_currentPath.clear();
     return false;
   }
 
@@ -149,6 +160,11 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
   }
 
   if (mark == ChunkType::DataStart) {
+    if (m_out.isOpen()) {
+      LOG_ERR("file transfer: start before previous file ended");
+      reset();
+      return Error;
+    }
     bool ok = false;
     const auto expected = QString::fromUtf8(data.data(), static_cast<qsizetype>(data.size())).toULongLong(&ok);
     if (!ok) {
@@ -174,7 +190,7 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
       reset();
       return Error;
     }
-    if (m_written + data.size() > m_expectedSize) {
+    if (m_written > m_expectedSize || data.size() > m_expectedSize - m_written) {
       LOG_ERR("file transfer: chunk exceeds declared size");
       reset();
       return Error;
@@ -191,7 +207,7 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
   }
 
   if (mark == ChunkType::DataEnd) {
-    if (!m_out.isOpen() && m_expectedSize != 0) {
+    if (!m_out.isOpen()) {
       LOG_ERR("file transfer: end before start");
       reset();
       return Error;
@@ -203,6 +219,11 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
             "file transfer: size mismatch expected=%llu actual=%llu", static_cast<unsigned long long>(m_expectedSize),
             static_cast<unsigned long long>(m_written)
         );
+        reset();
+        return Error;
+      }
+      if (!m_out.flush()) {
+        LOG_ERR("file transfer: failed to flush received file");
         reset();
         return Error;
       }

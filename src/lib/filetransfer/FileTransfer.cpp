@@ -48,6 +48,16 @@ std::string sanitizeFileName(const std::string &name)
       base.contains(QLatin1Char('\\'))) {
     return {};
   }
+  // Reject names that become device paths or NTFS alternate streams on Windows.
+  static const QRegularExpression invalid(QStringLiteral(R"([<>:"|?*\x00-\x1f])"));
+  static const QRegularExpression device(
+      QStringLiteral(R"(^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$))"),
+      QRegularExpression::CaseInsensitiveOption
+  );
+  if (base.contains(invalid) || base.endsWith(QLatin1Char('.')) || base.endsWith(QLatin1Char(' ')) ||
+      device.match(base).hasMatch()) {
+    return {};
+  }
   return base.toUtf8().toStdString();
 }
 
@@ -154,9 +164,12 @@ std::vector<std::string> decodeDragInfo(const std::string &info)
   std::vector<std::string> names;
   for (const auto &part : splitNul(info)) {
     const auto name = sanitizeFileName(part);
-    if (!name.empty()) {
-      names.push_back(name);
+    if (name.empty()) {
+      // Dropping just one name would assign all following file payloads to
+      // the wrong names. Reject the whole offer instead.
+      return {};
     }
+    names.push_back(name);
   }
   return names;
 }

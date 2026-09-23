@@ -1031,11 +1031,12 @@ void ServerProxy::dragInfoReceived()
     return;
   }
   auto names = deskflow::decodeDragInfo(info);
-  if (names.empty()) {
+  if (names.empty() || (fileCount != 0 && names.size() != fileCount)) {
     return;
   }
   LOG_INFO("drag info from server: %zu file(s)", names.size());
-  if (!m_fileReceive.isActive()) {
+  // A fresh offer replaces a cancelled or interrupted transfer on this stream.
+  {
     m_recvProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
       ipcSendToClient(
           QStringLiteral("fileTransfer"),
