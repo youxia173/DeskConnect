@@ -30,8 +30,10 @@ void ClientProxy::close(const char *msg) const
   LOG_VERBOSE("send close \"%s\" to \"%s\"", msg, getName().c_str());
   ProtocolUtil::writef(getStream(), msg);
 
-  // force the close to be sent before we return
-  getStream()->flush();
+  // Do not wait for the peer to drain the socket here. This runs on the input
+  // event loop, possibly while the primary screen still has its input grabbed.
+  // Server::closeClient keeps the stream alive for its bounded close grace
+  // period, allowing asynchronous delivery without delaying local input release.
 }
 
 deskflow::IStream *ClientProxy::getStream() const

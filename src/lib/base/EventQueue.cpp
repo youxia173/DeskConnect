@@ -104,10 +104,18 @@ void EventQueue::adoptBuffer(IEventQueueBuffer *buffer)
 
 bool EventQueue::processEvent(Event &event, double timeout, Stopwatch &timer)
 {
+  // Mouse motion and network input can keep the buffer nonempty indefinitely.
+  // Service deadlines even under load, but alternate with queued input so a
+  // fast repeating timer cannot starve keyboard/mouse events in turn.
+  if (!m_lastEventWasTimer && hasTimerExpired(event)) {
+    m_lastEventWasTimer = true;
+    return true;
+  }
   // if no events are waiting then handle timers and then wait
   while (m_buffer->isEmpty()) {
     // handle timers first
     if (hasTimerExpired(event)) {
+      m_lastEventWasTimer = true;
       return true;
     }
 
@@ -144,9 +152,11 @@ bool EventQueue::processEvent(Event &event, double timeout, Stopwatch &timer)
     return false;
 
   case System:
+    m_lastEventWasTimer = false;
     return true;
 
   case User: {
+    m_lastEventWasTimer = false;
     std::scoped_lock lock{m_mutex};
     event = removeEvent(dataID);
     return true;

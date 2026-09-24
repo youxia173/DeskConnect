@@ -188,6 +188,7 @@ elseif(UNIX)
         list(APPEND PLATFORM_SOURCES
           PortalClipboard.cpp
           PortalClipboard.h
+          ClipboardPipe.h
         )
       endif()
     endif()

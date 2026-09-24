@@ -115,6 +115,7 @@ private:
   Timers m_timers;
   TimerQueue m_timerQueue;
   TimerEvent m_timerEvent;
+  bool m_lastEventWasTimer = false;
 
   // event handlers
   HandlerTable m_handlers;

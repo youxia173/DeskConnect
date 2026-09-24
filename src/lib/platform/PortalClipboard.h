@@ -35,7 +35,6 @@ public:
 
   static constexpr int kReadTimeoutMs = 200;
   static constexpr int kWriteTimeoutMs = 200;
-  static constexpr qint64 kChunkBytes = 64 * 1024;
 
   static QByteArray formatMimeTypes(const char *const *mimeTypes);
   static const SupportedMime *findSupportedMime(const char *mime);

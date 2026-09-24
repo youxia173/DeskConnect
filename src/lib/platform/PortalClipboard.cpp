@@ -8,10 +8,10 @@
 
 #include "base/Log.h"
 #include "filetransfer/FileTransfer.h"
+#include "platform/ClipboardPipe.h"
 #include "platform/EiClipboard.h"
 
 #include <cstring>
-#include <poll.h>
 #include <unistd.h>
 
 #include <QBuffer>
@@ -183,17 +183,8 @@ QByteArray PortalClipboard::readSelectionBytes(XdpSession *session, const char *
   }
 
   QByteArray contents;
-  contents.reserve(std::min<qint64>(maxBytes, kChunkBytes));
-  while (contents.size() < maxBytes) {
-    pollfd pfd{fd, POLLIN, 0};
-    if (poll(&pfd, 1, kReadTimeoutMs) <= 0)
-      break;
-
-    const auto chunk = pipe.read(std::min<qint64>(kChunkBytes, maxBytes - contents.size()));
-    if (chunk.isEmpty())
-      break;
-
-    contents.append(chunk);
+  if (!ClipboardPipe::read(fd, maxBytes, contents, kReadTimeoutMs)) {
+    LOG_WARN("clipboard pipe read failed, exceeded size limit or timed out; discarding partial selection");
   }
   return contents;
 }
@@ -261,28 +252,14 @@ void PortalClipboard::serveSelectionTransfer(EiClipboard *cache, XdpSession *ses
     return;
   }
 
-  const char *buf = data.constData();
-  qint64 total = data.size();
-  qint64 written = 0;
-  while (written < total) {
-    pollfd pfd{fd, POLLOUT, 0};
-    if (poll(&pfd, 1, kWriteTimeoutMs) <= 0) {
-      LOG_ERR("timed out writing clipboard selection");
-      xdp_session_selection_write_done(session, serial, false);
-      return;
-    }
-
-    qint64 n = pipe.write(buf + written, total - written);
-    if (n <= 0) {
-      LOG_ERR("clipboard pipe write returned %lld", static_cast<long long>(n));
-      xdp_session_selection_write_done(session, serial, false);
-      return;
-    }
-    written += n;
-  }
-
-  xdp_session_selection_write_done(session, serial, true);
-  LOG_DEBUG("clipboard selection transfer complete, bytes: %lld", static_cast<long long>(written));
+  const bool success = ClipboardPipe::write(fd, data, kWriteTimeoutMs);
+  // Close the writer before notifying completion so the reader can see EOF.
+  pipe.close();
+  xdp_session_selection_write_done(session, serial, success);
+  if (!success)
+    LOG_WARN("clipboard pipe write failed or timed out");
+  else
+    LOG_DEBUG("clipboard selection transfer complete, bytes: %lld", static_cast<long long>(data.size()));
 }
 
 bool PortalClipboard::readSelectionIntoCache(

@@ -12,4 +12,5 @@ class ServerTests : public QObject
 private Q_SLOTS:
   void SwitchToScreenInfo_alloc_screen();
   void KeyboardBroadcastInfo_alloc_stateAndSceens();
+  void clientCloseQueuesMessageWithoutWaitingForPeer();
 };

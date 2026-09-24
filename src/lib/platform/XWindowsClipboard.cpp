@@ -11,6 +11,7 @@
 #include "platform/XWindowsClipboard.h"
 
 #include "base/Stopwatch.h"
+#include "platform/ClipboardImage.h"
 #include "platform/XWindowsClipboardBMPConverter.h"
 #include "platform/XWindowsClipboardHTMLConverter.h"
 #include "platform/XWindowsClipboardPNGConverter.h"
@@ -18,7 +19,6 @@
 #include "platform/XWindowsClipboardUCS2Converter.h"
 #include "platform/XWindowsClipboardURIListConverter.h"
 #include "platform/XWindowsClipboardUTF8Converter.h"
-#include "platform/ClipboardImage.h"
 #include "platform/XWindowsUtil.h"
 
 #include <X11/Xatom.h>
@@ -1292,21 +1292,22 @@ bool XWindowsClipboard::CICCCMGetClipboard::readClipboard(
   // by badly behaved selection owners.
   XEvent xevent;
   std::vector<XEvent> events;
-  Stopwatch timeout(false);             // timer not stopped, not triggered
-  static const double s_timeout = 0.25; // FIXME -- is this too short?
-  bool noWait = false;
+  Stopwatch timeout(false); // timer not stopped, not triggered
+  Stopwatch totalTime;
+  static const double s_timeout = 0.25;
+  static const double s_totalTimeout = 2.0;
   while (!m_done && !m_failed) {
     // fail if timeout has expired
-    if (timeout.getTime() >= s_timeout) {
+    if (timeout.getTime() >= s_timeout || totalTime.getTime() >= s_totalTimeout) {
       m_failed = true;
       break;
     }
 
     // process events if any otherwise sleep
-    if (noWait || XPending(display) > 0) {
-      while (!m_done && !m_failed && (noWait || XPending(display) > 0)) {
+    if (XPending(display) > 0) {
+      while (!m_done && !m_failed && XPending(display) > 0) {
         // fail if timeout has expired
-        if (timeout.getTime() >= s_timeout) {
+        if (timeout.getTime() >= s_timeout || totalTime.getTime() >= s_totalTimeout) {
           m_failed = true;
           break;
         }
@@ -1319,15 +1320,13 @@ bool XWindowsClipboard::CICCCMGetClipboard::readClipboard(
           // reset timer since we've made some progress
           timeout.reset();
 
-          // don't sleep anymore, just block waiting for events.
-          // we're assuming here that the clipboard owner will
-          // complete the protocol correctly.  if we continue to
-          // sleep we'll get very bad performance.
-          noWait = true;
+          // Never call XNextEvent on an empty queue, even after the owner
+          // begins INCR. A stalled owner must not block input/heartbeat
+          // processing indefinitely. Progress does not extend totalTime.
         }
       }
     } else {
-      Arch::sleep(0.01);
+      Arch::sleep(0.001);
     }
   }
 
@@ -1338,6 +1337,12 @@ bool XWindowsClipboard::CICCCMGetClipboard::readClipboard(
 
   // restore mask
   XSelectInput(display, m_requestor, attr.your_event_mask);
+  if (m_failed) {
+    LOG_WARN("clipboard selection timed out or failed after %.3fs; keeping input responsive", totalTime.getTime());
+    *m_actualTarget = None;
+    m_data->clear();
+    XDeleteProperty(display, m_requestor, m_property);
+  }
 
   // return success or failure
   LOG_VERBOSE("request %s after %fs", m_failed ? "failed" : "succeeded", timeout.getTime());

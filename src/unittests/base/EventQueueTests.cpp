@@ -7,6 +7,7 @@
 #include "EventQueueTests.h"
 
 #include "base/EventQueue.h"
+#include "base/IEventQueueBuffer.h"
 
 #include <QTest>
 
@@ -53,6 +54,48 @@ void EventQueueTests::dispatchEvent_handlerRemovesItself_keepsHandlerAliveUntilR
   QVERIFY(events.dispatchEvent(Event(EventTypes::ClientDisconnected, this)));
   QVERIFY(handlerAliveAfterRemoval);
   QVERIFY(handlerLifetimeObserver.expired());
+}
+
+void EventQueueTests::getEvent_busyBufferDoesNotStarveTimersOrInput()
+{
+  class BusyBuffer : public IEventQueueBuffer
+  {
+  public:
+    void init() override
+    {
+    }
+    void waitForEvent(double) override
+    {
+    }
+    bool isEmpty() const override
+    {
+      return false;
+    }
+    bool addEvent(uint32_t) override
+    {
+      return true;
+    }
+    Type getEvent(Event &event, uint32_t &) override
+    {
+      event = Event(EventTypes::System);
+      return Type::System;
+    }
+  };
+  EventQueue events;
+  events.adoptBuffer(new BusyBuffer);
+  auto *timer = events.newTimer(0.001, nullptr);
+  QTest::qSleep(10);
+  Event event;
+  const bool gotTimer = events.getEvent(event, 0);
+  const auto firstType = event.getType();
+  QTest::qSleep(10);
+  const bool gotInput = events.getEvent(event, 0);
+  const auto secondType = event.getType();
+  events.deleteTimer(timer);
+  QVERIFY(gotTimer);
+  QCOMPARE(firstType, EventTypes::Timer);
+  QVERIFY(gotInput);
+  QCOMPARE(secondType, EventTypes::System);
 }
 
 QTEST_MAIN(EventQueueTests)

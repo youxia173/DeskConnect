@@ -25,6 +25,13 @@ elseif(APPLE)
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/platform"
   )
 elseif(UNIX)
+  create_test(
+    NAME ClipboardPipeTests
+    DEPENDS common
+    SOURCE ClipboardPipeTests.cpp
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  )
+  set_tests_properties(ClipboardPipeTests PROPERTIES TIMEOUT 10)
   if(LIBEI_FOUND)
     create_test(
       NAME EiKeyStateTests

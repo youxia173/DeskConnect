@@ -281,6 +281,7 @@ void PortalInputCapture::handleSelectionTransfer(XdpSession *session, const char
 #ifdef HAVE_LIBPORTAL_CLIPBOARD
   if (m_isActive) {
     LOG_DEBUG("skipping clipboard selection transfer, clipboard is active");
+    xdp_session_selection_write_done(session, serial, false);
     return;
   }
   PortalClipboard::serveSelectionTransfer(m_clipboard, session, mimeType, serial);

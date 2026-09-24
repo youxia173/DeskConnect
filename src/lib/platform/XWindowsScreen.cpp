@@ -237,6 +237,10 @@ void XWindowsScreen::disable()
 
 void XWindowsScreen::enter()
 {
+  // Release local input before any synchronous focus/screensaver queries.
+  releaseInputGrab();
+  XUnmapWindow(m_display, m_window);
+  XFlush(m_display);
   screensaver(false);
 
   // release input context focus
@@ -262,11 +266,6 @@ void XWindowsScreen::enter()
       DPMSForceLevel(m_display, DPMSModeOn);
   }
 #endif
-
-  // Restore local input as soon as the cursor returns to this screen.
-  releaseInputGrab();
-  XUnmapWindow(m_display, m_window);
-  XFlush(m_display);
 
   // maybe call this if entering for the screensaver
   // set keyboard focus to root window.  the screensaver should then
@@ -2228,6 +2227,7 @@ bool XWindowsScreen::grabMouseAndKeyboard()
     if (result != GrabSuccess) {
       // back off to avoid grab deadlock
       XUngrabKeyboard(m_display, CurrentTime);
+      XFlush(m_display);
       LOG_VERBOSE("ungrabbed keyboard, waiting to grab pointer");
       Arch::sleep(0.05);
       if (timer.getTime() >= s_timeout) {
