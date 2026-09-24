@@ -321,8 +321,10 @@ QVariant Settings::defaultValue(const QString &key)
   if (key == FileTransfer::MaxSpeedMibs)
     return 4; // ~4 MB/s leaves headroom for input on the shared TCP link
 
-  if (key == FileTransfer::ReceiveDir)
-    return QString();
+  if (key == FileTransfer::ReceiveDir) {
+    const QString downloads = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    return QDir(downloads).filePath(QString::fromUtf8(kAppName));
+  }
 
   return QVariant();
 }

@@ -384,20 +384,23 @@ bool MSWindowsScreen::setClipboard(ClipboardID id, const IClipboard *src)
     return true;
   }
 
-  // DCLIP (text) often arrives around the same switch as CFOR. Emptying the clipboard
+  // DCLIP often arrives around the same switch as CFOR. Emptying the clipboard
   // here would cancel delayed CF_HDROP and break paste-time file transfer — unless
-  // the update is real text from a companion sync, which must replace the clipboard.
+  // the update is real content from a companion sync (text or screenshot), which
+  // must replace the clipboard.
   if (m_hasDelayedFilePaste) {
-    bool hasText = false;
+    bool hasContent = false;
     if (src != nullptr && src->open(0)) {
-      hasText = src->has(IClipboard::Format::Text) && !src->get(IClipboard::Format::Text).empty();
+      const bool hasText = src->has(IClipboard::Format::Text) && !src->get(IClipboard::Format::Text).empty();
+      const bool hasBitmap = src->has(IClipboard::Format::Bitmap) && !src->get(IClipboard::Format::Bitmap).empty();
+      hasContent = hasText || hasBitmap;
       src->close();
     }
-    if (!hasText) {
+    if (!hasContent) {
       LOG_DEBUG("ignoring clipboard update; delayed file paste is armed");
       return true;
     }
-    LOG_DEBUG("clearing delayed file paste; applying text clipboard from peer");
+    LOG_DEBUG("clearing delayed file paste; applying clipboard from peer");
     clearDelayedFilePaste();
   }
 

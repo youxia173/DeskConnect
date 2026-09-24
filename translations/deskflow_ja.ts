@@ -813,6 +813,11 @@ Current Wi-Fi: %1</source>
         <source>Waiting for peer before full speed…</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Hostname or IP address of the server computer.
+Successfully connected addresses are remembered.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MouseLocatorBinding</name>

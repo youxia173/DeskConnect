@@ -235,10 +235,13 @@ void SettingsDialog::browseLogPath()
 
 void SettingsDialog::browseFileTransferDir()
 {
-  const QString dir =
-      QFileDialog::getExistingDirectory(this, tr("Select receive folder"), ui->lineFileTransferDir->text());
+  QString startDir = ui->lineFileTransferDir->text().trimmed();
+  if (startDir.isEmpty()) {
+    startDir = Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString();
+  }
+  const QString dir = QFileDialog::getExistingDirectory(this, tr("Select receive folder"), startDir);
   if (!dir.isEmpty()) {
-    ui->lineFileTransferDir->setText(dir);
+    ui->lineFileTransferDir->setText(QDir(dir).absolutePath());
   }
 }
 
@@ -335,7 +338,14 @@ void SettingsDialog::accept()
   Settings::setValue(Settings::Core::ScreenEnterCommand, ui->lineCommandEnter->text());
   Settings::setValue(Settings::Core::ScreenExitCommand, ui->lineCommandExit->text());
   Settings::setValue(Settings::FileTransfer::Enabled, ui->groupFileTransfer->isChecked());
-  Settings::setValue(Settings::FileTransfer::ReceiveDir, ui->lineFileTransferDir->text());
+  {
+    QString dir = ui->lineFileTransferDir->text().trimmed();
+    if (dir.isEmpty()) {
+      dir = Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString();
+    }
+    ui->lineFileTransferDir->setText(QDir(dir).absolutePath());
+    Settings::setValue(Settings::FileTransfer::ReceiveDir, ui->lineFileTransferDir->text());
+  }
   Settings::setValue(Settings::FileTransfer::MaxSizeMb, ui->sbFileTransferMaxMb->value());
   Settings::setValue(Settings::FileTransfer::LimitSpeed, ui->cbFileTransferLimitSpeed->isChecked());
   Settings::setValue(Settings::FileTransfer::MaxSpeedMibs, ui->sbFileTransferMaxSpeedMibs->value());
@@ -389,7 +399,13 @@ void SettingsDialog::loadFromConfig()
     ui->comboTheme->setCurrentIndex(themeIndex >= 0 ? themeIndex : 0);
   }
   ui->groupFileTransfer->setChecked(Settings::value(Settings::FileTransfer::Enabled).toBool());
-  ui->lineFileTransferDir->setText(Settings::value(Settings::FileTransfer::ReceiveDir).toString());
+  {
+    QString dir = Settings::value(Settings::FileTransfer::ReceiveDir).toString().trimmed();
+    if (dir.isEmpty()) {
+      dir = Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString();
+    }
+    ui->lineFileTransferDir->setText(QDir(dir).absolutePath());
+  }
   ui->sbFileTransferMaxMb->setValue(Settings::value(Settings::FileTransfer::MaxSizeMb).toInt());
   ui->cbFileTransferLimitSpeed->setChecked(Settings::value(Settings::FileTransfer::LimitSpeed).toBool());
   ui->sbFileTransferMaxSpeedMibs->setValue(Settings::value(Settings::FileTransfer::MaxSpeedMibs).toInt());
@@ -564,6 +580,11 @@ bool SettingsDialog::isModified() const
 {
   const auto processMode = Settings::value(Settings::Core::ProcessMode).value<Settings::ProcessMode>();
   const bool ignoreInterface = !m_interfaceSetOnLoad && (ui->comboInterface->currentIndex() == 0);
+  QString storedReceiveDir = Settings::value(Settings::FileTransfer::ReceiveDir).toString().trimmed();
+  if (storedReceiveDir.isEmpty()) {
+    storedReceiveDir = Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString();
+  }
+  storedReceiveDir = QDir(storedReceiveDir).absolutePath();
 
   bool modified =
       (ui->sbPort->value() != Settings::value(Settings::Core::Port).toInt()) ||
@@ -594,7 +615,7 @@ bool SettingsDialog::isModified() const
       (ui->lineCommandEnter->text() != Settings::value(Settings::Core::ScreenEnterCommand).toString()) ||
       (ui->lineCommandExit->text() != Settings::value(Settings::Core::ScreenExitCommand).toString()) ||
       (ui->groupFileTransfer->isChecked() != Settings::value(Settings::FileTransfer::Enabled).toBool()) ||
-      (ui->lineFileTransferDir->text() != Settings::value(Settings::FileTransfer::ReceiveDir).toString()) ||
+      (ui->lineFileTransferDir->text() != storedReceiveDir) ||
       (ui->sbFileTransferMaxMb->value() != Settings::value(Settings::FileTransfer::MaxSizeMb).toInt()) ||
       (ui->cbFileTransferLimitSpeed->isChecked() != Settings::value(Settings::FileTransfer::LimitSpeed).toBool()) ||
       (ui->sbFileTransferMaxSpeedMibs->value() != Settings::value(Settings::FileTransfer::MaxSpeedMibs).toInt()) ||
@@ -643,7 +664,8 @@ bool SettingsDialog::isDefault() const
       (ui->cbRunEnterCommand->isChecked() == Settings::defaultValue(Settings::Core::EnableEnterCommand).toBool()) &&
       (ui->cbRunExitCommand->isChecked() == Settings::defaultValue(Settings::Core::EnableExitCommand).toBool()) &&
       (ui->groupFileTransfer->isChecked() == Settings::defaultValue(Settings::FileTransfer::Enabled).toBool()) &&
-      (ui->lineFileTransferDir->text() == Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString()) &&
+      (ui->lineFileTransferDir->text() ==
+       QDir(Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString()).absolutePath()) &&
       (ui->sbFileTransferMaxMb->value() == Settings::defaultValue(Settings::FileTransfer::MaxSizeMb).toInt()) &&
       (ui->cbFileTransferLimitSpeed->isChecked() ==
        Settings::defaultValue(Settings::FileTransfer::LimitSpeed).toBool()) &&
@@ -684,7 +706,9 @@ void SettingsDialog::resetToDefault()
   ui->lineCommandEnter->setText(Settings::defaultValue(Settings::Core::ScreenEnterCommand).toString());
   ui->lineCommandExit->setText(Settings::defaultValue(Settings::Core::ScreenExitCommand).toString());
   ui->groupFileTransfer->setChecked(Settings::defaultValue(Settings::FileTransfer::Enabled).toBool());
-  ui->lineFileTransferDir->setText(Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString());
+  ui->lineFileTransferDir->setText(
+      QDir(Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString()).absolutePath()
+  );
   ui->sbFileTransferMaxMb->setValue(Settings::defaultValue(Settings::FileTransfer::MaxSizeMb).toInt());
   ui->cbFileTransferLimitSpeed->setChecked(Settings::defaultValue(Settings::FileTransfer::LimitSpeed).toBool());
   ui->sbFileTransferMaxSpeedMibs->setValue(Settings::defaultValue(Settings::FileTransfer::MaxSpeedMibs).toInt());

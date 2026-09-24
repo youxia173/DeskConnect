@@ -1577,22 +1577,29 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
   }
 
   bool hasText = false;
+  bool hasBitmap = false;
   if (clipboard.m_clipboard.open(0)) {
     hasText = clipboard.m_clipboard.has(IClipboard::Format::Text) &&
               !clipboard.m_clipboard.get(IClipboard::Format::Text).empty();
+    hasBitmap = clipboard.m_clipboard.has(IClipboard::Format::Bitmap) &&
+                !clipboard.m_clipboard.get(IClipboard::Format::Bitmap).empty();
     clipboard.m_clipboard.close();
   }
+  const bool hasContent = hasText || hasBitmap;
 
   // Primary Linux may report an empty marshall before ConvertSelection completes.
   // Do not treat that as a successful update (would block retries / wipe peers).
+  // Screenshots are Bitmap-only (no Text) — still valid clipboard content.
   if (sender == m_primaryClient) {
-    if (!hasText) {
-      LOG_DEBUG("primary clipboard %u has no text yet; waiting for retry", static_cast<unsigned>(id));
+    if (!hasContent) {
+      LOG_DEBUG("primary clipboard %u empty yet; waiting for retry", static_cast<unsigned>(id));
       return;
     }
-  } else if (!hasText) {
-    // Companion sent DCLP but unmarshall produced no text — do not ACK or wipe peers.
-    LOG_WARN("ignored clipboard %u from \"%s\": no text after unmarshall", static_cast<unsigned>(id), getName(sender).c_str());
+  } else if (!hasContent) {
+    // Companion sent DCLP but unmarshall produced no usable payload — do not ACK or wipe peers.
+    LOG_WARN(
+        "ignored clipboard %u from \"%s\": empty after unmarshall", static_cast<unsigned>(id), getName(sender).c_str()
+    );
     return;
   }
 

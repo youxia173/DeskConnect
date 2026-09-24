@@ -382,20 +382,24 @@ bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
     return false;
   }
 
-  // Phone/companion text sync must win over an armed delayed file paste;
+  // Phone/companion clipboard sync must win over an armed delayed file paste;
   // otherwise Linux keeps an empty CLIPBOARD after grab+ignored set.
   if (m_hasDelayedFilePaste && id == kClipboardClipboard) {
     if (clipboard == nullptr) {
       LOG_DEBUG("ignoring empty clipboard grab; delayed file paste is armed");
       return true;
     }
-    bool hasText = false;
+    bool hasContent = false;
     if (clipboard->open(0)) {
-      hasText = clipboard->has(IClipboard::Format::Text) && !clipboard->get(IClipboard::Format::Text).empty();
+      const bool hasText =
+          clipboard->has(IClipboard::Format::Text) && !clipboard->get(IClipboard::Format::Text).empty();
+      const bool hasBitmap =
+          clipboard->has(IClipboard::Format::Bitmap) && !clipboard->get(IClipboard::Format::Bitmap).empty();
+      hasContent = hasText || hasBitmap;
       clipboard->close();
     }
-    if (hasText) {
-      LOG_DEBUG("clearing delayed file paste; applying text clipboard from peer");
+    if (hasContent) {
+      LOG_DEBUG("clearing delayed file paste; applying clipboard from peer");
       clearDelayedFilePaste();
     } else {
       LOG_DEBUG("ignoring clipboard update; delayed file paste is armed");

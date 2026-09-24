@@ -235,9 +235,13 @@ uint64_t transferSpeedLimitBytesPerSec()
 
 std::string ensureReceiveDirectory()
 {
-  QString dir = Settings::value(Settings::FileTransfer::ReceiveDir).toString();
+  QString dir = Settings::value(Settings::FileTransfer::ReceiveDir).toString().trimmed();
   if (dir.isEmpty()) {
-    dir = QString::fromStdString(defaultReceiveDirectory());
+    dir = Settings::defaultValue(Settings::FileTransfer::ReceiveDir).toString();
+    // Persist so settings UI and later sessions keep the same path instead of
+    // looking "reset" to the placeholder default every time.
+    Settings::setValue(Settings::FileTransfer::ReceiveDir, dir);
+    Settings::save(false);
   }
   if (!QDir().mkpath(dir)) {
     LOG_ERR("failed to create file receive directory: %s", qPrintable(dir));
