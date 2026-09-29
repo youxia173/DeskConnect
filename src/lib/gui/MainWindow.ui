@@ -476,6 +476,16 @@
               <number>0</number>
              </property>
              <item>
+              <widget class="QCheckBox" name="cbDirectEthernet">
+               <property name="toolTip">
+                <string>Use the Ethernet cable instead of Wi-Fi. Both computers need an IPv4 address on the wired adapter (link-local 169.254.x.x is fine).</string>
+               </property>
+               <property name="text">
+                <string>Direct Ethernet</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="btnToggleCore">
                <property name="enabled">
                 <bool>false</bool>

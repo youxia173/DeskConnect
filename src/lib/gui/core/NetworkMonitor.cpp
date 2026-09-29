@@ -13,6 +13,9 @@
 #include <QSet>
 #include <QTimer>
 
+#include <algorithm>
+#include <optional>
+
 namespace deskflow::gui {
 
 bool NetworkMonitor::isVirtualInterface(const QString &interfaceName)
@@ -125,6 +128,97 @@ QStringList NetworkMonitor::validAddresses()
     ipList.append(host.toString());
   }
   return ipList;
+}
+
+namespace {
+
+bool isEthernetNic(const QNetworkInterface &iface)
+{
+  if (iface.type() == QNetworkInterface::Wifi || iface.type() == QNetworkInterface::Ieee80211 ||
+      iface.type() == QNetworkInterface::Loopback || iface.type() == QNetworkInterface::Virtual ||
+      iface.type() == QNetworkInterface::Ppp || iface.type() == QNetworkInterface::Slip) {
+    return false;
+  }
+  if (iface.type() == QNetworkInterface::Ethernet) {
+    return true;
+  }
+  static const auto namePattern = QRegularExpression(
+      QStringLiteral("以太网|ethernet|\\beth\\d|\\benp|\\benx|\\beno"), QRegularExpression::CaseInsensitiveOption
+  );
+  const auto label = iface.humanReadableName() + QLatin1Char(' ') + iface.name();
+  return namePattern.match(label).hasMatch();
+}
+
+bool inPrefix(const QHostAddress &local, const QHostAddress &peer, int prefixLength)
+{
+  if (local.protocol() != QHostAddress::IPv4Protocol || peer.protocol() != QHostAddress::IPv4Protocol) {
+    return false;
+  }
+  if (prefixLength <= 0 || prefixLength > 32) {
+    return false;
+  }
+  const quint32 mask = prefixLength == 32 ? 0xffffffffu : (0xffffffffu << (32 - prefixLength));
+  return (local.toIPv4Address() & mask) == (peer.toIPv4Address() & mask);
+}
+
+} // namespace
+
+bool NetworkMonitor::sameEthernetLink(const QString &localIp, const QString &peerIp, int prefixLength)
+{
+  return inPrefix(QHostAddress(localIp), QHostAddress(peerIp), prefixLength);
+}
+
+std::optional<EthernetNic> NetworkMonitor::ethernetNic()
+{
+  struct Candidate
+  {
+    EthernetNic nic;
+    bool linkLocal = false;
+  };
+  QList<Candidate> found;
+
+  const auto allInterfaces = QNetworkInterface::allInterfaces();
+  for (const auto &interface : allInterfaces) {
+    if (!(interface.flags() & QNetworkInterface::IsUp) || !(interface.flags() & QNetworkInterface::IsRunning) ||
+        (interface.flags() & QNetworkInterface::IsLoopBack)) {
+      continue;
+    }
+    if (isVirtualInterface(interface.humanReadableName()) || isVirtualInterface(interface.name()) ||
+        !isEthernetNic(interface)) {
+      continue;
+    }
+
+    for (const auto &entry : interface.addressEntries()) {
+      const QHostAddress address = entry.ip();
+      if (address.protocol() != QHostAddress::IPv4Protocol || address.isLoopback()) {
+        continue;
+      }
+      EthernetNic nic;
+      nic.ip = address.toString();
+      const int reportedPrefix = entry.prefixLength();
+      if (reportedPrefix > 0 && reportedPrefix < 32) {
+        nic.prefixLength = reportedPrefix;
+      } else {
+        nic.prefixLength = address.isLinkLocal() ? 16 : 24;
+      }
+      nic.broadcast = entry.broadcast();
+      if (nic.broadcast.isNull()) {
+        nic.broadcast = QHostAddress::Broadcast;
+      }
+      found.append(Candidate{nic, address.isLinkLocal()});
+    }
+  }
+
+  const auto linkLocal = std::find_if(found.cbegin(), found.cend(), [](const Candidate &item) {
+    return item.linkLocal;
+  });
+  if (linkLocal != found.cend()) {
+    return linkLocal->nic;
+  }
+  if (!found.isEmpty()) {
+    return found.first().nic;
+  }
+  return std::nullopt;
 }
 
 void NetworkMonitor::setIpAddresses(const QStringList &newAddresses)

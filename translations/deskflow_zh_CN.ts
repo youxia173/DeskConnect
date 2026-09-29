@@ -796,6 +796,32 @@ Current Wi-Fi: %1</source>
 Successfully connected addresses are remembered.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use the Ethernet cable instead of Wi-Fi. Both computers need an IPv4 address on the wired adapter (link-local 169.254.x.x is fine).</source>
+        <translation>使用网线而不是 Wi-Fi。两台电脑的有线网卡都需要有 IPv4 地址（169.254.x.x 本地链路地址也可以）。</translation>
+    </message>
+    <message>
+        <source>Direct Ethernet</source>
+        <translation>网线直连</translation>
+    </message>
+    <message>
+        <source>The Ethernet adapter is not ready. Turn the cable on and give it an IPv4 address, including a 169.254 link-local address.</source>
+        <translation>有线网卡还没准备好。请接通网线并分配 IPv4 地址，169.254 本地链路地址也可以。</translation>
+    </message>
+    <message>
+        <source>Waiting for the other computer on the Ethernet cable.</source>
+        <translation>正在等待网线另一端的电脑。</translation>
+    </message>
+    <message>
+        <source>Waiting for the other computer on the Ethernet cable.
+This computer: %1</source>
+        <translation>正在等待网线另一端的电脑。
+本机地址：%1</translation>
+    </message>
+    <message>
+        <source>Ethernet cable is not ready. The wired adapter needs an IPv4 address.</source>
+        <translation>网线还没准备好。有线网卡需要有一个 IPv4 地址。</translation>
+    </message>
 </context>
 <context>
     <name>MouseLocatorBinding</name>

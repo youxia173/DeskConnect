@@ -818,6 +818,31 @@ Current Wi-Fi: %1</source>
 Successfully connected addresses are remembered.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use the Ethernet cable instead of Wi-Fi. Both computers need an IPv4 address on the wired adapter (link-local 169.254.x.x is fine).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Direct Ethernet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Ethernet adapter is not ready. Turn the cable on and give it an IPv4 address, including a 169.254 link-local address.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for the other computer on the Ethernet cable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for the other computer on the Ethernet cable.
+This computer: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ethernet cable is not ready. The wired adapter needs an IPv4 address.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MouseLocatorBinding</name>

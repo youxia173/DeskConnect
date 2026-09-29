@@ -51,6 +51,8 @@ add_library(${target} STATIC
   config/ServerConfig.h
   core/CoreProcess.cpp
   core/CoreProcess.h
+  core/EthernetBeacon.cpp
+  core/EthernetBeacon.h
   core/NetworkMonitor.cpp
   core/NetworkMonitor.h
   dialogs/AboutDialog.cpp

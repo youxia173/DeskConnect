@@ -30,6 +30,8 @@
 #include "gui/TlsUtility.h"
 #include "gui/WifiInfo.h"
 #include "gui/core/CoreProcess.h"
+#include "gui/core/EthernetBeacon.h"
+#include "gui/core/NetworkMonitor.h"
 #include "gui/ipc/DaemonIpcClient.h"
 #include "gui/widgets/LogDock.h"
 #include "net/FingerprintDatabase.h"
@@ -165,6 +167,7 @@ MainWindow::MainWindow()
   createMenuBar();
   setupControls();
   updateText();
+  m_ethernetBeacon = new EthernetBeacon(this);
   connectSlots();
   setupTrayIcon();
   updateScreenName();
@@ -390,6 +393,9 @@ void MainWindow::connectSlots()
     connect(hostnameEdit, &QLineEdit::returnPressed, ui->btnRestartCore, &QPushButton::click);
   }
   connect(ui->btnRemoveHostname, &QToolButton::clicked, this, &MainWindow::removeSelectedHostnameFromHistory);
+  connect(ui->cbDirectEthernet, &QCheckBox::toggled, this, &MainWindow::directEthernetToggled);
+  connect(m_ethernetBeacon, &EthernetBeacon::peerFound, this, &MainWindow::onDirectPeerFound);
+  connect(m_ethernetBeacon, &EthernetBeacon::localNicChanged, this, &MainWindow::onDirectNicChanged);
 
   connect(ui->btnSaveServerConfig, &QPushButton::clicked, this, &MainWindow::saveServerConfig);
   connect(ui->btnConfigureServer, &QPushButton::clicked, this, [this] { showConfigureServer(""); });
@@ -532,6 +538,26 @@ void MainWindow::coreProcessError(CoreProcess::Error error)
 
 void MainWindow::startCore()
 {
+  m_directUserHold = false;
+  if (directEthernetEnabled()) {
+    const auto nic = NetworkMonitor::ethernetNic();
+    if (!nic) {
+      QMessageBox::information(
+          this, kAppName,
+          tr("The Ethernet adapter is not ready. Turn the cable on and give it an IPv4 address, including a "
+             "169.254 link-local address.")
+      );
+      return;
+    }
+    Settings::setValue(Settings::Core::Interface, nic->ip);
+    if (m_coreProcess.mode() == CoreMode::Client && currentHostname().isEmpty()) {
+      QMessageBox::information(
+          this, kAppName, tr("Waiting for the other computer on the Ethernet cable.")
+      );
+      return;
+    }
+  }
+
   // Save current IP state when server starts
   if (m_coreProcess.mode() == CoreMode::Server && Settings::value(Settings::Core::Interface).toString().isEmpty()) {
     m_serverStartIPs = NetworkMonitor::validAddresses();
@@ -553,6 +579,9 @@ void MainWindow::startCore()
 void MainWindow::stopCore()
 {
   qDebug() << "stopping core process";
+  if (directEthernetEnabled()) {
+    m_directUserHold = true;
+  }
   m_coreProcess.stop();
   m_actionStartCore->setVisible(true);
   m_actionRestartCore->setVisible(false);
@@ -652,6 +681,10 @@ void MainWindow::coreModeToggled(bool checked)
 
   Settings::setValue(Settings::Core::CoreMode, mode);
   Settings::save();
+
+  if (directEthernetEnabled()) {
+    m_ethernetBeacon->start(mode == Settings::CoreMode::Server);
+  }
 
   updateModeControls();
 }
@@ -844,6 +877,15 @@ void MainWindow::applyConfig()
   }
 
   loadHostnameHistory();
+
+  const bool directEthernet = Settings::value(Settings::Core::DirectEthernet).toBool();
+  {
+    const QSignalBlocker blocker(ui->cbDirectEthernet);
+    ui->cbDirectEthernet->setChecked(directEthernet);
+  }
+  if (directEthernet) {
+    syncDirectEthernet();
+  }
 
   updateFingerprintButton();
   setTrayIcon();
@@ -1709,6 +1751,9 @@ QString MainWindow::hostForCurrentWifi()
 
 void MainWindow::refreshHostnameForCurrentWifi()
 {
+  if (directEthernetEnabled()) {
+    return;
+  }
   if (m_coreProcess.mode() != CoreMode::Client) {
     return;
   }
@@ -1735,6 +1780,9 @@ void MainWindow::maybeAutoStartCore()
 {
   using enum ProcessState;
   if (m_coreProcess.processState() != Stopped) {
+    return;
+  }
+  if (directEthernetEnabled()) {
     return;
   }
   if (!Settings::value(Settings::Gui::AutoStartCore).toBool()) {
@@ -1768,6 +1816,33 @@ void MainWindow::loadHostnameHistory()
   auto history = Settings::value(Settings::Client::RemoteHostHistory).toStringList();
   history.removeAll(QString());
   history.removeDuplicates();
+
+  if (directEthernetEnabled()) {
+    QString currentHost = typedHost;
+    if (!currentHost.isEmpty() && !history.contains(currentHost)) {
+      history.prepend(currentHost);
+    }
+    ui->comboHostname->addItems(history);
+    if (!currentHost.isEmpty()) {
+      const auto index = ui->comboHostname->findText(currentHost);
+      if (index >= 0) {
+        ui->comboHostname->setCurrentIndex(index);
+      } else {
+        ui->comboHostname->setEditText(currentHost);
+      }
+    } else {
+      ui->comboHostname->setCurrentIndex(-1);
+      ui->comboHostname->setEditText(QString());
+    }
+    const auto nic = NetworkMonitor::ethernetNic();
+    ui->comboHostname->setToolTip(
+        nic ? tr("Waiting for the other computer on the Ethernet cable.\nThis computer: %1").arg(nic->ip)
+            : tr("Ethernet cable is not ready. The wired adapter needs an IPv4 address.")
+    );
+    ui->btnRemoveHostname->setEnabled(ui->comboHostname->count() > 0 || !currentHostname().isEmpty());
+    remoteHostChanged(currentHostname());
+    return;
+  }
 
   const auto currentSsid = WifiInfo::currentSsid();
   const auto wifiHost = hostForWifi(currentSsid);
@@ -1858,14 +1933,16 @@ void MainWindow::rememberSuccessfulHost()
   Settings::setValue(Settings::Client::RemoteHostHistory, history);
   Settings::setValue(Settings::Client::RemoteHost, host);
 
-  // Bind only to the Wi-Fi this session started on. If the user switched networks
-  // while connected/reconnecting, do not overwrite the new Wi-Fi's remembered IP.
-  const auto ssidNow = WifiInfo::currentSsid();
-  const auto ssidToBind = !m_ssidWhenStarted.isEmpty() ? m_ssidWhenStarted : ssidNow;
-  if (!ssidToBind.isEmpty() && (m_ssidWhenStarted.isEmpty() || ssidNow.isEmpty() || ssidNow == m_ssidWhenStarted)) {
-    bindHostToWifi(ssidToBind, host);
-  } else {
-    qInfo() << "skip wifi host bind; session wifi" << m_ssidWhenStarted << "current" << ssidNow << "host" << host;
+  if (!directEthernetEnabled()) {
+    // Bind only to the Wi-Fi this session started on. If the user switched networks
+    // while connected/reconnecting, do not overwrite the new Wi-Fi's remembered IP.
+    const auto ssidNow = WifiInfo::currentSsid();
+    const auto ssidToBind = !m_ssidWhenStarted.isEmpty() ? m_ssidWhenStarted : ssidNow;
+    if (!ssidToBind.isEmpty() && (m_ssidWhenStarted.isEmpty() || ssidNow.isEmpty() || ssidNow == m_ssidWhenStarted)) {
+      bindHostToWifi(ssidToBind, host);
+    } else {
+      qInfo() << "skip wifi host bind; session wifi" << m_ssidWhenStarted << "current" << ssidNow << "host" << host;
+    }
   }
 
   const QSignalBlocker blocker(ui->comboHostname);
@@ -1912,4 +1989,131 @@ void MainWindow::removeSelectedHostnameFromHistory()
 
   ui->btnRemoveHostname->setEnabled(ui->comboHostname->count() > 0 || !nextHost.isEmpty());
   remoteHostChanged(nextHost);
+}
+
+bool MainWindow::directEthernetEnabled() const
+{
+  return Settings::value(Settings::Core::DirectEthernet).toBool();
+}
+
+void MainWindow::captureInterfaceForDirectEthernet()
+{
+  if (Settings::value(Settings::Core::DirectEthernetSaved).toBool()) {
+    return;
+  }
+  Settings::setValue(
+      Settings::Core::DirectEthernetSavedInterface, Settings::value(Settings::Core::Interface).toString()
+  );
+  Settings::setValue(Settings::Core::DirectEthernetSaved, true);
+}
+
+void MainWindow::restoreInterfaceAfterDirectEthernet()
+{
+  if (!Settings::value(Settings::Core::DirectEthernetSaved).toBool()) {
+    return;
+  }
+  const auto saved = Settings::value(Settings::Core::DirectEthernetSavedInterface).toString();
+  if (saved.isEmpty()) {
+    Settings::setValue(Settings::Core::Interface, QVariant());
+  } else {
+    Settings::setValue(Settings::Core::Interface, saved);
+  }
+  Settings::setValue(Settings::Core::DirectEthernetSaved, QVariant());
+  Settings::setValue(Settings::Core::DirectEthernetSavedInterface, QVariant());
+}
+
+void MainWindow::directEthernetToggled(bool checked)
+{
+  Settings::setValue(Settings::Core::DirectEthernet, checked);
+  Settings::save();
+  if (checked) {
+    m_directUserHold = false;
+    captureInterfaceForDirectEthernet();
+    if (m_coreProcess.mode() == CoreMode::Client) {
+      const QSignalBlocker blocker(ui->comboHostname);
+      ui->comboHostname->setCurrentIndex(-1);
+      ui->comboHostname->setEditText(QString());
+      remoteHostChanged(QString());
+    }
+  }
+  syncDirectEthernet();
+}
+
+void MainWindow::syncDirectEthernet()
+{
+  if (!directEthernetEnabled()) {
+    m_ethernetBeacon->stop();
+    restoreInterfaceAfterDirectEthernet();
+    loadHostnameHistory();
+    return;
+  }
+
+  captureInterfaceForDirectEthernet();
+  m_ethernetBeacon->start(m_coreProcess.mode() == CoreMode::Server);
+  const auto nic = NetworkMonitor::ethernetNic();
+  if (m_coreProcess.mode() == CoreMode::Client) {
+    ui->comboHostname->setToolTip(
+        nic ? tr("Waiting for the other computer on the Ethernet cable.\nThis computer: %1").arg(nic->ip)
+            : tr("Ethernet cable is not ready. The wired adapter needs an IPv4 address.")
+    );
+  }
+}
+
+void MainWindow::onDirectNicChanged(const QString &ip)
+{
+  if (!directEthernetEnabled()) {
+    return;
+  }
+
+  if (ip.isEmpty()) {
+    if (m_coreProcess.mode() == CoreMode::Client) {
+      ui->comboHostname->setToolTip(tr("Ethernet cable is not ready. The wired adapter needs an IPv4 address."));
+    }
+    return;
+  }
+
+  const auto previous = Settings::value(Settings::Core::Interface).toString();
+  Settings::setValue(Settings::Core::Interface, ip);
+  if (m_coreProcess.mode() == CoreMode::Client) {
+    ui->comboHostname->setToolTip(tr("Waiting for the other computer on the Ethernet cable.\nThis computer: %1").arg(ip));
+  }
+
+  using enum ProcessState;
+  if (m_coreProcess.processState() != Stopped && previous != ip) {
+    m_coreProcess.restart();
+    return;
+  }
+
+  if (m_directUserHold || m_coreProcess.processState() != Stopped) {
+    return;
+  }
+  if (m_coreProcess.mode() == CoreMode::Server) {
+    startCore();
+  }
+}
+
+void MainWindow::onDirectPeerFound(const QString &ip)
+{
+  if (!directEthernetEnabled() || m_coreProcess.mode() != CoreMode::Client || ip.isEmpty()) {
+    return;
+  }
+
+  const bool sameHost = currentHostname() == ip;
+  if (!sameHost) {
+    const QSignalBlocker blocker(ui->comboHostname);
+    const auto existing = ui->comboHostname->findText(ip);
+    if (existing >= 0) {
+      ui->comboHostname->setCurrentIndex(existing);
+    } else {
+      ui->comboHostname->insertItem(0, ip);
+      ui->comboHostname->setCurrentIndex(0);
+    }
+    remoteHostChanged(ip);
+  }
+
+  using enum ProcessState;
+  if (m_directUserHold || m_coreProcess.processState() != Stopped) {
+    return;
+  }
+  startCore();
 }

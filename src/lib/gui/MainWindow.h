@@ -21,6 +21,7 @@
 #include "common/Constants.h"
 #include "config/ServerConfig.h"
 #include "gui/core/CoreProcess.h"
+#include "gui/core/EthernetBeacon.h"
 #include "gui/core/NetworkMonitor.h"
 #include "net/Fingerprint.h"
 
@@ -51,6 +52,7 @@ class MainWindow : public QMainWindow
   using CoreMode = Settings::CoreMode;
   using CoreProcess = deskflow::gui::CoreProcess;
   using NetworkMonitor = deskflow::gui::NetworkMonitor;
+  using EthernetBeacon = deskflow::gui::EthernetBeacon;
   using ProcessState = deskflow::core::ProcessState;
 
   Q_OBJECT
@@ -160,6 +162,13 @@ private:
   void maybeAutoStartCore();
   void rememberSuccessfulHost();
   void removeSelectedHostnameFromHistory();
+  void directEthernetToggled(bool checked);
+  void syncDirectEthernet();
+  void captureInterfaceForDirectEthernet();
+  void restoreInterfaceAfterDirectEthernet();
+  void onDirectPeerFound(const QString &ip);
+  void onDirectNicChanged(const QString &ip);
+  [[nodiscard]] bool directEthernetEnabled() const;
   [[nodiscard]] QString currentHostname() const;
   [[nodiscard]] static QMap<QString, QString> wifiHostMap();
   static void saveWifiHostMap(const QMap<QString, QString> &map);
@@ -232,6 +241,9 @@ private:
 
   // Network monitoring
   NetworkMonitor *m_networkMonitor = nullptr;
+  EthernetBeacon *m_ethernetBeacon = nullptr;
+  //! User pressed Stop while direct Ethernet is on; do not immediately start again.
+  bool m_directUserHold = false;
   QString m_currentIpAddress;
   //! SSID observed when the user started this core session (client).
   QString m_ssidWhenStarted;

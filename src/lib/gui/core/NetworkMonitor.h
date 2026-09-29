@@ -10,8 +10,17 @@
 #include <QList>
 #include <QObject>
 
+#include <optional>
+
 class QTimer;
 namespace deskflow::gui {
+
+struct EthernetNic
+{
+  QString ip;
+  QHostAddress broadcast;
+  int prefixLength = 32;
+};
 
 /**
  * @brief Monitor network activity changes and provide IP address updates
@@ -51,6 +60,14 @@ public:
    * @return IP address list
    */
   static QStringList validAddresses();
+
+  /**
+   * @brief First usable Ethernet IPv4, including 169.254 link-local addresses.
+   * Link-local is preferred when present (typical for a cable with no DHCP).
+   */
+  static std::optional<EthernetNic> ethernetNic();
+
+  static bool sameEthernetLink(const QString &localIp, const QString &peerIp, int prefixLength);
 
   /**
    * @brief Check if a network interface is virtual

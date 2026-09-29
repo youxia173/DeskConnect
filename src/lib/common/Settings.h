@@ -51,6 +51,11 @@ public:
   {
     inline static const auto CoreMode = QStringLiteral("core/coreMode");
     inline static const auto Interface = QStringLiteral("core/interface");
+    //! When true, bind to the Ethernet NIC and discover the peer on that link.
+    inline static const auto DirectEthernet = QStringLiteral("core/directEthernet");
+    //! True after DirectEthernet captured the previous core/interface value.
+    inline static const auto DirectEthernetSaved = QStringLiteral("core/directEthernetSaved");
+    inline static const auto DirectEthernetSavedInterface = QStringLiteral("core/directEthernetSavedInterface");
     inline static const auto LastVersion = QStringLiteral("core/lastVersion");
     inline static const auto Port = QStringLiteral("core/port");
     inline static const auto PreventSleep = QStringLiteral("core/preventSleep");
@@ -293,6 +298,9 @@ private:
     , Client::XScrollScale
     , Core::CoreMode
     , Core::Interface
+    , Core::DirectEthernet
+    , Core::DirectEthernetSaved
+    , Core::DirectEthernetSavedInterface
     , Core::LastVersion
     , Core::Port
     , Core::PreventSleep
@@ -374,6 +382,8 @@ private:
     , Gui::IgnoreMissingKeyboardLayouts
     , Gui::ShellSendMenu
     , Core::PreventSleep
+    , Core::DirectEthernet
+    , Core::DirectEthernetSaved
     , Core::EnableEnterCommand
     , Core::EnableExitCommand
     , Client::DynamicConnectionRetry
