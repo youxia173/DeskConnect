@@ -819,19 +819,7 @@ Successfully connected addresses are remembered.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Use the Ethernet cable instead of Wi-Fi. Both computers need an IPv4 address on the wired adapter (link-local 169.254.x.x is fine).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Direct Ethernet</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The Ethernet adapter is not ready. Turn the cable on and give it an IPv4 address, including a 169.254 link-local address.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Waiting for the other computer on the Ethernet cable.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -841,6 +829,46 @@ This computer: %1</source>
     </message>
     <message>
         <source>Ethernet cable is not ready. The wired adapter needs an IPv4 address.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use a dedicated cable between two computers, without a router or DHCP. The server uses 169.254.248.1/16 and the client uses 169.254.248.2/16. Both may request permission to add an address. A wired adapter already connected to a network cannot be used.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not set the direct Ethernet address %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect a dedicated Ethernet cable before starting.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preparing wired address %1; authorize the network change if prompted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Ethernet adapter is not ready. Connect the dedicated cable and retry.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Using IP: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preparing direct Ethernet address...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect the client to %1 over the Ethernet cable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect the cable and authorize the network address change if prompted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Direct Ethernet needs a connected wired adapter without an Internet or LAN connection. The available wired adapter is already connected to a network, or no cable is connected.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1945,6 +1973,45 @@ You may need to restart the connection if it was blocked before.</source>
     <message>
         <source>Encryption Disabled</source>
         <translation>暗号化無効</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::EthernetBeacon</name>
+    <message>
+        <source>The Linux ip command was not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>pkexec is required to configure the Ethernet address.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not identify the Windows Ethernet adapter.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find the Windows system directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows PowerShell is required to authorize the Ethernet address.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find the DeskConnect executable for the elevated address setup.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatic Ethernet address setup is unavailable on this operating system.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not configure the Ethernet address (code %1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not start the Ethernet address setup command.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

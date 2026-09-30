@@ -396,6 +396,13 @@ void MainWindow::connectSlots()
   connect(ui->cbDirectEthernet, &QCheckBox::toggled, this, &MainWindow::directEthernetToggled);
   connect(m_ethernetBeacon, &EthernetBeacon::peerFound, this, &MainWindow::onDirectPeerFound);
   connect(m_ethernetBeacon, &EthernetBeacon::localNicChanged, this, &MainWindow::onDirectNicChanged);
+  connect(m_ethernetBeacon, &EthernetBeacon::addressSetupFailed, this, [this](const QString &reason) {
+    if (directEthernetEnabled()) {
+      const auto ip = m_coreProcess.mode() == CoreMode::Server ? EthernetBeacon::serverIp()
+                                                               : NetworkMonitor::directClientIp();
+      QMessageBox::warning(this, kAppName, tr("Could not set the direct Ethernet address %1: %2").arg(ip, reason));
+    }
+  });
 
   connect(ui->btnSaveServerConfig, &QPushButton::clicked, this, &MainWindow::saveServerConfig);
   connect(ui->btnConfigureServer, &QPushButton::clicked, this, [this] { showConfigureServer(""); });
@@ -540,21 +547,37 @@ void MainWindow::startCore()
 {
   m_directUserHold = false;
   if (directEthernetEnabled()) {
-    const auto nic = NetworkMonitor::ethernetNic();
+    const auto nic = NetworkMonitor::ethernetNic(
+        m_coreProcess.mode() == CoreMode::Server ? EthernetBeacon::serverIp() : NetworkMonitor::directClientIp()
+    );
+    if (!m_ethernetBeacon->addressReady()) {
+      if (NetworkMonitor::ethernetInterfaceName().isEmpty()) {
+        QMessageBox::information(this, kAppName, tr("Connect a dedicated Ethernet cable before starting."));
+        return;
+      }
+      m_ethernetBeacon->start(m_coreProcess.mode() == CoreMode::Server);
+      m_ethernetBeacon->retryAddressSetup();
+      m_directPendingStart = true;
+      const auto ip = m_coreProcess.mode() == CoreMode::Server ? EthernetBeacon::serverIp()
+                                                               : NetworkMonitor::directClientIp();
+      statusBar()->showMessage(
+          tr("Preparing wired address %1; authorize the network change if prompted.").arg(ip),
+          10000
+      );
+      return;
+    }
     if (!nic) {
       QMessageBox::information(
           this, kAppName,
-          tr("The Ethernet adapter is not ready. Turn the cable on and give it an IPv4 address, including a "
-             "169.254 link-local address.")
+          tr("The Ethernet adapter is not ready. Connect the dedicated cable and retry.")
       );
       return;
     }
     Settings::setValue(Settings::Core::Interface, nic->ip);
-    if (m_coreProcess.mode() == CoreMode::Client && currentHostname().isEmpty()) {
-      QMessageBox::information(
-          this, kAppName, tr("Waiting for the other computer on the Ethernet cable.")
-      );
-      return;
+    if (m_coreProcess.mode() == CoreMode::Client) {
+      const QSignalBlocker blocker(ui->comboHostname);
+      ui->comboHostname->setEditText(EthernetBeacon::serverIp());
+      remoteHostChanged(EthernetBeacon::serverIp());
     }
   }
 
@@ -573,12 +596,14 @@ void MainWindow::startCore()
 
   m_actionStartCore->setVisible(false);
   m_actionRestartCore->setVisible(true);
+  m_directPendingStart = false;
   m_coreProcess.start();
 }
 
 void MainWindow::stopCore()
 {
   qDebug() << "stopping core process";
+  m_directPendingStart = false;
   if (directEthernetEnabled()) {
     m_directUserHold = true;
   }
@@ -683,7 +708,7 @@ void MainWindow::coreModeToggled(bool checked)
   Settings::save();
 
   if (directEthernetEnabled()) {
-    m_ethernetBeacon->start(mode == Settings::CoreMode::Server);
+    syncDirectEthernet();
   }
 
   updateModeControls();
@@ -878,13 +903,18 @@ void MainWindow::applyConfig()
 
   loadHostnameHistory();
 
-  const bool directEthernet = Settings::value(Settings::Core::DirectEthernet).toBool();
+  const bool requestedDirectEthernet = Settings::value(Settings::Core::DirectEthernet).toBool();
+  const bool directEthernet = requestedDirectEthernet && !NetworkMonitor::ethernetInterfaceName().isEmpty();
+  Settings::setValue(Settings::Core::DirectEthernet, directEthernet);
   {
     const QSignalBlocker blocker(ui->cbDirectEthernet);
     ui->cbDirectEthernet->setChecked(directEthernet);
   }
   if (directEthernet) {
     syncDirectEthernet();
+  } else if (requestedDirectEthernet) {
+    syncDirectEthernet();
+    Settings::save();
   }
 
   updateFingerprintButton();
@@ -1174,6 +1204,15 @@ void MainWindow::coreProcessStateChanged(ProcessState state)
     if (state == Stopped) {
       m_ssidWhenStarted.clear();
       scheduleHostnameWifiRefresh();
+      if (m_directPendingStart && directEthernetEnabled() && !m_directUserHold) {
+        if (m_ethernetBeacon->addressReady()) {
+          m_directPendingStart = false;
+          QTimer::singleShot(0, this, [this] {
+            if (directEthernetEnabled() && m_coreProcess.processState() == ProcessState::Stopped && !m_directUserHold)
+              startCore();
+          });
+        }
+      }
     }
   }
   updateModeControlLabels();
@@ -1575,6 +1614,18 @@ void MainWindow::updateIpLabel(const QStringList &addresses)
     return;
   }
 
+  if (directEthernetEnabled() && mode == CoreMode::Server) {
+    const bool ready = m_ethernetBeacon->serverAddressReady();
+    ui->lblIpAddresses->setText(
+        ready ? tr("Using IP: %1").arg(EthernetBeacon::serverIp()) : tr("Preparing direct Ethernet address...")
+    );
+    ui->lblIpAddresses->setToolTip(
+        ready ? tr("Connect the client to %1 over the Ethernet cable.").arg(EthernetBeacon::serverIp())
+              : tr("Connect the cable and authorize the network address change if prompted.")
+    );
+    return;
+  }
+
   static const auto colorText = QStringLiteral(R"(<span style="color:%1;">%2</span>)");
   const bool serverStarted = m_coreProcess.isStarted();
   const bool fixedIP = !Settings::value(Settings::Core::Interface).toString().isEmpty();
@@ -1818,23 +1869,9 @@ void MainWindow::loadHostnameHistory()
   history.removeDuplicates();
 
   if (directEthernetEnabled()) {
-    QString currentHost = typedHost;
-    if (!currentHost.isEmpty() && !history.contains(currentHost)) {
-      history.prepend(currentHost);
-    }
-    ui->comboHostname->addItems(history);
-    if (!currentHost.isEmpty()) {
-      const auto index = ui->comboHostname->findText(currentHost);
-      if (index >= 0) {
-        ui->comboHostname->setCurrentIndex(index);
-      } else {
-        ui->comboHostname->setEditText(currentHost);
-      }
-    } else {
-      ui->comboHostname->setCurrentIndex(-1);
-      ui->comboHostname->setEditText(QString());
-    }
-    const auto nic = NetworkMonitor::ethernetNic();
+    ui->comboHostname->setEditText(EthernetBeacon::serverIp());
+    remoteHostChanged(EthernetBeacon::serverIp());
+    const auto nic = NetworkMonitor::ethernetNic(NetworkMonitor::directClientIp());
     ui->comboHostname->setToolTip(
         nic ? tr("Waiting for the other computer on the Ethernet cable.\nThis computer: %1").arg(nic->ip)
             : tr("Ethernet cable is not ready. The wired adapter needs an IPv4 address.")
@@ -2024,24 +2061,33 @@ void MainWindow::restoreInterfaceAfterDirectEthernet()
 
 void MainWindow::directEthernetToggled(bool checked)
 {
+  if (checked && NetworkMonitor::ethernetInterfaceName().isEmpty()) {
+    const QSignalBlocker blocker(ui->cbDirectEthernet);
+    ui->cbDirectEthernet->setChecked(false);
+    QMessageBox::information(
+        this, kAppName,
+        tr("Direct Ethernet needs a connected wired adapter without an Internet or LAN connection. "
+           "The available wired adapter is already connected to a network, or no cable is connected.")
+    );
+    return;
+  }
+  if (!checked)
+    m_directPendingStart = false;
   Settings::setValue(Settings::Core::DirectEthernet, checked);
   Settings::save();
   if (checked) {
     m_directUserHold = false;
     captureInterfaceForDirectEthernet();
-    if (m_coreProcess.mode() == CoreMode::Client) {
-      const QSignalBlocker blocker(ui->comboHostname);
-      ui->comboHostname->setCurrentIndex(-1);
-      ui->comboHostname->setEditText(QString());
-      remoteHostChanged(QString());
-    }
   }
   syncDirectEthernet();
+  if (!checked && m_coreProcess.processState() != ProcessState::Stopped)
+    m_coreProcess.restart();
 }
 
 void MainWindow::syncDirectEthernet()
 {
   if (!directEthernetEnabled()) {
+    m_directPendingStart = false;
     m_ethernetBeacon->stop();
     restoreInterfaceAfterDirectEthernet();
     loadHostnameHistory();
@@ -2050,8 +2096,21 @@ void MainWindow::syncDirectEthernet()
 
   captureInterfaceForDirectEthernet();
   m_ethernetBeacon->start(m_coreProcess.mode() == CoreMode::Server);
-  const auto nic = NetworkMonitor::ethernetNic();
+  const auto nic = NetworkMonitor::ethernetNic(
+      m_coreProcess.mode() == CoreMode::Server ? EthernetBeacon::serverIp() : NetworkMonitor::directClientIp()
+  );
+  if (!m_ethernetBeacon->addressReady() &&
+      m_coreProcess.processState() != ProcessState::Stopped &&
+      m_coreProcess.processState() != ProcessState::Stopping) {
+    m_directPendingStart = true;
+    m_coreProcess.stop();
+  }
   if (m_coreProcess.mode() == CoreMode::Client) {
+    {
+      const QSignalBlocker blocker(ui->comboHostname);
+      ui->comboHostname->setEditText(EthernetBeacon::serverIp());
+    }
+    remoteHostChanged(EthernetBeacon::serverIp());
     ui->comboHostname->setToolTip(
         nic ? tr("Waiting for the other computer on the Ethernet cable.\nThis computer: %1").arg(nic->ip)
             : tr("Ethernet cable is not ready. The wired adapter needs an IPv4 address.")
@@ -2065,7 +2124,15 @@ void MainWindow::onDirectNicChanged(const QString &ip)
     return;
   }
 
+  if (m_coreProcess.mode() == CoreMode::Server)
+    updateNetworkInfo();
+
   if (ip.isEmpty()) {
+    if (m_coreProcess.processState() != ProcessState::Stopped &&
+        m_coreProcess.processState() != ProcessState::Stopping) {
+      m_directPendingStart = true;
+      m_coreProcess.stop();
+    }
     if (m_coreProcess.mode() == CoreMode::Client) {
       ui->comboHostname->setToolTip(tr("Ethernet cable is not ready. The wired adapter needs an IPv4 address."));
     }
@@ -2079,6 +2146,10 @@ void MainWindow::onDirectNicChanged(const QString &ip)
   }
 
   using enum ProcessState;
+  if (m_coreProcess.processState() == Stopping) {
+    m_directPendingStart = !m_directUserHold;
+    return;
+  }
   if (m_coreProcess.processState() != Stopped && previous != ip) {
     m_coreProcess.restart();
     return;
@@ -2087,14 +2158,13 @@ void MainWindow::onDirectNicChanged(const QString &ip)
   if (m_directUserHold || m_coreProcess.processState() != Stopped) {
     return;
   }
-  if (m_coreProcess.mode() == CoreMode::Server) {
+  if (m_coreProcess.mode() == CoreMode::Server || m_directPendingStart)
     startCore();
-  }
 }
 
 void MainWindow::onDirectPeerFound(const QString &ip)
 {
-  if (!directEthernetEnabled() || m_coreProcess.mode() != CoreMode::Client || ip.isEmpty()) {
+  if (!directEthernetEnabled() || m_coreProcess.mode() != CoreMode::Client || ip != EthernetBeacon::serverIp()) {
     return;
   }
 

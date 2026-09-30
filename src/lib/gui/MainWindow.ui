@@ -478,7 +478,7 @@
              <item>
               <widget class="QCheckBox" name="cbDirectEthernet">
                <property name="toolTip">
-                <string>Use the Ethernet cable instead of Wi-Fi. Both computers need an IPv4 address on the wired adapter (link-local 169.254.x.x is fine).</string>
+                <string>Use a dedicated cable between two computers, without a router or DHCP. The server uses 169.254.248.1/16 and the client uses 169.254.248.2/16. Both may request permission to add an address. A wired adapter already connected to a network cannot be used.</string>
                </property>
                <property name="text">
                 <string>Direct Ethernet</string>

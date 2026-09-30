@@ -139,5 +139,6 @@ target_link_libraries(${target}
 )
 
 if(WIN32)
-  target_link_libraries(${target} PUBLIC wlanapi dwmapi shell32)
+  target_sources(${target} PRIVATE core/DirectEthernetAddress.cpp core/DirectEthernetAddress.h)
+  target_link_libraries(${target} PUBLIC wlanapi dwmapi shell32 iphlpapi ws2_32)
 endif()

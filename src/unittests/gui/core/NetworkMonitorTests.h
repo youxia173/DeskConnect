@@ -12,4 +12,5 @@ class NetworkMonitorTests : public QObject
 private Q_SLOTS:
   // Test are run in order top to bottom
   void testVirtualInterface();
+  void testDirectEthernetLink();
 };

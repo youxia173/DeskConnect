@@ -19,8 +19,18 @@
 #include "gui/WindowsShellContextMenu.h"
 #include "common/Settings.h"
 
+#if defined(Q_OS_WIN)
+#include "gui/core/DirectEthernetAddress.h"
+#include "gui/core/NetworkMonitor.h"
+#include <charconv>
+#include <cstring>
+#include <system_error>
+#endif
+
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QCoreApplication>
+#include <QNetworkInterface>
 #include <QLocalSocket>
 #include <QMessageBox>
 #include <QSharedMemory>
@@ -49,6 +59,26 @@ const static auto kHeader = QStringLiteral("%1: %2\n").arg(kAppName, kDisplayVer
 
 int main(int argc, char *argv[])
 {
+#if defined(Q_OS_WIN)
+  // Short-lived elevated child. Handle this before QApplication, the single-
+  // instance check and all GUI initialization; it must never open a window.
+  if (argc >= 2 && std::strcmp(argv[1], "--deskconnect-add-direct-ethernet-address") == 0) {
+    QCoreApplication helperApp(argc, argv);
+    if (argc != 4)
+      return s_exitArgs;
+    int interfaceIndex = 0;
+    const auto *begin = argv[2];
+    const auto *end = begin + std::strlen(begin);
+    const auto [next, error] = std::from_chars(begin, end, interfaceIndex);
+    if (error != std::errc{} || next != end || interfaceIndex <= 0)
+      return s_exitArgs;
+    if (std::strcmp(argv[3], "server") != 0 && std::strcmp(argv[3], "client") != 0)
+      return s_exitArgs;
+    if (QNetworkInterface::interfaceFromIndex(interfaceIndex).name() != NetworkMonitor::ethernetInterfaceName())
+      return s_exitArgs;
+    return addWindowsDirectAddress(interfaceIndex, std::strcmp(argv[3], "server") == 0);
+  }
+#endif
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
   // Fixes Fedora bug where qDebug() messages aren't printed.
   QLoggingCategory::setFilterRules(QStringLiteral("*.debug=true\nqt.*=false"));

@@ -17,6 +17,7 @@ namespace deskflow::gui {
 
 struct EthernetNic
 {
+  QString interfaceName;
   QString ip;
   QHostAddress broadcast;
   int prefixLength = 32;
@@ -65,7 +66,16 @@ public:
    * @brief First usable Ethernet IPv4, including 169.254 link-local addresses.
    * Link-local is preferred when present (typical for a cable with no DHCP).
    */
-  static std::optional<EthernetNic> ethernetNic();
+  static std::optional<EthernetNic> ethernetNic(const QString &preferredIp = {});
+
+  /** Fixed IPv4 address used by the direct Ethernet server. */
+  static QString directServerIp();
+
+  /** Fixed IPv4 address used by the direct Ethernet client. */
+  static QString directClientIp();
+
+  /** A connected physical Ethernet interface, even before it has an IPv4 address. */
+  static QString ethernetInterfaceName();
 
   static bool sameEthernetLink(const QString &localIp, const QString &peerIp, int prefixLength);
 

@@ -33,4 +33,10 @@ void NetworkMonitorTests::testVirtualInterface()
   QVERIFY(!NetworkMonitor::isVirtualInterface(QStringLiteral("wifi")));
   QVERIFY(!NetworkMonitor::isVirtualInterface(QStringLiteral("wlan0")));
 }
+void NetworkMonitorTests::testDirectEthernetLink()
+{
+  QVERIFY(NetworkMonitor::sameEthernetLink(QStringLiteral("169.254.37.9"), QStringLiteral("169.254.248.1"), 16));
+  QVERIFY(!NetworkMonitor::sameEthernetLink(QStringLiteral("192.168.1.3"), QStringLiteral("169.254.248.1"), 24));
+  QVERIFY(!NetworkMonitor::sameEthernetLink(QStringLiteral("169.254.37.9"), QStringLiteral("169.254.248.1"), 24));
+}
 QTEST_MAIN(NetworkMonitorTests)

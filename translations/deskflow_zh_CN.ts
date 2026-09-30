@@ -797,20 +797,44 @@ Successfully connected addresses are remembered.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Use the Ethernet cable instead of Wi-Fi. Both computers need an IPv4 address on the wired adapter (link-local 169.254.x.x is fine).</source>
-        <translation>使用网线而不是 Wi-Fi。两台电脑的有线网卡都需要有 IPv4 地址（169.254.x.x 本地链路地址也可以）。</translation>
+        <source>Use a dedicated cable between two computers, without a router or DHCP. The server uses 169.254.248.1/16 and the client uses 169.254.248.2/16. Both may request permission to add an address. A wired adapter already connected to a network cannot be used.</source>
+        <translation>两台电脑用专用网线直连，不需要路由器或 DHCP。服务端使用 169.254.248.1/16，客户端使用 169.254.248.2/16。两边都可能需要授权添加地址。已接入其他网络的有线网卡不能用于直连。</translation>
     </message>
     <message>
         <source>Direct Ethernet</source>
         <translation>网线直连</translation>
     </message>
     <message>
-        <source>The Ethernet adapter is not ready. Turn the cable on and give it an IPv4 address, including a 169.254 link-local address.</source>
-        <translation>有线网卡还没准备好。请接通网线并分配 IPv4 地址，169.254 本地链路地址也可以。</translation>
+        <source>Could not set the direct Ethernet address %1: %2</source>
+        <translation>无法设置网线直连地址 %1：%2</translation>
     </message>
     <message>
-        <source>Waiting for the other computer on the Ethernet cable.</source>
-        <translation>正在等待网线另一端的电脑。</translation>
+        <source>Connect a dedicated Ethernet cable before starting.</source>
+        <translation>请先接好专用网线再启动。</translation>
+    </message>
+    <message>
+        <source>Preparing wired address %1; authorize the network change if prompted.</source>
+        <translation>正在准备有线地址 %1；如有提示请授权网络更改。</translation>
+    </message>
+    <message>
+        <source>The Ethernet adapter is not ready. Connect the dedicated cable and retry.</source>
+        <translation>有线网卡还没准备好。请接好专用网线后重试。</translation>
+    </message>
+    <message>
+        <source>Using IP: %1</source>
+        <translation>使用 IP：%1</translation>
+    </message>
+    <message>
+        <source>Preparing direct Ethernet address...</source>
+        <translation>正在准备网线直连地址…</translation>
+    </message>
+    <message>
+        <source>Connect the client to %1 over the Ethernet cable.</source>
+        <translation>请让客户端通过网线连接到 %1。</translation>
+    </message>
+    <message>
+        <source>Connect the cable and authorize the network address change if prompted.</source>
+        <translation>请接好网线，如有提示请授权网络地址更改。</translation>
     </message>
     <message>
         <source>Waiting for the other computer on the Ethernet cable.
@@ -821,6 +845,10 @@ This computer: %1</source>
     <message>
         <source>Ethernet cable is not ready. The wired adapter needs an IPv4 address.</source>
         <translation>网线还没准备好。有线网卡需要有一个 IPv4 地址。</translation>
+    </message>
+    <message>
+        <source>Direct Ethernet needs a connected wired adapter without an Internet or LAN connection. The available wired adapter is already connected to a network, or no cable is connected.</source>
+        <translation>网线直连需要一块已连接、且未接入互联网或局域网的有线网卡。当前可用有线网卡已接入其他网络，或者还没有接上网线。</translation>
     </message>
 </context>
 <context>
@@ -1961,6 +1989,45 @@ You may need to restart the connection if it was blocked before.</source>
     <message>
         <source>Encryption Disabled</source>
         <translation>加密已禁用</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::EthernetBeacon</name>
+    <message>
+        <source>The Linux ip command was not found.</source>
+        <translation>未找到 Linux 的 ip 命令。</translation>
+    </message>
+    <message>
+        <source>pkexec is required to configure the Ethernet address.</source>
+        <translation>配置有线地址需要 pkexec。</translation>
+    </message>
+    <message>
+        <source>Could not identify the Windows Ethernet adapter.</source>
+        <translation>无法识别 Windows 有线网卡。</translation>
+    </message>
+    <message>
+        <source>Could not find the Windows system directory.</source>
+        <translation>找不到 Windows 系统目录。</translation>
+    </message>
+    <message>
+        <source>Windows PowerShell is required to authorize the Ethernet address.</source>
+        <translation>授权配置有线地址需要 Windows PowerShell。</translation>
+    </message>
+    <message>
+        <source>Could not find the DeskConnect executable for the elevated address setup.</source>
+        <translation>找不到用于提权配置地址的 DeskConnect 程序。</translation>
+    </message>
+    <message>
+        <source>Automatic Ethernet address setup is unavailable on this operating system.</source>
+        <translation>当前操作系统不支持自动配置有线地址。</translation>
+    </message>
+    <message>
+        <source>Could not configure the Ethernet address (code %1).</source>
+        <translation>无法配置有线地址（错误码 %1）。</translation>
+    </message>
+    <message>
+        <source>Could not start the Ethernet address setup command.</source>
+        <translation>无法启动有线地址配置命令。</translation>
     </message>
 </context>
 <context>

@@ -7,11 +7,19 @@
 #include "NetworkMonitor.h"
 
 #include <QAbstractSocket>
+#include <QByteArray>
+#include <QFile>
 #include <QList>
 #include <QNetworkInterface>
 #include <QRegularExpression>
 #include <QSet>
 #include <QTimer>
+
+#ifdef Q_OS_WIN
+#include <winsock2.h>
+#include <windows.h>
+#include <iphlpapi.h>
+#endif
 
 #include <algorithm>
 #include <optional>
@@ -64,16 +72,16 @@ QStringList NetworkMonitor::validAddresses()
   QSet<QHostAddress> uniqueAddresses;
 
   const auto allInterfaces = QNetworkInterface::allInterfaces();
-  for (const auto &interface : allInterfaces) {
-    if (!(interface.flags() & QNetworkInterface::IsUp) || !(interface.flags() & QNetworkInterface::IsRunning) ||
-        (interface.flags() & QNetworkInterface::IsLoopBack)) {
+  for (const auto &iface : allInterfaces) {
+    if (!(iface.flags() & QNetworkInterface::IsUp) || !(iface.flags() & QNetworkInterface::IsRunning) ||
+        (iface.flags() & QNetworkInterface::IsLoopBack)) {
       continue;
     }
 
-    const bool isP2P = (interface.flags() & QNetworkInterface::IsPointToPoint);
-    const bool isVirtualType = interface.type() == QNetworkInterface::Virtual;
-    const bool isVirtual = isVirtualInterface(interface.humanReadableName()) || isP2P || isVirtualType;
-    const auto addressEntries = interface.addressEntries();
+    const bool isP2P = (iface.flags() & QNetworkInterface::IsPointToPoint);
+    const bool isVirtualType = iface.type() == QNetworkInterface::Virtual;
+    const bool isVirtual = isVirtualInterface(iface.humanReadableName()) || isP2P || isVirtualType;
+    const auto addressEntries = iface.addressEntries();
 
     for (const auto &entry : addressEntries) {
       const QHostAddress address = entry.ip();
@@ -132,6 +140,47 @@ QStringList NetworkMonitor::validAddresses()
 
 namespace {
 
+std::optional<QSet<int>> ethernetGatewayIndexes()
+{
+  QSet<int> result;
+#ifdef Q_OS_WIN
+  ULONG size = 0;
+  if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, nullptr, nullptr, &size) != ERROR_BUFFER_OVERFLOW)
+    return std::nullopt;
+  QByteArray storage(static_cast<qsizetype>(size), 0);
+  auto *adapters = reinterpret_cast<PIP_ADAPTER_ADDRESSES>(storage.data());
+  if (GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, nullptr, adapters, &size) != NO_ERROR)
+    return std::nullopt;
+  for (auto *adapter = adapters; adapter; adapter = adapter->Next) {
+    if (adapter->FirstGatewayAddress)
+      result.insert(static_cast<int>(adapter->IfIndex));
+  }
+#elif defined(Q_OS_LINUX)
+  // Linux keeps the default route here even when NetworkManager supplied it.
+  QFile routes(QStringLiteral("/proc/net/route"));
+  if (!routes.open(QIODevice::ReadOnly))
+    return std::nullopt;
+  {
+    const auto lines = routes.readAll().split('\n');
+    for (const auto &line : lines) {
+      const auto fields = line.simplified().split(' ');
+      if (fields.size() < 4 || fields[1] != "00000000")
+        continue;
+      bool valid = false;
+      const auto flags = fields[3].toUInt(&valid, 16);
+      if (valid && (flags & 1u)) {
+        const auto iface = QNetworkInterface::interfaceFromName(QString::fromLocal8Bit(fields[0]));
+        if (iface.isValid())
+          result.insert(iface.index());
+      }
+    }
+  }
+#else
+  return std::nullopt;
+#endif
+  return result;
+}
+
 bool isEthernetNic(const QNetworkInterface &iface)
 {
   if (iface.type() == QNetworkInterface::Wifi || iface.type() == QNetworkInterface::Ieee80211 ||
@@ -168,8 +217,64 @@ bool NetworkMonitor::sameEthernetLink(const QString &localIp, const QString &pee
   return inPrefix(QHostAddress(localIp), QHostAddress(peerIp), prefixLength);
 }
 
-std::optional<EthernetNic> NetworkMonitor::ethernetNic()
+QString NetworkMonitor::directServerIp()
 {
+  return QStringLiteral("169.254.248.1");
+}
+
+QString NetworkMonitor::directClientIp()
+{
+  return QStringLiteral("169.254.248.2");
+}
+
+QString NetworkMonitor::ethernetInterfaceName()
+{
+  const auto interfaces = QNetworkInterface::allInterfaces();
+  const auto gatewayIndexes = ethernetGatewayIndexes();
+  if (!gatewayIndexes)
+    return {};
+  QString unaddressed;
+  QString linkLocal;
+  for (const auto &iface : interfaces) {
+    if ((iface.flags() & QNetworkInterface::IsUp) && (iface.flags() & QNetworkInterface::IsRunning) &&
+        !(iface.flags() & QNetworkInterface::IsLoopBack) && !isVirtualInterface(iface.name()) &&
+        !isVirtualInterface(iface.humanReadableName()) && isEthernetNic(iface) &&
+        !gatewayIndexes->contains(iface.index())) {
+      bool hasIpv4 = false;
+      bool hasNetworkAddress = false;
+      for (const auto &entry : iface.addressEntries()) {
+        if (entry.ip().protocol() == QHostAddress::IPv4Protocol) {
+          hasIpv4 = true;
+          if (!entry.ip().isLinkLocal())
+            hasNetworkAddress = true;
+        } else if (entry.ip().protocol() == QHostAddress::IPv6Protocol && !entry.ip().isLinkLocal()) {
+          hasNetworkAddress = true;
+        }
+      }
+      // A normal LAN address means this cable is already attached to a
+      // network, even if it has no default gateway.
+      if (hasNetworkAddress)
+        continue;
+      for (const auto &entry : iface.addressEntries()) {
+        if (entry.ip() == QHostAddress(directServerIp()) || entry.ip() == QHostAddress(directClientIp()))
+          return iface.name();
+      }
+      if (hasIpv4 && linkLocal.isEmpty())
+        linkLocal = iface.name();
+      if (!hasIpv4 && unaddressed.isEmpty())
+        unaddressed = iface.name();
+    }
+  }
+  if (!linkLocal.isEmpty())
+    return linkLocal;
+  return unaddressed;
+}
+
+std::optional<EthernetNic> NetworkMonitor::ethernetNic(const QString &preferredIp)
+{
+  const auto selectedInterface = ethernetInterfaceName();
+  if (selectedInterface.isEmpty())
+    return std::nullopt;
   struct Candidate
   {
     EthernetNic nic;
@@ -178,22 +283,25 @@ std::optional<EthernetNic> NetworkMonitor::ethernetNic()
   QList<Candidate> found;
 
   const auto allInterfaces = QNetworkInterface::allInterfaces();
-  for (const auto &interface : allInterfaces) {
-    if (!(interface.flags() & QNetworkInterface::IsUp) || !(interface.flags() & QNetworkInterface::IsRunning) ||
-        (interface.flags() & QNetworkInterface::IsLoopBack)) {
+  for (const auto &iface : allInterfaces) {
+    if (iface.name() != selectedInterface)
+      continue;
+    if (!(iface.flags() & QNetworkInterface::IsUp) || !(iface.flags() & QNetworkInterface::IsRunning) ||
+        (iface.flags() & QNetworkInterface::IsLoopBack)) {
       continue;
     }
-    if (isVirtualInterface(interface.humanReadableName()) || isVirtualInterface(interface.name()) ||
-        !isEthernetNic(interface)) {
+    if (isVirtualInterface(iface.humanReadableName()) || isVirtualInterface(iface.name()) ||
+        !isEthernetNic(iface)) {
       continue;
     }
 
-    for (const auto &entry : interface.addressEntries()) {
+    for (const auto &entry : iface.addressEntries()) {
       const QHostAddress address = entry.ip();
       if (address.protocol() != QHostAddress::IPv4Protocol || address.isLoopback()) {
         continue;
       }
       EthernetNic nic;
+      nic.interfaceName = iface.name();
       nic.ip = address.toString();
       const int reportedPrefix = entry.prefixLength();
       if (reportedPrefix > 0 && reportedPrefix < 32) {
@@ -203,12 +311,25 @@ std::optional<EthernetNic> NetworkMonitor::ethernetNic()
       }
       nic.broadcast = entry.broadcast();
       if (nic.broadcast.isNull()) {
-        nic.broadcast = QHostAddress::Broadcast;
+        const quint32 mask = nic.prefixLength == 32 ? 0xffffffffu : (0xffffffffu << (32 - nic.prefixLength));
+        nic.broadcast = QHostAddress((address.toIPv4Address() & mask) | ~mask);
       }
       found.append(Candidate{nic, address.isLinkLocal()});
     }
   }
 
+  const auto preferred = std::find_if(found.cbegin(), found.cend(), [&preferredIp](const Candidate &item) {
+    return !preferredIp.isEmpty() && item.nic.ip == preferredIp;
+  });
+  if (preferred != found.cend()) {
+    return preferred->nic;
+  }
+  const auto fixedDirect = std::find_if(found.cbegin(), found.cend(), [](const Candidate &item) {
+    return item.nic.ip == NetworkMonitor::directServerIp() || item.nic.ip == NetworkMonitor::directClientIp();
+  });
+  if (fixedDirect != found.cend()) {
+    return fixedDirect->nic;
+  }
   const auto linkLocal = std::find_if(found.cbegin(), found.cend(), [](const Candidate &item) {
     return item.linkLocal;
   });

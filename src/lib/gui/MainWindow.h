@@ -244,6 +244,7 @@ private:
   EthernetBeacon *m_ethernetBeacon = nullptr;
   //! User pressed Stop while direct Ethernet is on; do not immediately start again.
   bool m_directUserHold = false;
+  bool m_directPendingStart = false;
   QString m_currentIpAddress;
   //! SSID observed when the user started this core session (client).
   QString m_ssidWhenStarted;
