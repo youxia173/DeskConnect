@@ -32,6 +32,7 @@
 #include <X11/X.h>
 #include <X11/Xutil.h>
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #define XK_MISCELLANY
@@ -218,6 +219,7 @@ void XWindowsScreen::enable()
 
 void XWindowsScreen::disable()
 {
+  LOG_INFO("X11 input capture disable: grabbed=%d onScreen=%d", m_inputGrabbed, m_isOnScreen);
   // release input context focus
   if (m_ic != nullptr) {
     XUnsetICFocus(m_ic);
@@ -237,6 +239,7 @@ void XWindowsScreen::disable()
 
 void XWindowsScreen::enter()
 {
+  LOG_INFO("X11 input capture return begin: grabbed=%d", m_inputGrabbed);
   // Release local input before any synchronous focus/screensaver queries.
   releaseInputGrab();
   XUnmapWindow(m_display, m_window);
@@ -287,10 +290,19 @@ void XWindowsScreen::enter()
 
   // now on screen
   m_isOnScreen = true;
+  m_captureLogTimer.invalidate();
+  m_rawMotionRemainderX = 0.0;
+  m_rawMotionRemainderY = 0.0;
+  // A clipboard owner may have changed while local input was captured.
+  // Recheck only after the keyboard/pointer grabs have been released.
+  if (m_isPrimary)
+    pollExternalClipboard();
+  LOG_INFO("X11 input capture return complete: grabbed=%d", m_inputGrabbed);
 }
 
 bool XWindowsScreen::canLeave()
 {
+  LOG_INFO("X11 input capture begin: mapping grab window");
   // raise and show the window, required to grab mouse and keyboard
   XMapRaised(m_display, m_window);
   XFlush(m_display);
@@ -306,6 +318,7 @@ bool XWindowsScreen::canLeave()
     LOG_WARN("can't grab mouse/keyboard; staying on primary screen");
     return false;
   }
+  LOG_INFO("X11 input capture ready: grabbed=%d", m_inputGrabbed);
   return true;
 }
 
@@ -372,6 +385,13 @@ void XWindowsScreen::leave()
 
   // now off screen
   m_isOnScreen = false;
+  m_captureLogTimer.start();
+  m_captureMotionCount = 0;
+  m_captureButtonCount = 0;
+  m_captureKeyCount = 0;
+  LOG_INFO("X11 input capture off-screen: grabbed=%d park=%d,%d", m_inputGrabbed, m_parkX, m_parkY);
+  m_rawMotionRemainderX = 0.0;
+  m_rawMotionRemainderY = 0.0;
 }
 
 bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
@@ -551,7 +571,7 @@ void XWindowsScreen::stopClipboardMonitor()
 
 void XWindowsScreen::onClipboardOwnershipChanged(ClipboardID id)
 {
-  if (!m_isPrimary || id >= kClipboardEnd || m_clipboard[id] == nullptr) {
+  if (!m_isPrimary || !m_isOnScreen || id >= kClipboardEnd || m_clipboard[id] == nullptr) {
     return;
   }
   const Window owner = XGetSelectionOwner(m_display, m_clipboard[id]->getSelection());
@@ -567,7 +587,15 @@ void XWindowsScreen::onClipboardOwnershipChanged(ClipboardID id)
 
 void XWindowsScreen::pollExternalClipboard()
 {
-  if (!m_isPrimary || m_clipboardPollBusy) {
+  if (m_isPrimary && !m_isOnScreen && m_captureLogTimer.isValid() && m_captureLogTimer.elapsed() >= 10000) {
+    LOG_INFO("X11 input capture alive: grabbed=%d park=%d,%d motion=%u buttons=%u keys=%u", m_inputGrabbed,
+             m_parkX, m_parkY, m_captureMotionCount, m_captureButtonCount, m_captureKeyCount);
+    m_captureMotionCount = 0;
+    m_captureButtonCount = 0;
+    m_captureKeyCount = 0;
+    m_captureLogTimer.restart();
+  }
+  if (!m_isPrimary || !m_isOnScreen || m_clipboardPollBusy) {
     return;
   }
   m_clipboardPollBusy = true;
@@ -1440,6 +1468,36 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
     auto *cookie = &xevent->xcookie;
     if (XGetEventData(m_display, cookie) && cookie->type == GenericEvent && cookie->extension == xi_opcode) {
       if (cookie->evtype == XI_RawMotion) {
+        // While controlling a secondary screen, querying the X pointer for
+        // every raw event causes one synchronous X server round trip per mouse
+        // sample. Use XI2's relative deltas instead; this also avoids the
+        // query/warp feedback loop around the parked cursor.
+        if (m_isPrimary && !m_isOnScreen && cookie->data != nullptr) {
+          ++m_captureMotionCount;
+          const auto *raw = static_cast<const XIRawEvent *>(cookie->data);
+          const double *values = raw->valuators.values;
+          double dx = 0.0;
+          double dy = 0.0;
+          if (values != nullptr && raw->valuators.mask_len > 0 && XIMaskIsSet(raw->valuators.mask, 0))
+            dx = *values++;
+          if (values != nullptr && raw->valuators.mask_len > 0 && XIMaskIsSet(raw->valuators.mask, 1))
+            dy = *values;
+          if (!std::isfinite(dx) || !std::isfinite(dy)) {
+            LOG_WARN("ignoring non-finite XInput2 motion");
+            XFreeEventData(m_display, cookie);
+            return;
+          }
+          m_rawMotionRemainderX += std::clamp(dx, -16384.0, 16384.0);
+          m_rawMotionRemainderY += std::clamp(dy, -16384.0, 16384.0);
+          const auto pixelDx = static_cast<int32_t>(m_rawMotionRemainderX);
+          const auto pixelDy = static_cast<int32_t>(m_rawMotionRemainderY);
+          m_rawMotionRemainderX -= pixelDx;
+          m_rawMotionRemainderY -= pixelDy;
+          if (pixelDx != 0 || pixelDy != 0)
+            sendEvent(EventTypes::PrimaryScreenMotionOnSecondary, MotionInfo::alloc(pixelDx, pixelDy));
+          XFreeEventData(m_display, cookie);
+          return;
+        }
         // Get current pointer's position
         XMotionEvent xmotion;
         xmotion.type = MotionNotify;
@@ -1657,6 +1715,8 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
 
 void XWindowsScreen::onKeyPress(XKeyEvent &xkey)
 {
+  if (m_isPrimary && !m_isOnScreen)
+    ++m_captureKeyCount;
   LOG_VERBOSE("event: KeyPress code=%d, state=0x%04x", xkey.keycode, xkey.state);
   const KeyModifierMask mask = m_keyState->mapModifiersFromX(xkey.state);
   KeyID key = mapKeyFromX(&xkey);
@@ -1698,6 +1758,8 @@ void XWindowsScreen::onKeyPress(XKeyEvent &xkey)
 
 void XWindowsScreen::onKeyRelease(XKeyEvent &xkey, bool isRepeat)
 {
+  if (m_isPrimary && !m_isOnScreen)
+    ++m_captureKeyCount;
   const KeyModifierMask mask = m_keyState->mapModifiersFromX(xkey.state);
   KeyID key = mapKeyFromX(&xkey);
   if (key != kKeyNone) {
@@ -1753,6 +1815,8 @@ bool XWindowsScreen::onHotKey(const XKeyEvent &xkey, bool isRepeat)
 
 void XWindowsScreen::onMousePress(const XButtonEvent &xbutton)
 {
+  if (m_isPrimary && !m_isOnScreen)
+    ++m_captureButtonCount;
   LOG_VERBOSE("event: ButtonPress button=%d", xbutton.button);
   ButtonID button = mapButtonFromX(&xbutton);
   KeyModifierMask mask = m_keyState->mapModifiersFromX(xbutton.state);
@@ -1802,6 +1866,8 @@ void XWindowsScreen::maybeShowMouseLocatorForKey(KeyID key, KeyModifierMask mask
 
 void XWindowsScreen::onMouseRelease(const XButtonEvent &xbutton)
 {
+  if (m_isPrimary && !m_isOnScreen)
+    ++m_captureButtonCount;
   using enum EventTypes;
   LOG_VERBOSE("event: ButtonRelease button=%d", xbutton.button);
   ButtonID button = mapButtonFromX(&xbutton);
@@ -1825,6 +1891,14 @@ void XWindowsScreen::onMouseRelease(const XButtonEvent &xbutton)
 
 void XWindowsScreen::onMouseMove(const XMotionEvent &xmotion)
 {
+#ifdef HAVE_XI2
+  // XI_RawMotion already supplied this movement while the primary is off
+  // screen. Core MotionNotify would forward it a second time.
+  if (m_isPrimary && m_xi2detected && !m_isOnScreen)
+    return;
+#endif
+  if (m_isPrimary && !m_isOnScreen && !xmotion.send_event)
+    ++m_captureMotionCount;
   LOG_VERBOSE("event: MotionNotify %d,%d", xmotion.x_root, xmotion.y_root);
 
   // compute motion delta (relative to the last known

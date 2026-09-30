@@ -17,6 +17,8 @@
 #include <libportal/inputcapture.h>
 #include <libportal/portal.h>
 
+#include <atomic>
+
 #include <cstdint>
 #include <map>
 #include <utility>
@@ -165,8 +167,8 @@ private:
   };
 
   bool m_enabled = false;
-  bool m_isActive = false;
-  std::uint32_t m_activationId = 0;
+  std::atomic_bool m_isActive{false};
+  std::atomic<std::uint32_t> m_activationId{0};
 
   std::vector<XdpInputCapturePointerBarrier *> m_barriers;
   std::vector<BarrierInfo> m_barrierInfo;

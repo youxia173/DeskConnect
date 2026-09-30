@@ -15,10 +15,12 @@
 #include "platform/XWindowsMouseLocator.h"
 
 #include <functional>
+#include <cstdint>
 #include <set>
 #include <string>
 #include <vector>
 
+#include <QElapsedTimer>
 #include <QString>
 
 #include <X11/Xlib.h>
@@ -192,6 +194,7 @@ private:
 
   // true while XGrabPointer/XGrabKeyboard are held (primary off-screen)
   bool m_inputGrabbed = false;
+  QElapsedTimer m_captureLogTimer;
 
   uint32_t m_activeSides = 0;
   // screen shape stuff
@@ -208,6 +211,11 @@ private:
   // last mouse position
   int32_t m_xCursor = 0;
   int32_t m_yCursor = 0;
+  double m_rawMotionRemainderX = 0.0;
+  double m_rawMotionRemainderY = 0.0;
+  uint32_t m_captureMotionCount = 0;
+  uint32_t m_captureButtonCount = 0;
+  uint32_t m_captureKeyCount = 0;
 
   // keyboard stuff
   XWindowsKeyState *m_keyState = nullptr;

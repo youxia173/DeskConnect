@@ -165,6 +165,15 @@ bool Screen::leave()
     LOG_WARN("screen already left");
   }
 
+  // On X11, canLeave() grabs the local keyboard and pointer. Clipboard
+  // discovery can synchronously wait for another application's selection;
+  // complete that work while local input is still usable.
+  if (m_isPrimary) {
+    LOG_INFO("primary clipboard check before input capture");
+    m_screen->checkClipboards();
+    LOG_INFO("primary clipboard check complete");
+  }
+
   if (!m_screen->canLeave()) {
     return false;
   }
@@ -176,6 +185,8 @@ bool Screen::leave()
   }
 
   m_screen->leave();
+  if (m_isPrimary)
+    LOG_INFO("primary platform leave complete");
   if (Settings::value(Settings::Core::EnableExitCommand).toBool()) {
     const auto commandLine = Settings::value(Settings::Core::ScreenExitCommand).toString();
     LOG_DEBUG("running screen exit command: %s", qPrintable(commandLine));
@@ -183,8 +194,8 @@ bool Screen::leave()
       LOG_ERR("failed to run screen exit command");
   }
 
-  // make sure our idea of clipboard ownership is correct
-  m_screen->checkClipboards();
+  if (!m_isPrimary)
+    m_screen->checkClipboards();
 
   // now not on screen
   m_entered = false;

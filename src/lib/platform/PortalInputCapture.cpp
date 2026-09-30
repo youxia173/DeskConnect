@@ -243,6 +243,7 @@ gboolean PortalInputCapture::timeoutHandler() const
 void PortalInputCapture::handleSessionClosed(XdpSession *session)
 {
   LOG_ERR("portal input capture session was closed, exiting");
+  m_isActive = false;
   g_main_loop_quit(m_glibMainLoop);
   m_events->addEvent(Event(EventTypes::Quit));
 
@@ -693,11 +694,12 @@ void PortalInputCapture::handleDisabled(const XdpInputCaptureSession *, const GV
 {
   LOG_DEBUG("portal cb disabled");
 
+  m_isActive = false;
+
   if (!m_enabled)
     return; // Nothing to do
 
   m_enabled = false;
-  m_isActive = false;
 
   // FIXME: need some better heuristics here of when we want to enable again
   // But we don't know *why* we got disabled (and it's doubtfull we ever
@@ -719,6 +721,11 @@ void PortalInputCapture::handleActivated(
 )
 {
   LOG_DEBUG("portal cb activated, id=%d", activationId);
+
+  // The main EI thread may ask us to release capture as soon as it processes
+  // the motion event below. Publish the id and active state first.
+  m_activationId = activationId;
+  m_isActive = true;
 
   if (options) {
     gdouble x;
@@ -747,12 +754,14 @@ void PortalInputCapture::handleActivated(
       ));
     } else {
       LOG_WARN("failed to get cursor position");
+      release();
+      return;
     }
   } else {
     LOG_WARN("activation has no options");
+    release();
+    return;
   }
-  m_activationId = activationId;
-  m_isActive = true;
 
 #ifdef HAVE_LIBPORTAL_CLIPBOARD
   if (m_session) {
@@ -783,6 +792,11 @@ void PortalInputCapture::handleDeactivated(
 )
 {
   LOG_DEBUG("cb deactivated, id=%i", activationId);
+  if (activationId != m_activationId) {
+    LOG_DEBUG("ignoring stale deactivation for capture %u; current capture is %u", activationId,
+              m_activationId.load());
+    return;
+  }
   m_isActive = false;
 }
 
