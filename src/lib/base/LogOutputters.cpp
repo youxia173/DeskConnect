@@ -11,7 +11,9 @@
 
 #include <iostream>
 
+#include <QDate>
 #include <QFile>
+#include <QFileInfo>
 #include <QString>
 #include <QTextStream>
 
@@ -125,20 +127,47 @@ void FileLogOutputter::setLogFilename(const QString &logFile)
 {
   assert(logFile != nullptr);
   m_fileName = logFile;
+  m_logDay = {};
+}
+
+void FileLogOutputter::ensureCurrentDayFile()
+{
+  const auto today = QDate::currentDate();
+  if (m_logDay == today) {
+    return;
+  }
+
+  // Keep only today's log. A leftover file from a previous day is truncated.
+  QFile::remove(QStringLiteral("%1.1").arg(m_fileName));
+  QFile existing(m_fileName);
+  if (existing.exists()) {
+    const auto lastModified = QFileInfo(m_fileName).lastModified().date();
+    if (lastModified != today) {
+      if (existing.open(QFile::WriteOnly | QFile::Truncate)) {
+        existing.close();
+      }
+    }
+  }
+  m_logDay = today;
 }
 
 bool FileLogOutputter::write(LogLevel::Level, const QString &message)
 {
+  ensureCurrentDayFile();
+
   QFile file(m_fileName);
   if (!file.open(QFile::WriteOnly | QFile::Append))
     return false;
 
   QTextStream(&file) << message << Qt::endl;
+  const auto size = file.size();
   file.close();
 
-  if (file.size() > s_logFileSizeLimit) {
+  // Within a single day, roll oversized files once. Previous-day leftovers are
+  // already discarded by ensureCurrentDayFile().
+  if (size > s_logFileSizeLimit) {
     const auto oldFile = QStringLiteral("%1.1").arg(m_fileName);
-    QFile::remove(m_fileName);
+    QFile::remove(oldFile);
     QFile::rename(m_fileName, oldFile);
   }
 

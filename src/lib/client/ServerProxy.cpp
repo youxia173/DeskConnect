@@ -317,6 +317,13 @@ ServerProxy::ConnectionResult ServerProxy::parseMessage(const uint8_t *code)
     setClipboard();
   }
 
+  else if (memcmp(code, kMsgCClipboardAck, 4) == 0) {
+    // Server ACKs companion clipboard sync. Desktop clients ignore the payload.
+    ClipboardID id = 0;
+    ProtocolUtil::readf(m_stream, kMsgCClipboardAck + 4, &id);
+    LOG_DEBUG("ignored clipboard ack id=%u", id);
+  }
+
   else if (memcmp(code, kMsgDDragInfo, 4) == 0) {
     resetKeepAliveAlarm();
     dragInfoReceived();

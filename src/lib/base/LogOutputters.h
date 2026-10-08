@@ -10,6 +10,7 @@
 
 #include "base/ILogOutputter.h"
 
+#include <QDate>
 #include <QString>
 //! Stop traversing log chain outputter
 /*!
@@ -67,7 +68,10 @@ public:
   void setLogFilename(const QString &title);
 
 private:
+  void ensureCurrentDayFile();
+
   QString m_fileName;
+  QDate m_logDay;
 };
 
 //! Write log to system log
