@@ -7,7 +7,7 @@
 ```cmake
 set(DESKFLOW_VERSION_MAJOR 1)
 set(DESKFLOW_VERSION_MINOR 26)
-set(DESKFLOW_VERSION_PATCH 24)   # ← 每次发版 +1
+set(DESKFLOW_VERSION_PATCH 25)   # ← 每次发版 +1
 set(DESKFLOW_VERSION_TWEAK 0)
 ```
 
@@ -29,15 +29,16 @@ cmake --build build --config Release --target deskflow deskflow-core deskflow-da
 | 用途 | 路径 |
 |------|------|
 | 本机直接运行 | `D:\Other\CursorCode\Desk Connect\build\bin\Release\DeskConnect.exe` |
-| 给别人安装 | `D:\Other\CursorCode\Desk Connect\build\DeskConnect-<版本>-win-x64.msi` |
+| 给别人安装 | `D:\Other\CursorCode\Desk Connect\dist\DeskConnect-<版本>-win-x64.msi` |
 
-打 MSI：
+打 MSI 后拷到 `dist`（`build` 只当编译目录，不要从里面找安装包）：
 
 ```powershell
 cmake --build build --config Release --target package -j 8
+New-Item -ItemType Directory -Force -Path dist | Out-Null
+Copy-Item "build\DeskConnect-*-win-x64.msi" "dist\" -Force
+Remove-Item "build\DeskConnect-*-win-x64-portable.7z","build\_CPack_Packages" -Recurse -Force -ErrorAction SilentlyContinue
 ```
-
-生成后在 `build\` 下取 `DeskConnect-*-win-x64.msi` 即可。
 
 ## 不需要保留的文件
 

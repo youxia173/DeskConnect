@@ -1598,7 +1598,9 @@ void MainWindow::remoteHostChanged(const QString &newRemoteHost)
 {
   const auto host = newRemoteHost.trimmed();
   m_coreProcess.setAddress(host);
-  toggleCanRunCore(!host.isEmpty() && ui->rbModeClient->isChecked());
+  // Address history also refreshes in server mode when direct Ethernet is
+  // disabled. A server does not need a remote hostname to run.
+  toggleCanRunCore(canRunCore());
   ui->btnRemoveHostname->setEnabled(!host.isEmpty() || ui->comboHostname->count() > 0);
   if (host.isEmpty()) {
     Settings::setValue(Settings::Client::RemoteHost);
@@ -2091,6 +2093,7 @@ void MainWindow::syncDirectEthernet()
     m_ethernetBeacon->stop();
     restoreInterfaceAfterDirectEthernet();
     loadHostnameHistory();
+    updateNetworkInfo();
     return;
   }
 
