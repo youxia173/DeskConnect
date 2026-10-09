@@ -675,18 +675,20 @@ void PortalInputCapture::disable()
 
 void PortalInputCapture::release()
 {
-  LOG_DEBUG("releasing input capture session, id=%d", m_activationId);
-  xdp_input_capture_session_release(m_session, m_activationId);
+  const auto activationId = m_activationId.load();
+  LOG_DEBUG("releasing input capture session, id=%d", activationId);
+  xdp_input_capture_session_release(m_session, activationId);
   m_isActive = false;
 }
 
 void PortalInputCapture::release(double x, double y)
 {
   const auto [mappedX, mappedY] = mapPortalReleasePosition(x, y);
+  const auto activationId = m_activationId.load();
   LOG_DEBUG(
-      "releasing input capture session, id=%d x=%.1f y=%.1f mapped=%.1f,%.1f", m_activationId, x, y, mappedX, mappedY
+      "releasing input capture session, id=%d x=%.1f y=%.1f mapped=%.1f,%.1f", activationId, x, y, mappedX, mappedY
   );
-  xdp_input_capture_session_release_at(m_session, m_activationId, mappedX, mappedY);
+  xdp_input_capture_session_release_at(m_session, activationId, mappedX, mappedY);
   m_isActive = false;
 }
 

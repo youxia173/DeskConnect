@@ -44,6 +44,7 @@ private:
   void tick();
   void readDatagrams();
   void configureAddress(const QString &interfaceName);
+  void destroySocket(QUdpSocket *&socket);
 
   bool m_running = false;
   bool m_server = false;

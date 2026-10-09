@@ -57,26 +57,35 @@ void EthernetBeacon::start(bool server)
   tick();
 }
 
+void EthernetBeacon::destroySocket(QUdpSocket *&socket)
+{
+  if (!socket) {
+    return;
+  }
+  auto *dying = socket;
+  socket = nullptr;
+  dying->disconnect(this);
+  dying->close();
+  // deleteLater() left a live QUdpSocket in Qt's network engine after the
+  // pointer was cleared; the 1s tick then rebound or wrote through a stale
+  // socket and crashed in libQt6Network.
+  delete dying;
+}
+
 void EthernetBeacon::stop()
 {
   m_running = false;
   m_timer->stop();
   if (m_addressProcess) {
+    m_addressProcess->disconnect(this);
     m_addressProcess->kill();
+    m_addressProcess->deleteLater();
     m_addressProcess = nullptr;
   }
   m_setupAttemptedInterface.clear();
   m_addressSetupFailed = false;
-  if (m_send) {
-    m_send->close();
-    m_send->deleteLater();
-    m_send = nullptr;
-  }
-  if (m_listen) {
-    m_listen->close();
-    m_listen->deleteLater();
-    m_listen = nullptr;
-  }
+  destroySocket(m_send);
+  destroySocket(m_listen);
   m_localIp.clear();
 }
 
@@ -120,11 +129,8 @@ void EthernetBeacon::tick()
       m_localIp.clear();
       Q_EMIT localNicChanged(QString());
     }
-    if (m_send) {
-      m_send->close();
-      m_send->deleteLater();
-      m_send = nullptr;
-    }
+    destroySocket(m_send);
+    destroySocket(m_listen);
   }
   // The native helper waits for duplicate-address detection. An address can
   // appear in Qt's interface list before it is usable. Linux also waits for
@@ -145,11 +151,7 @@ void EthernetBeacon::tick()
   if (m_localIp != nic->ip) {
     m_localIp = nic->ip;
     m_prefixLength = nic->prefixLength;
-    if (m_send) {
-      m_send->close();
-      m_send->deleteLater();
-      m_send = nullptr;
-    }
+    destroySocket(m_send);
     Q_EMIT localNicChanged(m_localIp);
   }
 
@@ -157,8 +159,7 @@ void EthernetBeacon::tick()
     if (!m_send) {
       m_send = new QUdpSocket(this);
       if (!m_send->bind(QHostAddress(m_localIp), 0, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint)) {
-        m_send->deleteLater();
-        m_send = nullptr;
+        destroySocket(m_send);
         return;
       }
     }
@@ -177,8 +178,7 @@ void EthernetBeacon::tick()
     if (!m_listen->bind(
             QHostAddress::AnyIPv4, kDiscoveryPort, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint
         )) {
-      m_listen->deleteLater();
-      m_listen = nullptr;
+      destroySocket(m_listen);
     }
   }
 }

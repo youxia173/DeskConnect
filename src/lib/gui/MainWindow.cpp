@@ -202,6 +202,9 @@ MainWindow::MainWindow()
 }
 MainWindow::~MainWindow()
 {
+  if (m_ethernetBeacon) {
+    m_ethernetBeacon->stop();
+  }
   // Stop network monitoring
   if (m_networkMonitor) {
     m_networkMonitor->stopMonitoring();

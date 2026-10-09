@@ -477,12 +477,24 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
           }
 
           m_coreIpcClient = new ipc::CoreIpcClient(this);
+          // Direct Ethernet / TLS handshake can delay the core IPC socket past
+          // a single 1s wait. Keep retrying while the process is still running.
+          m_coreIpcClient->setRetryLimit(20);
+          m_coreIpcClient->setRetryIntervalMs(250);
           connect(m_coreIpcClient, &ipc::CoreIpcClient::commandReceived, this, &CoreProcess::onCoreIpcMessageReceived);
           connect(m_coreIpcClient, &ipc::CoreIpcClient::connected, this, [] {
             qDebug("connected to core ipc server");
           });
-          connect(m_coreIpcClient, &ipc::CoreIpcClient::connectionFailed, this, [] {
+          connect(m_coreIpcClient, &ipc::CoreIpcClient::connectionFailed, this, [this] {
             qWarning("failed to establish core ipc connection");
+            if (m_processState == ProcessState::Started) {
+              QTimer::singleShot(kRetryDelay, this, [this] {
+                if (m_processState == ProcessState::Started && m_coreIpcClient &&
+                    !m_coreIpcClient->isConnected()) {
+                  m_coreIpcClient->connectToServer();
+                }
+              });
+            }
           });
           connect(m_coreIpcClient, &ipc::CoreIpcClient::serverShutdown, this, [this, client = m_coreIpcClient] {
             qDebug("core ipc server shut down cleanly");

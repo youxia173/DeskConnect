@@ -29,6 +29,8 @@ public:
   explicit IpcClient(QObject *parent, const QString &socketName, const QString &typeName);
   void connectToServer();
   void disconnectFromServer();
+  void setRetryLimit(int retryLimit);
+  void setRetryIntervalMs(int retryIntervalMs);
 
   bool isConnected() const
   {
@@ -64,6 +66,8 @@ private:
   QString m_socketName;
   QByteArray m_readBuffer;
   int m_retryCount{0};
+  int m_retryLimit{3};
+  int m_retryIntervalMs{0};
   QString m_typeName;
 };
 

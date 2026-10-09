@@ -25,6 +25,16 @@ IpcClient::IpcClient(QObject *parent, const QString &socketName, const QString &
   connect(m_socket, &QLocalSocket::readyRead, this, &IpcClient::handleReadyRead);
 }
 
+void IpcClient::setRetryLimit(int retryLimit)
+{
+  m_retryLimit = retryLimit > 0 ? retryLimit : 1;
+}
+
+void IpcClient::setRetryIntervalMs(int retryIntervalMs)
+{
+  m_retryIntervalMs = retryIntervalMs > 0 ? retryIntervalMs : 0;
+}
+
 void IpcClient::connectToServer()
 {
   if (m_state == State::Connecting) {
@@ -49,9 +59,9 @@ void IpcClient::connectToServer()
 
 void IpcClient::attemptConnection()
 {
-  if (const int retryLimit = 3; m_retryCount >= retryLimit) {
+  if (m_retryCount >= m_retryLimit) {
     qWarning().noquote() << QStringLiteral("%1 ipc client failed to connect after %2 attempts")
-                                .arg(m_typeName, QString::number(retryLimit));
+                                .arg(m_typeName, QString::number(m_retryLimit));
     m_state = State::Unconnected;
     Q_EMIT connectionFailed();
     return;
@@ -84,7 +94,7 @@ void IpcClient::attemptConnection()
         ) << QStringLiteral("%1 ipc client failed to connect: %2").arg(m_typeName, m_socket->errorString());
         m_socket->disconnectFromServer();
         m_state = State::Unconnected;
-        QTimer::singleShot(0, this, &IpcClient::attemptConnection);
+        QTimer::singleShot(m_retryIntervalMs, this, &IpcClient::attemptConnection);
       },
       Qt::SingleShotConnection
   );
