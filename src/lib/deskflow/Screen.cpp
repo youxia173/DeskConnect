@@ -217,7 +217,9 @@ void Screen::warpCursor(int32_t x, int32_t y)
 
 void Screen::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
-  m_screen->setClipboard(id, clipboard);
+  if (!m_screen->setClipboard(id, clipboard)) {
+    LOG_WARN("failed to apply clipboard %u to the local system clipboard", static_cast<unsigned>(id));
+  }
 }
 
 void Screen::grabClipboard(ClipboardID id)

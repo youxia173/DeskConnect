@@ -579,10 +579,13 @@ void XWindowsScreen::onClipboardOwnershipChanged(ClipboardID id)
     return;
   }
   LOG_DEBUG("clipboard %u ownership changed (owner=0x%08lx)", static_cast<unsigned>(id), static_cast<unsigned long>(owner));
-  // Keep the content fingerprint: clipboard managers routinely take ownership
-  // of text we just applied from a peer, and re-announcing it would bounce the
-  // same text back to that peer.
-  sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
+  // Ownership changes are not necessarily content changes. Clipboard managers
+  // also take ownership of data we just received from a peer. Use the same
+  // fingerprint check as the fallback poll before announcing a local copy.
+  if (id == kClipboardClipboard)
+    pollExternalClipboard();
+  else
+    sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
 }
 
 void XWindowsScreen::pollExternalClipboard()
@@ -622,12 +625,13 @@ void XWindowsScreen::pollExternalClipboard()
     return;
   }
 
-  bool hasText = false;
+  bool hasContent = false;
   if (probe.open(0)) {
-    hasText = probe.has(IClipboard::Format::Text) && !probe.get(IClipboard::Format::Text).empty();
+    hasContent = (probe.has(IClipboard::Format::Text) && !probe.get(IClipboard::Format::Text).empty()) ||
+                 (probe.has(IClipboard::Format::Bitmap) && !probe.get(IClipboard::Format::Bitmap).empty());
     probe.close();
   }
-  if (!hasText) {
+  if (!hasContent) {
     m_clipboardPollBusy = false;
     return;
   }
@@ -1578,8 +1582,16 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
     // selection owner.  report that to the receiver.
     ClipboardID id = getClipboardID(xevent->xselectionclear.selection);
     if (id != kClipboardEnd) {
+      // An old SelectionClear may still be queued after a newer peer update
+      // reclaimed the selection. Do not invalidate that new local cache.
+      if (XGetSelectionOwner(m_display, m_clipboard[id]->getSelection()) == m_window)
+        return;
       m_clipboard[id]->lost(xevent->xselectionclear.time);
-      sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
+      if (m_isPrimary) {
+        onClipboardOwnershipChanged(id);
+      } else {
+        sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
+      }
       return;
     }
   } break;

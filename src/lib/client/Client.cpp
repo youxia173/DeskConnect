@@ -374,6 +374,8 @@ void Client::setOptions(const OptionsList &options)
     LOG_INFO("clipboard sharing is disabled because the server set the maximum clipboard size to 0");
   }
 
+  LOG_INFO("clipboard sharing configuration from server: enabled=%d limit=%zu KB", m_enableClipboard,
+           m_maximumClipboardSize);
   m_screen->setOptions(options);
 }
 
@@ -403,7 +405,10 @@ void Client::sendClipboard(ClipboardID id)
   if (clipboard.open(m_timeClipboard[id])) {
     clipboard.close();
   }
-  m_screen->getClipboard(id, &clipboard);
+  if (!m_screen->getClipboard(id, &clipboard)) {
+    LOG_WARN("could not read local clipboard %u; leaving it pending for the next send", static_cast<unsigned>(id));
+    return;
+  }
 
   // check time
   if (m_timeClipboard[id] == 0 || clipboard.getTime() != m_timeClipboard[id]) {
@@ -418,6 +423,7 @@ void Client::sendClipboard(ClipboardID id)
     m_timeClipboard[id] = clipboard.getTime();
     // save and send data if different or not yet sent
     if (!m_sentClipboard[id] || data != m_dataClipboard[id]) {
+      LOG_INFO("sending local clipboard %u (%zu bytes, active=%d)", static_cast<unsigned>(id), data.size(), m_active);
       m_sentClipboard[id] = true;
       m_dataClipboard[id] = data;
       m_server->onClipboardChanged(id, &clipboard);

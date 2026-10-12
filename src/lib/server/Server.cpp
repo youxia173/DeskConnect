@@ -1170,6 +1170,7 @@ void Server::processOptions()
   }
   m_relativeMoves = newRelativeMoves;
   m_protocol = Settings::networkProtocol();
+  LOG_INFO("clipboard sharing configuration: enabled=%d limit=%zu KB", m_enableClipboard, m_maximumClipboardSize);
 }
 
 void Server::handleShapeChanged(BaseClientProxy *client)
@@ -1244,6 +1245,15 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
     clipboard.m_clipboardData.clear();
   }
 
+  // Read the primary before changing any peer's system clipboard. An owner
+  // notification can be a clipboard manager echo, or the read can fail. In
+  // either case an eager CCLP would empty Windows' last usable clipboard.
+  if (grabber == m_primaryClient) {
+    onClipboardChanged(m_primaryClient, info->m_id, clipboard.m_clipboardSeqNum);
+    schedulePrimaryClipboardRetry(info->m_id, clipboard.m_clipboardSeqNum);
+    return;
+  }
+
   // tell all other screens to take ownership of clipboard.  tell the
   // grabber that it's clipboard isn't dirty.
   //
@@ -1259,18 +1269,6 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
     } else {
       client->grabClipboard(info->m_id);
     }
-  }
-
-  // Primary (Windows/macOS) only emits ClipboardGrabbed when the user copies;
-  // ClipboardChanged is not raised. Deskflow historically delayed the data
-  // push until leaving the primary screen. Companion clients (e.g. Android)
-  // may never become active, so push primary clipboard contents immediately.
-  // Remote clients still deliver data via ClipboardChanged after DCLP.
-  if (grabber == m_primaryClient) {
-    onClipboardChanged(m_primaryClient, info->m_id, clipboard.m_clipboardSeqNum);
-    // On Linux X11, SelectionClear often races the new owner's ConvertSelection
-    // reply — the first read can be empty and Android would never get text.
-    schedulePrimaryClipboardRetry(info->m_id, clipboard.m_clipboardSeqNum);
   }
 }
 
@@ -1616,16 +1614,17 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
     }
   };
 
-  // ignore if data hasn't changed — still ACK remote sync attempts, but only
-  // after peers that were marked dirty (e.g. primary after remote grab) receive
-  // a push. Otherwise a re-sync of the same text leaves Linux emptied/stale.
+  // Primary retries and clipboard-manager ownership echoes must not republish
+  // unchanged data. Remote grabs clear m_clipboardData above, so a remote
+  // re-sync still applies its payload to all peers even if the text is equal.
   const bool unchanged = (data == clipboard.m_clipboardData);
-  if (unchanged) {
-    LOG_DEBUG("screen \"%s\" clipboard %d unchanged; still flushing dirty peers", clipboard.m_clipboardOwner.c_str(), id);
-  } else {
-    LOG_INFO("screen \"%s\" updated clipboard %d", clipboard.m_clipboardOwner.c_str(), id);
-    clipboard.m_clipboardData = data;
+  if (unchanged && sender == m_primaryClient) {
+    LOG_DEBUG("primary clipboard %u unchanged; skipping repeat push", static_cast<unsigned>(id));
+    return;
   }
+  LOG_INFO("screen \"%s\" updated clipboard %d (%zu bytes, text=%d bitmap=%d)",
+           clipboard.m_clipboardOwner.c_str(), id, data.size(), hasText, hasBitmap);
+  clipboard.m_clipboardData = data;
 
   // Clipboard-paste transfers are tied to clipboard content; menu Send files is not.
   if (id == kClipboardClipboard && m_fileSendFromClipboard) {

@@ -611,7 +611,8 @@ void ServerProxy::setClipboard()
     m_clipboardDataCached.clear();
     m_clipboardDataCached.shrink_to_fit();
 
-    LOG_INFO("clipboard was updated");
+    LOG_INFO("received clipboard from server (id=%u, bytes=%zu)", static_cast<unsigned>(id),
+             ClipboardChunk::getExpectedSize(m_clipboardChunkState));
   } else if (r == TransferState::Error) {
     // Keep the session alive; discard the bad transfer and wait for a retry.
     LOG_ERR("invalid clipboard data from server; discarding transfer");
