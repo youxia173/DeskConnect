@@ -1514,6 +1514,38 @@ Enabling this setting will disable the server config GUI.</source>
 <context>
     <name>SettingsDialog</name>
     <message>
+        <source>Linux login session</source>
+        <translation>Linux 登录方式</translation>
+    </message>
+    <message>
+        <source>Use Xorg by default</source>
+        <translation>默认使用 Xorg 登录</translation>
+    </message>
+    <message>
+        <source>Use Xorg by default for clipboard sharing on Ubuntu. Changes the system login configuration after administrator authorization; takes effect after restarting the computer.</source>
+        <translation>将 Ubuntu 的默认登录方式设为 Xorg，以使用剪贴板共享。系统授权后修改登录配置，重启电脑后生效。</translation>
+    </message>
+    <message>
+        <source>Could not set the default Xorg login: %1</source>
+        <translation>无法设置默认使用 Xorg 登录：%1</translation>
+    </message>
+    <message>
+        <source>Administrator authorization requires pkexec. Please install polkit and try again.</source>
+        <translation>未找到系统授权工具 pkexec，请安装 polkit 后重试。</translation>
+    </message>
+    <message>
+        <source>Xorg is now the default login session. Save your work and restart the computer to apply it.</source>
+        <translation>已设置默认使用 Xorg 登录。请保存当前工作并重启电脑，使设置生效。</translation>
+    </message>
+    <message>
+        <source>Administrator authorization was canceled or denied. The login setting was not applied.</source>
+        <translation>管理员授权已取消或被拒绝，未应用登录设置。</translation>
+    </message>
+    <message>
+        <source>Helper exited with code %1.</source>
+        <translation>配置程序已退出，错误码：%1。</translation>
+    </message>
+    <message>
         <source>Preferences</source>
         <translation>首选项</translation>
     </message>

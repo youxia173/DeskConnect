@@ -55,6 +55,8 @@ add_library(${target} STATIC
   core/EthernetBeacon.h
   core/NetworkMonitor.cpp
   core/NetworkMonitor.h
+  core/LinuxLoginSession.cpp
+  core/LinuxLoginSession.h
   dialogs/AboutDialog.cpp
   dialogs/AboutDialog.h
   dialogs/AboutDialog.ui

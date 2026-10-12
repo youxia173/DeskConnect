@@ -19,13 +19,17 @@
 #include "gui/WindowsFirewall.h"
 #include "gui/WindowsShellContextMenu.h"
 #include "gui/core/NetworkMonitor.h"
+#include "gui/core/LinuxLoginSession.h"
 #include "gui/widgets/KeySequenceWidget.h"
 #include "gui/widgets/SettingsDialogButtonBox.h"
 
 #include <QComboBox>
 #include <QDir>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QMessageBox>
+#include <QPointer>
+#include <QProcess>
 
 using namespace deskflow::gui;
 
@@ -37,6 +41,11 @@ SettingsDialog::SettingsDialog(QWidget *parent, const ServerConfig &serverConfig
 {
 
   ui->setupUi(this);
+#ifdef Q_OS_LINUX
+  ui->groupLinuxLogin->show();
+#else
+  ui->groupLinuxLogin->hide();
+#endif
   layout()->addWidget(m_buttonBox);
   ui->tabWidget->setCurrentIndex(0);
 
@@ -146,6 +155,7 @@ void SettingsDialog::initConnections() const
   connect(ui->btnBrowseLog, &QPushButton::clicked, this, &SettingsDialog::browseLogPath);
   connect(ui->btnBrowseFileTransferDir, &QPushButton::clicked, this, &SettingsDialog::browseFileTransferDir);
   connect(ui->btnAddFirewallRule, &QPushButton::clicked, this, &SettingsDialog::addFirewallRules);
+  connect(ui->btnDefaultXorg, &QPushButton::clicked, this, &SettingsDialog::configureXorgLogin);
   connect(ui->groupLogToFile, &QGroupBox::toggled, this, &SettingsDialog::setLogToFile);
   connect(ui->comboLogLevel, &QComboBox::currentIndexChanged, this, &SettingsDialog::logLevelChanged);
   connect(ui->comboLanguage, &QComboBox::currentTextChanged, this, [](const QString &lang) {
@@ -203,6 +213,57 @@ void SettingsDialog::regenCertificates()
     const auto certificate = Settings::value(Settings::Security::Certificate).toString();
     updateKeyLengthOnFile(certificate);
   }
+}
+
+void SettingsDialog::configureXorgLogin()
+{
+#ifdef Q_OS_LINUX
+  const auto unavailable = defaultXorgUnavailableReason();
+  if (!unavailable.isEmpty()) {
+    QMessageBox::information(this, tr("Linux login session"),
+                             tr("Could not set the default Xorg login: %1").arg(unavailable));
+    return;
+  }
+  const QString pkexec = QStringLiteral("/usr/bin/pkexec");
+  if (!QFileInfo(pkexec).isExecutable()) {
+    QMessageBox::warning(this, tr("Linux login session"),
+                         tr("Administrator authorization requires pkexec. Please install polkit and try again."));
+    return;
+  }
+  ui->btnDefaultXorg->setEnabled(false);
+  // Authorization may outlive the settings dialog. Keep the helper alive and
+  // use a guarded UI pointer so closing the dialog cannot cause a crash.
+  auto *process = new QProcess(qApp);
+  const QPointer<SettingsDialog> dialog(this);
+  connect(process, &QProcess::errorOccurred, qApp, [dialog, process](QProcess::ProcessError error) {
+    if (error != QProcess::FailedToStart)
+      return;
+    if (dialog)
+      dialog->ui->btnDefaultXorg->setEnabled(true);
+    QMessageBox::warning(dialog.data(), tr("Linux login session"),
+                         tr("Could not set the default Xorg login: %1").arg(process->errorString()));
+    process->deleteLater();
+  });
+  connect(process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), qApp,
+          [dialog, process](int code, QProcess::ExitStatus status) {
+    if (dialog)
+      dialog->ui->btnDefaultXorg->setEnabled(true);
+    if (status == QProcess::NormalExit && code == 0) {
+      QMessageBox::information(dialog.data(), tr("Linux login session"),
+          tr("Xorg is now the default login session. Save your work and restart the computer to apply it."));
+    } else if (status == QProcess::NormalExit && (code == 126 || code == 127)) {
+      QMessageBox::information(dialog.data(), tr("Linux login session"),
+                               tr("Administrator authorization was canceled or denied. The login setting was not applied."));
+    } else {
+      const auto detail = QString::fromUtf8(process->readAllStandardError()).trimmed();
+      QMessageBox::warning(dialog.data(), tr("Linux login session"),
+          tr("Could not set the default Xorg login: %1").arg(
+              detail.isEmpty() ? tr("Helper exited with code %1.").arg(code) : detail));
+    }
+    process->deleteLater();
+  });
+  process->start(pkexec, {QCoreApplication::applicationFilePath(), QStringLiteral("--deskconnect-default-xorg")});
+#endif
 }
 
 void SettingsDialog::browseCertificatePath()

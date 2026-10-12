@@ -241,10 +241,19 @@ bool FileSendSession::openCurrentFile()
     LOG_ERR("failed to open file for transfer: %s", offer.localPath.c_str());
     return false;
   }
-  if (m_file.size() < 0 || static_cast<uint64_t>(m_file.size()) != offer.size) {
-    LOG_ERR("file size changed before transfer: %s", offer.localPath.c_str());
+  const qint64 currentSize = m_file.size();
+  if (currentSize < 0 || static_cast<uint64_t>(currentSize) < offer.size) {
+    LOG_ERR("file shrank or its size could not be read before transfer: %s", offer.localPath.c_str());
     m_file.close();
     return false;
+  }
+  // Sending the application's own log writes more log entries between the
+  // offer and this asynchronous open. Transfer only the originally offered
+  // prefix; the pump already bounds every read by offer.size. Appended data
+  // must neither abort the transfer nor extend it indefinitely.
+  if (static_cast<uint64_t>(currentSize) > offer.size) {
+    LOG_INFO("file grew before transfer; sending the originally offered %llu bytes: %s",
+             static_cast<unsigned long long>(offer.size), offer.localPath.c_str());
   }
   m_sent = 0;
   m_startedFile = true;

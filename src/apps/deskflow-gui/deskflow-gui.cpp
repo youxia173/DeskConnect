@@ -19,6 +19,12 @@
 #include "gui/WindowsShellContextMenu.h"
 #include "common/Settings.h"
 
+#ifdef Q_OS_LINUX
+#include "gui/core/LinuxLoginSession.h"
+#include <cstring>
+#include <QTextStream>
+#endif
+
 #if defined(Q_OS_WIN)
 #include "gui/core/DirectEthernetAddress.h"
 #include "gui/core/NetworkMonitor.h"
@@ -59,6 +65,20 @@ const static auto kHeader = QStringLiteral("%1: %2\n").arg(kAppName, kDisplayVer
 
 int main(int argc, char *argv[])
 {
+#ifdef Q_OS_LINUX
+  // A fixed-purpose privileged helper, before GUI and single-instance setup.
+  if (argc >= 2 && std::strcmp(argv[1], "--deskconnect-default-xorg") == 0) {
+    QCoreApplication helperApp(argc, argv);
+    if (argc != 2)
+      return s_exitArgs;
+    QString error;
+    if (!configureDefaultXorg(error)) {
+      QTextStream(stderr) << error << Qt::endl;
+      return s_exitFailed;
+    }
+    return s_exitSuccess;
+  }
+#endif
 #if defined(Q_OS_WIN)
   // Short-lived elevated child. Handle this before QApplication, the single-
   // instance check and all GUI initialization; it must never open a window.
