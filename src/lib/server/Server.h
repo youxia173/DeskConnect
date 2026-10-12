@@ -16,6 +16,7 @@
 #include "deskflow/KeyTypes.h"
 #include "deskflow/MouseTypes.h"
 #include "filetransfer/FileReceiveSession.h"
+#include "filetransfer/ClipboardFiles.h"
 #include "filetransfer/FileSend.h"
 #include "filetransfer/TransferProgress.h"
 #include "server/Config.h"
@@ -209,6 +210,7 @@ public:
   void onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data);
   //! Handle CFTR (paste requested remote file contents)
   void onClipboardFileRequest(BaseClientProxy *sender);
+  void onClipboardFileOffer(BaseClientProxy *sender, const std::string &message);
   //! Push local files to a named client (empty name = the only connected client).
   bool sendFilesTo(const std::string &clientName, const std::vector<std::string> &paths);
   //! Cancel active outbound send and/or inbound receive.
@@ -496,6 +498,10 @@ private:
   bool m_enableClipboard = true;
 
   deskflow::FileReceiveSession m_fileReceive;
+  std::map<std::string, std::unique_ptr<deskflow::ClipboardFiles>> m_clipboardFiles;
+  std::string m_localClipboardFiles;
+  bool m_fileClipboardActive = false;
+  bool m_forceLocalFileOffer = false;
   std::string m_fileReceiveSource;
   deskflow::FileSendSession m_fileSend;
   deskflow::TransferProgressReporter m_sendProgress;

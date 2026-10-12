@@ -23,4 +23,5 @@ public:
 
 private:
   Atom m_atom;
+  bool m_gnome;
 };

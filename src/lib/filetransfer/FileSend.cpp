@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <thread>
 
 namespace deskflow {
 
@@ -45,6 +46,9 @@ bool validOffers(const std::vector<FileOffer> &offers, uint64_t &total)
   }
   total = 0;
   for (const auto &offer : offers) {
+    if (!isSafeTransferPath(offer.name) || (offer.name.back() == '/' && offer.size != 0)) {
+      return false;
+    }
     if (offer.size > static_cast<uint64_t>(std::numeric_limits<qint64>::max()) ||
         offer.size > std::numeric_limits<uint64_t>::max() - total) {
       return false;
@@ -54,6 +58,60 @@ bool validOffers(const std::vector<FileOffer> &offers, uint64_t &total)
   return encodeDragInfo(offers).size() <= PROTOCOL_MAX_STRING_LENGTH;
 }
 } // namespace
+
+struct FileSendSession::PendingOffers
+{
+  std::atomic_bool cancelled{false};
+  std::atomic_bool ready{false};
+  bool allowFolders = false;
+  std::vector<FileOffer> offers;
+};
+
+void FileSendSession::cancelPreparation()
+{
+  if (m_pending) {
+    m_pending->cancelled = true;
+    m_pending.reset();
+  }
+}
+
+bool FileSendSession::startPaths(
+    IStream *stream, IEventQueue *events, const std::string &paths, bool allowFolders,
+    DoneCallback onDone, ProgressCallback onProgress
+)
+{
+  if (!stream || !events || paths.empty() || m_active || !isFileTransferEnabled()) {
+    return false;
+  }
+  cancel(false);
+  const auto limit = maxTransferBytes(); // Settings stays on the core thread.
+  auto pending = std::make_shared<PendingOffers>();
+  pending->allowFolders = allowFolders;
+  try {
+    // The worker owns only its result state and source paths, never this, a
+    // socket or a screen. Cancellation/destruction never waits for filesystem IO.
+    std::thread([pending, paths, limit]() {
+      try {
+        pending->offers = fileOffersFromClipboardData(paths, limit, &pending->cancelled);
+      } catch (...) {
+        pending->offers.clear();
+      }
+      pending->ready.store(true, std::memory_order_release);
+    }).detach();
+  } catch (...) {
+    return false;
+  }
+  m_pending = std::move(pending);
+  m_stream = stream;
+  m_events = events;
+  m_fingerprint = paths;
+  m_onDone = std::move(onDone);
+  m_onProgress = std::move(onProgress);
+  m_active = true;
+  LOG_INFO("preparing file transfer manifest asynchronously");
+  schedulePump();
+  return true;
+}
 
 FileSendSession::~FileSendSession()
 {
@@ -80,6 +138,7 @@ void FileSendSession::invokeDone(bool success)
 
 void FileSendSession::cancel(bool notifyDone)
 {
+  cancelPreparation();
   clearTimer();
   if (m_file.isOpen()) {
     m_file.close();
@@ -151,6 +210,7 @@ bool FileSendSession::start(
   }
 
   // Cancel without invoking done on the new callback.
+  cancelPreparation();
   clearTimer();
   if (m_file.isOpen()) {
     m_file.close();
@@ -236,6 +296,13 @@ bool FileSendSession::openCurrentFile()
     return false;
   }
   const auto &offer = m_offers[m_index];
+  if (offer.name.back() == '/') {
+    m_sent = 0;
+    m_startedFile = true;
+    const std::string sizeStr = "0";
+    ProtocolUtil::writef(m_stream, kMsgDFileTransfer, static_cast<uint8_t>(ChunkType::DataStart), &sizeStr);
+    return true;
+  }
   m_file.setFileName(QString::fromStdString(offer.localPath));
   if (!m_file.open(QIODevice::ReadOnly)) {
     LOG_ERR("failed to open file for transfer: %s", offer.localPath.c_str());
@@ -310,6 +377,7 @@ void FileSendSession::completeOk()
 
 void FileSendSession::fail(const char *reason)
 {
+  cancelPreparation();
   LOG_ERR("clipboard file transfer aborted: %s", reason);
   clearTimer();
   if (m_file.isOpen()) {
@@ -357,6 +425,38 @@ void FileSendSession::pump()
 {
   clearTimer();
   if (!m_active || m_stream == nullptr) {
+    return;
+  }
+
+  if (m_pending) {
+    if (!m_pending->ready.load(std::memory_order_acquire)) {
+      schedulePump();
+      return;
+    }
+    const auto pending = std::move(m_pending);
+    uint64_t total = 0;
+    if (pending->offers.empty() || !validOffers(pending->offers, total) ||
+        (!pending->allowFolders && std::any_of(pending->offers.begin(), pending->offers.end(), [](const auto &offer) {
+          return offer.name.find('/') != std::string::npos;
+        }))) {
+      fail("source unreadable, invalid folder/name, size/count limit, or peer needs update");
+      return;
+    }
+    const bool fullSpeed = m_forceFullSpeed;
+    m_active = false;
+    // Keep the existing callbacks intact if start rejects the prepared list.
+    try {
+      if (!start(m_stream, m_events, pending->offers, m_fingerprint, m_onDone, m_onProgress)) {
+        fail("could not start prepared file transfer");
+        return;
+      }
+    } catch (...) {
+      fail("could not send prepared file manifest");
+      return;
+    }
+    if (fullSpeed) {
+      setFullSpeedForSession();
+    }
     return;
   }
 
@@ -460,7 +560,7 @@ bool writeFileOffersToStream(IStream *stream, const std::vector<FileOffer> &offe
 
   for (const auto &offer : offers) {
     QFile file(QString::fromStdString(offer.localPath));
-    if (!file.open(QIODevice::ReadOnly)) {
+    if (offer.name.back() != '/' && !file.open(QIODevice::ReadOnly)) {
       LOG_ERR("failed to open file for transfer: %s", offer.localPath.c_str());
       return false;
     }

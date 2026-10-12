@@ -30,8 +30,11 @@
 
 #include <QFileInfo>
 #include <QString>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include <cstring>
+#include <algorithm>
 
 //
 // ServerProxy
@@ -59,6 +62,8 @@ ServerProxy::ServerProxy(Client *client, deskflow::IStream *stream, IEventQueue 
 
 ServerProxy::~ServerProxy()
 {
+  m_clipboardFiles.reset();
+  m_client->getScreen()->getPlatformScreen()->clearDelayedFilePaste();
   const bool recvActive = m_fileReceive.isActive();
   const bool sendActive = m_fileSend.isActive();
   m_fileSend.cancel(false);
@@ -853,6 +858,31 @@ void ServerProxy::setOptions()
   // forward
   m_client->setOptions(options);
 
+  for (size_t i = 0; i + 1 < options.size(); i += 2) {
+    if (options[i] == kOptionClipboardFiles && options[i + 1] == 1 && !m_clipboardFiles) {
+      m_clipboardFiles = std::make_unique<deskflow::ClipboardFiles>(
+          m_events, m_client->getScreen()->getPlatformScreen(),
+          [this](const std::string &message) {
+            ProtocolUtil::writef(m_stream, kMsgDFileOffer, static_cast<uint16_t>(0), &message);
+          },
+          [this](const std::vector<std::string> &paths) {
+            if (m_fileSend.isActive()) {
+              return false;
+            }
+            sendFiles(paths);
+            return m_fileSend.isActive();
+          },
+          [this]() {
+            m_fileSend.cancel(false);
+          },
+          [this]() {
+            m_fileReceive.reset();
+          });
+      const std::string hello = R"({"v":1,"op":"hello"})";
+      ProtocolUtil::writef(m_stream, kMsgDFileOffer, static_cast<uint16_t>(0), &hello);
+    }
+  }
+
   // update modifier table
   for (uint32_t i = 0, n = (uint32_t)options.size(); i < n; i += 2) {
     KeyModifierID id = kKeyModifierIDNull;
@@ -929,36 +959,35 @@ void ServerProxy::setActiveServerLanguage(const std::string_view &language)
   }
 }
 
+void ServerProxy::offerClipboardFiles(const std::string &paths, bool force)
+{
+  if (m_clipboardFiles && deskflow::isFileTransferEnabled()) {
+    if (!paths.empty()) {
+      m_clipboardSender.cancel();
+    }
+    m_clipboardFiles->announce(paths, force);
+  }
+}
+
 void ServerProxy::sendClipboardFiles()
 {
-  if (!deskflow::isFileTransferEnabled()) {
-    return;
-  }
+  // File bodies are sent exclusively in response to a versioned paste request.
+}
 
-  Clipboard clipboard;
-  if (!m_client->getClipboard(kClipboardClipboard, &clipboard)) {
-    return;
+void ServerProxy::cancelFileTransfer()
+{
+  if (m_clipboardFiles) {
+    m_clipboardFiles->cancel();
+    m_clipboardFiles->sendFinished(false);
   }
-  if (!clipboard.has(IClipboard::Format::Files)) {
-    return;
-  }
+  m_fileSend.cancel(false);
+  m_fileReceive.reset();
+  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer cancelled"));
+}
 
-  const std::string filesData = clipboard.get(IClipboard::Format::Files);
-  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
-  if (offers.empty()) {
-    return;
-  }
-
-  if (m_fileSend.fingerprint() == filesData) {
-    if (m_fileSend.isActive()) {
-      LOG_DEBUG("clipboard file transfer already in progress");
-      return;
-    }
-    LOG_DEBUG("clipboard file list already sent, skipping");
-    return;
-  }
-
-  m_fileSend.start(m_stream, m_events, offers, filesData);
+void ServerProxy::setFileTransferFullSpeed()
+{
+  m_fileSend.setFullSpeedForSession();
 }
 
 void ServerProxy::sendFiles(const std::vector<std::string> &paths)
@@ -969,14 +998,20 @@ void ServerProxy::sendFiles(const std::vector<std::string> &paths)
     return;
   }
 
-  const std::string filesData = deskflow::clipboardDataFromPaths(paths);
-  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
-  if (offers.empty()) {
-    LOG_ERR("send files: no readable files");
-    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|no readable files"));
+  if (m_fileSend.isActive()) {
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|another transfer is active"));
     return;
   }
-
+  const std::string filesData = deskflow::clipboardDataFromPaths(paths);
+  if (paths.empty()) {
+    return;
+  }
+  if (!m_clipboardFiles && std::any_of(paths.begin(), paths.end(), [](const auto &path) {
+        return QFileInfo(QString::fromStdString(path)).isDir();
+      })) {
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|update both computers to transfer folders"));
+    return;
+  }
   m_sendProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
     ipcSendToClient(
         QStringLiteral("fileTransfer"),
@@ -985,11 +1020,14 @@ void ServerProxy::sendFiles(const std::vector<std::string> &paths)
   });
   m_sendProgress.reset();
 
-  if (!m_fileSend.start(
-          m_stream, m_events, offers, filesData,
-          [offers](bool success) {
+  if (!m_fileSend.startPaths(
+          m_stream, m_events, filesData, m_clipboardFiles != nullptr,
+          [this, count = paths.size()](bool success) {
+            if (m_clipboardFiles) {
+              m_clipboardFiles->sendFinished(success);
+            }
             if (success) {
-              ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("ok|%1").arg(offers.size()));
+              ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("ok|%1").arg(count));
             } else {
               ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer failed"));
             }
@@ -1000,8 +1038,8 @@ void ServerProxy::sendFiles(const std::vector<std::string> &paths)
     return;
   }
 
-  LOG_INFO("sending %zu file(s) to server", offers.size());
-  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("sending|%1").arg(offers.size()));
+  LOG_INFO("sending %zu file(s) to server", paths.size());
+  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("sending|%1").arg(paths.size()));
 }
 
 void ServerProxy::applyReceivedFiles(const std::vector<std::string> &paths)
@@ -1024,7 +1062,17 @@ void ServerProxy::fileOfferReceived()
     LOG_ERR("failed to read file offer from server");
     return;
   }
-  LOG_DEBUG("ignored clipboard file offer (%u file(s)); use Send files", fileCount);
+  if (m_clipboardFiles) {
+    const auto object = QJsonDocument::fromJson(QByteArray::fromStdString(info)).object();
+    if (object.value("op").toString() == "offer") {
+      m_client->receivedClipboardFiles();
+    }
+    const bool wasWaiting = m_clipboardFiles->waiting();
+    m_clipboardFiles->handle(info);
+    if (wasWaiting && !m_clipboardFiles->waiting()) {
+      m_fileReceive.reset();
+    }
+  }
 }
 
 void ServerProxy::dragInfoReceived()
@@ -1053,9 +1101,12 @@ void ServerProxy::dragInfoReceived()
       );
     });
     m_recvProgress.reset();
-    m_fileReceive.begin(names, deskflow::maxTransferBytes(), [this](const deskflow::TransferProgressInfo &info) {
+    const bool started = m_fileReceive.begin(names, deskflow::maxTransferBytes(), [this](const deskflow::TransferProgressInfo &info) {
       m_recvProgress.report(info);
     });
+    if (!started && m_clipboardFiles) {
+      m_clipboardFiles->failed();
+    }
   }
 }
 
@@ -1079,30 +1130,24 @@ void ServerProxy::fileChunkReceived()
     return;
   }
   if (!m_fileReceive.isActive()) {
-    if (!m_pendingOfferNames.empty()) {
-      m_recvProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
-        ipcSendToClient(
-            QStringLiteral("fileTransfer"),
-            QStringLiteral("progress|%1")
-                .arg(QString::fromStdString(deskflow::formatTransferProgressDetail(info, bps, eta)))
-        );
-      });
-      m_recvProgress.reset();
-      m_fileReceive.begin(
-          m_pendingOfferNames, deskflow::maxTransferBytes(),
-          [this](const deskflow::TransferProgressInfo &info) { m_recvProgress.report(info); }
-      );
-    } else {
-      LOG_WARN("file chunk from server without drag info");
-      return;
-    }
+    LOG_WARN("file chunk from server without drag info");
+    return;
+  }
+  if (m_clipboardFiles) {
+    m_clipboardFiles->progress();
   }
 
   const auto state = m_fileReceive.onChunk(mark, data, deskflow::maxTransferBytes());
   if (state == TransferState::Finished) {
+    if (m_clipboardFiles) {
+      m_clipboardFiles->received(m_fileReceive.receivedPaths());
+    }
     applyReceivedFiles(m_fileReceive.receivedPaths());
     m_fileReceive.reset();
   } else if (state == TransferState::Error) {
+    if (m_clipboardFiles) {
+      m_clipboardFiles->failed();
+    }
     LOG_ERR("file transfer from server failed");
     m_fileReceive.reset();
     m_recvProgress.reset();

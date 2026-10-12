@@ -152,9 +152,7 @@ XWindowsScreen::XWindowsScreen(const char *displayName, bool isPrimary, IEventQu
     m_clipboard[id] = new XWindowsClipboard(m_display, m_window, id);
   }
 
-  if (m_isPrimary) {
-    startClipboardMonitor();
-  }
+  startClipboardMonitor();
 
   // install event handlers
   m_events->addHandler(EventTypes::System, m_events->getSystemTarget(), [this](const auto &e) {
@@ -424,7 +422,7 @@ bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
       LOG_DEBUG("ignoring clipboard update; delayed file paste is armed");
       return true;
     }
-  } else {
+  } else if (id == kClipboardClipboard) {
     clearDelayedFilePaste();
   }
 
@@ -455,6 +453,8 @@ bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
 
 void XWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
 {
+  ++m_delayedFileGeneration;
+  m_renderingDelayedFilePaste = false;
   m_delayedFilePull = std::move(pullFiles);
   m_hasDelayedFilePaste = (m_delayedFilePull != nullptr);
   if (!m_hasDelayedFilePaste || m_clipboard[kClipboardClipboard] == nullptr) {
@@ -482,6 +482,7 @@ void XWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::stri
 
 void XWindowsScreen::clearDelayedFilePaste()
 {
+  ++m_delayedFileGeneration;
   m_hasDelayedFilePaste = false;
   m_renderingDelayedFilePaste = false;
   m_delayedFilePull = {};
@@ -497,8 +498,13 @@ bool XWindowsScreen::renderDelayedFilePaste()
   }
 
   m_renderingDelayedFilePaste = true;
+  const auto generation = m_delayedFileGeneration;
+  const auto pull = m_delayedFilePull;
   LOG_INFO("paste requested — fetching remote clipboard file(s)");
-  const auto paths = m_delayedFilePull();
+  const auto paths = pull();
+  if (generation != m_delayedFileGeneration) {
+    return false;
+  }
   m_renderingDelayedFilePaste = false;
 
   if (paths.empty()) {
@@ -514,6 +520,8 @@ bool XWindowsScreen::renderDelayedFilePaste()
   // Keep ownership from prepareDelayedFilePaste; only replace Files payload.
   m_clipboard[kClipboardClipboard]->add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
   m_clipboard[kClipboardClipboard]->close();
+  m_lastClipboardFiles = deskflow::clipboardDataFromPaths(paths);
+  m_receivedFileClipboardFiles = m_lastClipboardFiles;
   LOG_INFO("delayed file paste ready with %zu file(s)", paths.size());
   return true;
 }
@@ -525,7 +533,7 @@ void XWindowsScreen::checkClipboards()
 
 void XWindowsScreen::startClipboardMonitor()
 {
-  if (!m_isPrimary || m_events == nullptr) {
+  if (m_events == nullptr) {
     return;
   }
 
@@ -571,24 +579,27 @@ void XWindowsScreen::stopClipboardMonitor()
 
 void XWindowsScreen::onClipboardOwnershipChanged(ClipboardID id)
 {
-  if (!m_isPrimary || !m_isOnScreen || id >= kClipboardEnd || m_clipboard[id] == nullptr) {
+  if ((m_isPrimary && !m_isOnScreen) || id >= kClipboardEnd || m_clipboard[id] == nullptr) {
     return;
   }
   const Window owner = XGetSelectionOwner(m_display, m_clipboard[id]->getSelection());
   if (owner == m_window) {
     return;
   }
+  if (id == kClipboardClipboard && m_hasDelayedFilePaste) {
+    clearDelayedFilePaste();
+  }
   LOG_DEBUG("clipboard %u ownership changed (owner=0x%08lx)", static_cast<unsigned>(id), static_cast<unsigned long>(owner));
   // Ownership changes are not necessarily content changes. Clipboard managers
   // also take ownership of data we just received from a peer. Use the same
   // fingerprint check as the fallback poll before announcing a local copy.
   if (id == kClipboardClipboard)
-    pollExternalClipboard();
+    pollExternalClipboard(true);
   else
     sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
 }
 
-void XWindowsScreen::pollExternalClipboard()
+void XWindowsScreen::pollExternalClipboard(bool forceFileCopy)
 {
   if (m_isPrimary && !m_isOnScreen && m_captureLogTimer.isValid() && m_captureLogTimer.elapsed() >= 10000) {
     LOG_INFO("X11 input capture alive: grabbed=%d park=%d,%d motion=%u buttons=%u keys=%u", m_inputGrabbed,
@@ -598,7 +609,7 @@ void XWindowsScreen::pollExternalClipboard()
     m_captureKeyCount = 0;
     m_captureLogTimer.restart();
   }
-  if (!m_isPrimary || !m_isOnScreen || m_clipboardPollBusy) {
+  if ((m_isPrimary && !m_isOnScreen) || m_clipboardPollBusy) {
     return;
   }
   m_clipboardPollBusy = true;
@@ -626,9 +637,14 @@ void XWindowsScreen::pollExternalClipboard()
   }
 
   bool hasContent = false;
+  std::string filesData;
   if (probe.open(0)) {
+    if (probe.has(IClipboard::Format::Files)) {
+      filesData = probe.get(IClipboard::Format::Files);
+    }
     hasContent = (probe.has(IClipboard::Format::Text) && !probe.get(IClipboard::Format::Text).empty()) ||
-                 (probe.has(IClipboard::Format::Bitmap) && !probe.get(IClipboard::Format::Bitmap).empty());
+                 (probe.has(IClipboard::Format::Bitmap) && !probe.get(IClipboard::Format::Bitmap).empty()) ||
+                 !filesData.empty();
     probe.close();
   }
   if (!hasContent) {
@@ -637,12 +653,14 @@ void XWindowsScreen::pollExternalClipboard()
   }
 
   const std::string data = probe.marshall();
-  if (data == m_lastClipboardMarshall[id]) {
+  const bool freshFileCopy = forceFileCopy && !filesData.empty() && filesData != m_receivedFileClipboardFiles;
+  if (!freshFileCopy && data == m_lastClipboardMarshall[id] && filesData == m_lastClipboardFiles) {
     m_clipboardPollBusy = false;
     return;
   }
 
   m_lastClipboardMarshall[id] = data;
+  m_lastClipboardFiles = filesData;
   LOG_INFO("detected external CLIPBOARD change (%zu bytes); notifying server", data.size());
   sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
   m_clipboardPollBusy = false;
@@ -1586,6 +1604,9 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
       // reclaimed the selection. Do not invalidate that new local cache.
       if (XGetSelectionOwner(m_display, m_clipboard[id]->getSelection()) == m_window)
         return;
+      if (id == kClipboardClipboard) {
+        clearDelayedFilePaste();
+      }
       m_clipboard[id]->lost(xevent->xselectionclear.time);
       if (m_isPrimary) {
         onClipboardOwnershipChanged(id);
@@ -1607,6 +1628,7 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
     break;
 
   case SelectionRequest: {
+    const auto request = xevent->xselectionrequest;
     // somebody is asking for clipboard data
     ClipboardID id = getClipboardID(xevent->xselectionrequest.selection);
     if (id != kClipboardEnd) {
@@ -1616,8 +1638,7 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
         renderDelayedFilePaste();
       }
       m_clipboard[id]->addRequest(
-          xevent->xselectionrequest.owner, xevent->xselectionrequest.requestor, xevent->xselectionrequest.target,
-          xevent->xselectionrequest.time, xevent->xselectionrequest.property
+          request.owner, request.requestor, request.target, request.time, request.property
       );
       return;
     }

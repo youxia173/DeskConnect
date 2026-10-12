@@ -269,6 +269,16 @@ void Client::setClipboard(ClipboardID id, const IClipboard *clipboard)
   m_sentClipboard[id] = false;
 }
 
+void Client::cancelFileTransfer()
+{
+  if (m_server) m_server->cancelFileTransfer();
+}
+
+void Client::setFileTransferFullSpeed()
+{
+  if (m_server) m_server->setFileTransferFullSpeed();
+}
+
 void Client::grabClipboard(ClipboardID id)
 {
   m_screen->grabClipboard(id);
@@ -408,6 +418,18 @@ void Client::sendClipboard(ClipboardID id)
   if (!m_screen->getClipboard(id, &clipboard)) {
     LOG_WARN("could not read local clipboard %u; leaving it pending for the next send", static_cast<unsigned>(id));
     return;
+  }
+
+  if (id == kClipboardClipboard && clipboard.open(0)) {
+    const auto files = clipboard.has(IClipboard::Format::Files) ?
+                           clipboard.get(IClipboard::Format::Files) : std::string{};
+    m_server->offerClipboardFiles(files, !m_sentClipboard[id]);
+    clipboard.close();
+    if (!files.empty()) {
+      m_timeClipboard[id] = clipboard.getTime();
+      m_sentClipboard[id] = true;
+      return;
+    }
   }
 
   // check time
@@ -659,11 +681,9 @@ void Client::handleClipboardGrabbed(const Event &event)
   m_sentClipboard[info->m_id] = false;
   m_timeClipboard[info->m_id] = 0;
 
-  // if we're not the active screen then send the clipboard now,
-  // otherwise we'll wait until we leave.
-  if (!m_active) {
-    sendClipboard(info->m_id);
-  }
+  // Publish the copy now. File copies only advertise metadata, so publishing
+  // does not start a transfer or depend on leaving the active screen.
+  sendClipboard(info->m_id);
 }
 
 void Client::handleHello()

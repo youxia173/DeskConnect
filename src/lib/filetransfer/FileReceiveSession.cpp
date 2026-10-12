@@ -9,15 +9,31 @@
 #include "base/Log.h"
 
 #include <QString>
+#include <QDir>
+#include <QFileInfo>
+#include <QSet>
+#include <QTemporaryDir>
 
 #include <algorithm>
 #include <limits>
+#include <thread>
 
 namespace deskflow {
 
 void FileReceiveSession::reset()
 {
+  const bool incomplete = m_active;
   closeCurrent(false);
+  if (incomplete && !m_receiveDir.empty()) {
+    const auto directory = QString::fromStdString(m_receiveDir);
+    try {
+      // A cancelled tree may contain thousands of files. Cleanup must not
+      // hold the event thread (and Linux input grabs) while deleting them.
+      std::thread([directory]() { QDir(directory).removeRecursively(); }).detach();
+    } catch (...) {
+      LOG_WARN("could not schedule incomplete transfer cleanup: %s", m_receiveDir.c_str());
+    }
+  }
   m_active = false;
   m_names.clear();
   m_expectedSizes.clear();
@@ -40,15 +56,40 @@ bool FileReceiveSession::begin(
   if (names.empty()) {
     return false;
   }
-  for (const auto &name : names) {
-    if (name.empty() || sanitizeFileName(name) != name) {
-      return false;
-    }
-  }
-  m_receiveDir = ensureReceiveDirectory();
-  if (m_receiveDir.empty()) {
+  QSet<QString> entries;
+  QSet<QString> directories;
+  if (names.size() > 65535) {
     return false;
   }
+  for (const auto &name : names) {
+    QString relative = QString::fromStdString(name);
+    if (relative.endsWith('/')) {
+      relative.chop(1);
+    }
+    if (!isSafeTransferPath(name) || entries.contains(relative.toCaseFolded())) {
+      return false;
+    }
+    const auto slash = relative.lastIndexOf('/');
+    if (slash >= 0 && !directories.contains(relative.left(slash).toCaseFolded())) {
+      return false;
+    }
+    if (name.back() == '/') {
+      directories.insert(relative.toCaseFolded());
+    }
+    entries.insert(relative.toCaseFolded());
+  }
+  const auto base = ensureReceiveDirectory();
+  if (base.empty()) {
+    return false;
+  }
+  // Each transfer owns a new staging directory. Never traverse an existing
+  // destination tree (including symlinks), overwrite files or expose partial roots.
+  QTemporaryDir directory(QDir(QString::fromStdString(base)).filePath("DeskConnect-XXXXXX"));
+  if (!directory.isValid()) {
+    return false;
+  }
+  directory.setAutoRemove(false);
+  m_receiveDir = directory.path().toUtf8().toStdString();
   m_names = names;
   m_expectedSizes.assign(names.size(), 0);
   m_maxTotalBytes = maxTotalBytes;
@@ -74,13 +115,29 @@ bool FileReceiveSession::openNextFile(uint64_t expectedSize)
     return false;
   }
 
-  m_currentPath = uniqueReceivePath(m_receiveDir, m_names[m_index]);
+  const auto &name = m_names[m_index];
+  m_directory = name.back() == '/';
+  const QString relative = QString::fromStdString(m_directory ? name.substr(0, name.size() - 1) : name);
+  const QString path = QDir(QString::fromStdString(m_receiveDir)).filePath(relative);
+  m_currentPath = path.toUtf8().toStdString();
   if (m_currentPath.empty()) {
     LOG_ERR("file transfer: could not allocate receive path");
     return false;
   }
 
   // QFile handles UTF-8 paths on Windows; std::ofstream does not.
+  if (!QDir().mkpath(QFileInfo(path).absolutePath())) {
+    return false;
+  }
+  if (m_directory) {
+    if (expectedSize != 0 || !QDir().mkpath(path)) {
+      return false;
+    }
+    m_expectedSize = 0;
+    m_expectedSizes[m_index] = 0;
+    m_written = 0;
+    return true;
+  }
   m_out.setFileName(QString::fromUtf8(m_currentPath.data(), static_cast<qsizetype>(m_currentPath.size())));
   if (!m_out.open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
     LOG_ERR("file transfer: failed to open %s for write", m_currentPath.c_str());
@@ -106,7 +163,13 @@ void FileReceiveSession::closeCurrent(bool success)
   }
   if (!m_currentPath.empty()) {
     if (success) {
-      m_receivedPaths.push_back(m_currentPath);
+      auto relative = m_names[m_index];
+      if (relative.back() == '/') {
+        relative.pop_back();
+      }
+      if (relative.find('/') == std::string::npos) {
+        m_receivedPaths.push_back(m_currentPath);
+      }
       m_totalWritten += m_written;
       ++m_index;
     } else {
@@ -116,6 +179,7 @@ void FileReceiveSession::closeCurrent(bool success)
   }
   m_expectedSize = 0;
   m_written = 0;
+  m_directory = false;
 }
 
 void FileReceiveSession::emitProgress()
@@ -160,7 +224,7 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
   }
 
   if (mark == ChunkType::DataStart) {
-    if (m_out.isOpen()) {
+    if (m_out.isOpen() || m_directory) {
       LOG_ERR("file transfer: start before previous file ended");
       reset();
       return Error;
@@ -185,7 +249,7 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
   }
 
   if (mark == ChunkType::DataChunk) {
-    if (!m_out.isOpen()) {
+    if (!m_out.isOpen() || m_directory) {
       LOG_ERR("file transfer: data before start");
       reset();
       return Error;
@@ -207,13 +271,13 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
   }
 
   if (mark == ChunkType::DataEnd) {
-    if (!m_out.isOpen()) {
+    if (!m_out.isOpen() && !m_directory) {
       LOG_ERR("file transfer: end before start");
       reset();
       return Error;
     }
     // Zero-byte files: openNextFile left stream open with expectedSize 0.
-    if (m_out.isOpen() || m_expectedSize == 0) {
+    if (m_out.isOpen() || m_directory) {
       if (m_written != m_expectedSize) {
         LOG_ERR(
             "file transfer: size mismatch expected=%llu actual=%llu", static_cast<unsigned long long>(m_expectedSize),
@@ -222,7 +286,7 @@ TransferState FileReceiveSession::onChunk(uint8_t mark, const std::string &data,
         reset();
         return Error;
       }
-      if (!m_out.flush()) {
+      if (!m_directory && !m_out.flush()) {
         LOG_ERR("file transfer: failed to flush received file");
         reset();
         return Error;

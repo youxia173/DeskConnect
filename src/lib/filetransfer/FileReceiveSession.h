@@ -61,6 +61,7 @@ private:
   std::string m_receiveDir;
   std::string m_currentPath;
   QFile m_out;
+  bool m_directory = false;
   std::vector<std::string> m_receivedPaths;
   ProgressCallback m_onProgress;
 };

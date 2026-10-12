@@ -183,6 +183,9 @@ public:
   void enter(int32_t xAbs, int32_t yAbs, uint32_t seqNum, KeyModifierMask mask, bool forScreensaver) override;
   bool leave() override;
   void setClipboard(ClipboardID, const IClipboard *) override;
+  void receivedClipboardFiles() { m_ownClipboard[kClipboardClipboard] = false; }
+  void cancelFileTransfer();
+  void setFileTransferFullSpeed();
   void grabClipboard(ClipboardID) override;
   void setClipboardDirty(ClipboardID, bool) override;
   void keyDown(KeyID, KeyModifierMask, KeyButton, const std::string &) override;

@@ -59,6 +59,7 @@ static const OptionID kOptionDefaultLockToScreenState = OPTION_CODE("LTSS");
 static const OptionID kOptionDisableLockToScreen = OPTION_CODE("DLTS");
 static const OptionID kOptionClipboardSharing = OPTION_CODE("CLPS");
 static const OptionID kOptionClipboardSharingSize = OPTION_CODE("CLSZ");
+static const OptionID kOptionClipboardFiles = OPTION_CODE("CLFL"); // versioned lazy file clipboard
 //@}
 
 //! @name Screen switch corner masks

@@ -7,9 +7,10 @@
 #include "platform/XWindowsClipboardURIListConverter.h"
 
 #include "filetransfer/FileTransfer.h"
+#include <cstring>
 
 XWindowsClipboardURIListConverter::XWindowsClipboardURIListConverter(Display *display, const char *name)
-    : m_atom(XInternAtom(display, name, False))
+    : m_atom(XInternAtom(display, name, False)), m_gnome(std::strcmp(name, "x-special/gnome-copied-files") == 0)
 {
 }
 
@@ -30,10 +31,15 @@ int XWindowsClipboardURIListConverter::getDataSize() const
 
 std::string XWindowsClipboardURIListConverter::fromIClipboard(const std::string &data) const
 {
-  return deskflow::uriListFromClipboardData(data);
+  const auto uris = deskflow::uriListFromClipboardData(data);
+  return m_gnome ? "copy\n" + uris : uris;
 }
 
 std::string XWindowsClipboardURIListConverter::toIClipboard(const std::string &data) const
 {
+  if (m_gnome) {
+    const auto newline = data.find('\n');
+    return newline == std::string::npos ? std::string{} : deskflow::clipboardDataFromUriList(data.substr(newline + 1));
+  }
   return deskflow::clipboardDataFromUriList(data);
 }

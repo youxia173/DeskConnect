@@ -31,6 +31,10 @@
 
 #include <QFileInfo>
 #include <QString>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <algorithm>
 
 #ifdef _WIN32
 #include <algorithm>
@@ -150,6 +154,8 @@ Server::Server(ServerConfig &config, PrimaryClient *primaryClient, deskflow::Scr
 
 Server::~Server()
 {
+  m_clipboardFiles.clear();
+  m_screen->getPlatformScreen()->clearDelayedFilePaste();
   // remove event handlers and timers
   using enum EventTypes;
   m_events->removeHandler(KeyStateKeyDown, m_inputFilter);
@@ -480,6 +486,9 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
     if (m_active == m_primaryClient && m_enableClipboard) {
       for (ClipboardID id = 0; id < kClipboardEnd; ++id) {
         ClipboardInfo &clipboard = m_clipboards[id];
+        if (id == kClipboardClipboard && m_fileClipboardActive) {
+          continue;
+        }
         if (clipboard.m_clipboardOwner != getName(m_primaryClient)) {
           continue;
         }
@@ -534,6 +543,9 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
       // Linux often syncs a tiny PRIMARY after a PNG and would wipe the image.
       static const ClipboardID kOrder[] = {kClipboardSelection, kClipboardClipboard};
       for (ClipboardID id : kOrder) {
+        if (id == kClipboardClipboard && m_fileClipboardActive) {
+          continue;
+        }
         // Hackity hackity hack
         if (m_clipboards[id].m_clipboard.marshall().size() > (m_maximumClipboardSize * 1024)) {
           continue;
@@ -1114,6 +1126,9 @@ void Server::sendOptions(BaseClientProxy *client) const
     }
   }
 
+  // The extension stays disabled until a peer replies with DFOF hello.
+  optionsList.push_back(kOptionClipboardFiles);
+  optionsList.push_back(1);
   // send the options
   client->resetOptions();
   client->setOptions(optionsList);
@@ -1249,6 +1264,9 @@ void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber
   // notification can be a clipboard manager echo, or the read can fail. In
   // either case an eager CCLP would empty Windows' last usable clipboard.
   if (grabber == m_primaryClient) {
+    if (info->m_id == kClipboardClipboard) {
+      m_forceLocalFileOffer = true;
+    }
     onClipboardChanged(m_primaryClient, info->m_id, clipboard.m_clipboardSeqNum);
     schedulePrimaryClipboardRetry(info->m_id, clipboard.m_clipboardSeqNum);
     return;
@@ -1391,6 +1409,10 @@ void Server::handleSwitchWaitTimeout()
 
 void Server::handleClientDisconnected(BaseClientProxy *client)
 {
+  m_clipboardFiles.erase(getName(client));
+  if (m_fileReceiveSource == getName(client)) {
+    m_fileReceive.reset();
+  }
   // client has disconnected.  it might be an old client or an
   // active client.  we don't care so just handle it both ways.
   removeActiveClient(client);
@@ -1406,6 +1428,7 @@ void Server::handleClientDisconnected(BaseClientProxy *client)
 
 void Server::handleClientCloseTimeout(BaseClientProxy *client)
 {
+  m_clipboardFiles.erase(getName(client));
   // client took too long to disconnect.  just dump it.
   LOG_INFO("forced disconnection of client \"%s\"", getName(client).c_str());
   removeOldClient(client);
@@ -1578,12 +1601,33 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
 
   bool hasText = false;
   bool hasBitmap = false;
+  std::string filesData;
   if (clipboard.m_clipboard.open(0)) {
+    if (id == kClipboardClipboard && clipboard.m_clipboard.has(IClipboard::Format::Files)) {
+      filesData = clipboard.m_clipboard.get(IClipboard::Format::Files);
+    }
     hasText = clipboard.m_clipboard.has(IClipboard::Format::Text) &&
               !clipboard.m_clipboard.get(IClipboard::Format::Text).empty();
     hasBitmap = clipboard.m_clipboard.has(IClipboard::Format::Bitmap) &&
                 !clipboard.m_clipboard.get(IClipboard::Format::Bitmap).empty();
     clipboard.m_clipboard.close();
+  }
+  if (sender == m_primaryClient && id == kClipboardClipboard && (!filesData.empty() || hasText || hasBitmap)) {
+    m_localClipboardFiles = filesData;
+    m_fileClipboardActive = !filesData.empty();
+    for (auto &[name, files] : m_clipboardFiles) {
+      if (!filesData.empty()) {
+        if (const auto peer = m_clients.find(name); peer != m_clients.end()) {
+          peer->second->cancelClipboardTransfer();
+        }
+      }
+      files->announce(filesData, m_forceLocalFileOffer);
+    }
+    m_forceLocalFileOffer = false;
+    if (!filesData.empty()) {
+      // Marshall excludes paths. Its empty payload would overwrite delayed ownership.
+      return;
+    }
   }
   const bool hasContent = hasText || hasBitmap;
 
@@ -2123,6 +2167,7 @@ bool Server::removeClient(BaseClientProxy *client)
   m_events->removeHandler(ClipboardChanged, client->getEventTarget());
 
   // remove from list
+  m_clipboardFiles.erase(getName(client));
   m_clients.erase(getName(client));
   m_clientSet.erase(i);
 
@@ -2260,48 +2305,68 @@ bool Server::trySendClipboardFilesTo(BaseClientProxy *dst)
     return false;
   }
 
-  std::string filesData;
-  auto &cached = m_clipboards[kClipboardClipboard].m_clipboard;
-  if (cached.open(0)) {
-    if (cached.has(IClipboard::Format::Files)) {
-      filesData = cached.get(IClipboard::Format::Files);
+  // Legacy CFTR has no offer token: do not transmit a potentially newer copy.
+  return false;
+}
+
+void Server::onClipboardFileOffer(BaseClientProxy *sender, const std::string &message)
+{
+  if (!sender || !sender->getStream() || !m_enableClipboard || !deskflow::isFileTransferEnabled()) {
+    return;
+  }
+  const auto name = getName(sender);
+  auto index = m_clipboardFiles.find(name);
+  if (index == m_clipboardFiles.end()) {
+    const auto object = QJsonDocument::fromJson(QByteArray::fromStdString(message)).object();
+    if (object.value("v").toInt() != 1 || object.value("op").toString() != "hello") {
+      return;
     }
-    cached.close();
-  }
-
-  if (filesData.empty()) {
-    Clipboard live;
-    if (m_primaryClient->getClipboard(kClipboardClipboard, &live) && live.open(0)) {
-      if (live.has(IClipboard::Format::Files)) {
-        filesData = live.get(IClipboard::Format::Files);
-      }
-      live.close();
+    auto files = std::make_unique<deskflow::ClipboardFiles>(
+        m_events, m_screen->getPlatformScreen(),
+        [sender](const std::string &control) {
+          ProtocolUtil::writef(sender->getStream(), kMsgDFileOffer, static_cast<uint16_t>(0), &control);
+        },
+        [this, name](const std::vector<std::string> &paths) {
+          if (m_fileSend.isActive()) {
+            return false;
+          }
+          return sendFilesTo(name, paths);
+        },
+        [this, name]() {
+          if (m_sentFilesTarget == name) {
+            m_fileSend.cancel(false);
+            m_sentFilesTarget.clear();
+          }
+        },
+        [this, name]() {
+          if (m_fileReceiveSource == name) {
+            m_fileReceive.reset();
+          }
+        });
+    if (!m_localClipboardFiles.empty()) {
+      files->announce(m_localClipboardFiles);
     }
+    m_clipboardFiles.emplace(name, std::move(files));
+    return;
   }
-
-  if (filesData.empty()) {
-    return false;
+  const auto object = QJsonDocument::fromJson(QByteArray::fromStdString(message)).object();
+  if (object.value("op").toString() == "offer") {
+    m_fileClipboardActive = !object.value("names").toArray().isEmpty();
+    auto &clipboard = m_clipboards[kClipboardClipboard];
+    clipboard.m_clipboardOwner = name;
+    if (clipboard.m_clipboard.open(0)) {
+      clipboard.m_clipboard.empty();
+      clipboard.m_clipboard.close();
+    }
+    clipboard.m_clipboardData = clipboard.m_clipboard.marshall();
+    m_localClipboardFiles.clear();
+    m_forceLocalFileOffer = false;
   }
-
-  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
-  if (offers.empty()) {
-    return false;
+  const bool wasWaiting = index->second->waiting();
+  index->second->handle(message);
+  if (wasWaiting && !index->second->waiting() && m_fileReceiveSource == name) {
+    m_fileReceive.reset();
   }
-
-  const std::string target = getName(dst);
-  if (m_fileSend.isActive()) {
-    LOG_DEBUG("clipboard file transfer already in progress to \"%s\"", target.c_str());
-    return true;
-  }
-
-  m_sentFilesTarget = target;
-  m_fileSendFromClipboard = true;
-  if (!m_fileSend.start(dst->getStream(), m_events, offers, filesData)) {
-    m_sentFilesTarget.clear();
-    m_fileSendFromClipboard = false;
-    return false;
-  }
-  return true;
 }
 
 void Server::onClipboardFileRequest(BaseClientProxy *sender)
@@ -2366,14 +2431,17 @@ bool Server::sendFilesTo(const std::string &clientName, const std::vector<std::s
   }
 
   const std::string filesData = deskflow::clipboardDataFromPaths(paths);
-  const auto offers = deskflow::fileOffersFromClipboardData(filesData);
-  if (offers.empty()) {
-    LOG_ERR("send files: no readable files");
-    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|no readable files"));
+  const std::string target = getName(dst);
+  if (paths.empty() || m_fileSend.isActive()) {
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|empty file list or transfer busy"));
     return false;
   }
-
-  const std::string target = getName(dst);
+  if (!m_clipboardFiles.contains(target) && std::any_of(paths.begin(), paths.end(), [](const auto &path) {
+        return QFileInfo(QString::fromStdString(path)).isDir();
+      })) {
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|update both computers to transfer folders"));
+    return false;
+  }
   m_sendProgress.setEmit([](const deskflow::TransferProgressInfo &info, double bps, int eta) {
     ipcSendToClient(
         QStringLiteral("fileTransfer"),
@@ -2384,14 +2452,17 @@ bool Server::sendFilesTo(const std::string &clientName, const std::vector<std::s
 
   m_sentFilesTarget = target;
   m_fileSendFromClipboard = false;
-  if (!m_fileSend.start(
-          dst->getStream(), m_events, offers, filesData,
-          [this, offers](bool success) {
+  if (!m_fileSend.startPaths(
+          dst->getStream(), m_events, filesData, m_clipboardFiles.contains(target),
+          [this, count = paths.size(), target](bool success) {
+            if (const auto peer = m_clipboardFiles.find(target); peer != m_clipboardFiles.end()) {
+              peer->second->sendFinished(success);
+            }
             m_sentFilesTarget.clear();
             m_fileSendFromClipboard = false;
             if (success) {
               ipcSendToClient(
-                  QStringLiteral("fileTransfer"), QStringLiteral("ok|%1").arg(offers.size())
+                  QStringLiteral("fileTransfer"), QStringLiteral("ok|%1").arg(count)
               );
             } else {
               ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|transfer failed"));
@@ -2405,13 +2476,17 @@ bool Server::sendFilesTo(const std::string &clientName, const std::vector<std::s
     return false;
   }
 
-  LOG_INFO("sending %zu file(s) to \"%s\"", offers.size(), target.c_str());
-  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("sending|%1").arg(offers.size()));
+  LOG_INFO("sending %zu file(s) to \"%s\"", paths.size(), target.c_str());
+  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("sending|%1").arg(paths.size()));
   return true;
 }
 
 void Server::cancelActiveFileTransfer()
 {
+  for (auto &[name, files] : m_clipboardFiles) {
+    files->cancel();
+    files->sendFinished(false);
+  }
   bool cancelled = false;
   if (m_fileSend.isActive()) {
     LOG_INFO("cancelling outbound file transfer");
@@ -2492,9 +2567,14 @@ void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::
     );
   });
   m_recvProgress.reset();
-  m_fileReceive.begin(names, deskflow::maxTransferBytes(), [this](const deskflow::TransferProgressInfo &info) {
+  const bool started = m_fileReceive.begin(names, deskflow::maxTransferBytes(), [this](const deskflow::TransferProgressInfo &info) {
     m_recvProgress.report(info);
   });
+  if (!started) {
+    if (const auto peer = m_clipboardFiles.find(getName(sender)); peer != m_clipboardFiles.end()) {
+      peer->second->failed();
+    }
+  }
 }
 
 void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data)
@@ -2519,11 +2599,21 @@ void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::strin
     return;
   }
 
+  const auto peer = m_clipboardFiles.find(getName(sender));
+  if (peer != m_clipboardFiles.end()) {
+    peer->second->progress();
+  }
   const auto state = m_fileReceive.onChunk(mark, data, deskflow::maxTransferBytes());
   if (state == TransferState::Finished) {
+    if (peer != m_clipboardFiles.end()) {
+      peer->second->received(m_fileReceive.receivedPaths());
+    }
     notifyReceivedFiles(m_fileReceive.receivedPaths());
     m_fileReceive.reset();
   } else if (state == TransferState::Error) {
+    if (peer != m_clipboardFiles.end()) {
+      peer->second->failed();
+    }
     LOG_ERR("file transfer from \"%s\" failed", getName(sender).c_str());
     m_fileReceive.reset();
     m_recvProgress.reset();

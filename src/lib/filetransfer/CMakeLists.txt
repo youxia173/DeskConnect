@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 
 add_library(filetransfer STATIC
+  ClipboardFiles.cpp
+  ClipboardFiles.h
   FileTransfer.cpp
   FileTransfer.h
   FileReceiveSession.cpp

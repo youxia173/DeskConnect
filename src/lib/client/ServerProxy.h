@@ -15,6 +15,7 @@
 #include "deskflow/KeyboardLayoutManager.h"
 #include "deskflow/StreamChunker.h"
 #include "filetransfer/FileReceiveSession.h"
+#include "filetransfer/ClipboardFiles.h"
 #include "filetransfer/FileSend.h"
 #include "filetransfer/TransferProgress.h"
 
@@ -56,7 +57,10 @@ public:
   bool onGrabClipboard(ClipboardID);
   void onClipboardChanged(ClipboardID, const IClipboard *);
   void sendClipboardFiles();
+  void offerClipboardFiles(const std::string &paths, bool force = false);
   void sendFiles(const std::vector<std::string> &paths);
+  void cancelFileTransfer();
+  void setFileTransferFullSpeed();
   void applyReceivedFiles(const std::vector<std::string> &paths);
 
   //@}
@@ -146,12 +150,8 @@ private:
   bool m_isUserNotifiedAboutLayoutSyncError = false;
   deskflow::KeyboardLayoutManager m_layoutManager;
   deskflow::FileReceiveSession m_fileReceive;
+  std::unique_ptr<deskflow::ClipboardFiles> m_clipboardFiles;
   deskflow::FileSendSession m_fileSend;
   deskflow::TransferProgressReporter m_sendProgress;
   deskflow::TransferProgressReporter m_recvProgress;
-  std::vector<std::string> m_pendingOfferNames;
-  std::vector<std::string> m_cachedReceivedPaths;
-  bool m_pullWaiting = false;
-  bool m_pullDone = false;
-  bool m_pullSuccess = false;
 };

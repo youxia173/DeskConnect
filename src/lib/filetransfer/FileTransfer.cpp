@@ -11,6 +11,8 @@
 #include "common/Settings.h"
 
 #include <QDir>
+#include <QDirIterator>
+#include <QSet>
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <QStandardPaths>
@@ -61,23 +63,91 @@ std::string sanitizeFileName(const std::string &name)
   return base.toUtf8().toStdString();
 }
 
+std::vector<std::string> pathsFromClipboardData(const std::string &data)
+{
+  return splitNul(data);
+}
+
+bool isSafeTransferPath(const std::string &path)
+{
+  if (path.empty() || path.size() > 32768 || path.front() == '/' || path.find('\\') != std::string::npos) {
+    return false;
+  }
+  const std::string value = path.back() == '/' ? path.substr(0, path.size() - 1) : path;
+  size_t start = 0;
+  do {
+    const size_t end = value.find('/', start);
+    const auto part = value.substr(start, end == std::string::npos ? end : end - start);
+    if (part.empty() || sanitizeFileName(part) != part) {
+      return false;
+    }
+    if (end == std::string::npos) {
+      return true;
+    }
+    start = end + 1;
+  } while (start <= value.size());
+  return false;
+}
+
 std::vector<FileOffer> fileOffersFromClipboardData(const std::string &filesData)
 {
+  return fileOffersFromClipboardData(filesData, maxTransferBytes(), nullptr);
+}
+
+std::vector<FileOffer> fileOffersFromClipboardData(
+    const std::string &filesData, uint64_t limit, const std::atomic_bool *cancelled
+)
+{
   std::vector<FileOffer> offers;
+  QSet<QString> roots;
+  QSet<QString> manifest;
+  uint64_t total = 0;
+  auto add = [&](const QFileInfo &info, const QString &relative) {
+    if (cancelled && cancelled->load()) {
+      return false;
+    }
+    const auto name = (relative + (info.isDir() ? "/" : "")).toUtf8().toStdString();
+    const auto folded = relative.toCaseFolded();
+#ifdef Q_OS_WIN
+    if (info.isJunction()) {
+      return false;
+    }
+#endif
+    if (info.isSymLink() || !info.isReadable() || (!info.isDir() && !info.isFile()) || !isSafeTransferPath(name) ||
+        manifest.contains(folded) || offers.size() >= 65535) {
+      return false;
+    }
+    const auto size = info.isDir() ? 0 : static_cast<uint64_t>(info.size());
+    if (size > UINT64_MAX - total || (limit && (total > limit || size > limit - total))) {
+      return false;
+    }
+    total += size;
+    manifest.insert(folded);
+    offers.push_back({name, size, info.absoluteFilePath().toUtf8().toStdString()});
+    return true;
+  };
   for (const auto &path : splitNul(filesData)) {
     QFileInfo info(QString::fromUtf8(path.data(), static_cast<qsizetype>(path.size())));
-    if (!info.exists() || !info.isFile()) {
-      LOG_INFO("skipping non-file clipboard path: %s", path.c_str());
-      continue;
+    QString root = info.fileName();
+    const QString original = root;
+    for (int suffix = 2; roots.contains(root.toCaseFolded()); ++suffix) {
+      root = QStringLiteral("%1 (%2)").arg(original).arg(suffix);
     }
-    FileOffer offer;
-    offer.localPath = info.absoluteFilePath().toUtf8().toStdString();
-    offer.name = sanitizeFileName(info.fileName().toUtf8().toStdString());
-    offer.size = static_cast<uint64_t>(info.size());
-    if (offer.name.empty()) {
-      continue;
+    roots.insert(root.toCaseFolded());
+    if (!add(info, root)) {
+      return {};
     }
-    offers.push_back(std::move(offer));
+    if (info.isDir()) {
+      const QDir dir(info.absoluteFilePath());
+      QDirIterator iterator(dir.absolutePath(), QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System,
+                            QDirIterator::Subdirectories);
+      while (iterator.hasNext()) {
+        iterator.next();
+        if (!add(iterator.fileInfo(), root + '/' + dir.relativeFilePath(iterator.filePath()))) {
+          return {};
+        }
+      }
+    }
   }
   return offers;
 }
@@ -138,7 +208,7 @@ std::string clipboardDataFromUriList(const std::string &uriList)
     }
 
     QFileInfo info(local);
-    if (!info.exists() || !info.isFile()) {
+    if (!info.exists() || (!info.isFile() && !info.isDir()) || info.isSymLink()) {
       LOG_INFO("skipping non-file uri-list entry: %s", qPrintable(local));
       continue;
     }
@@ -163,8 +233,8 @@ std::vector<std::string> decodeDragInfo(const std::string &info)
 {
   std::vector<std::string> names;
   for (const auto &part : splitNul(info)) {
-    const auto name = sanitizeFileName(part);
-    if (name.empty()) {
+    const auto &name = part;
+    if (!isSafeTransferPath(name)) {
       // Dropping just one name would assign all following file payloads to
       // the wrong names. Reject the whole offer instead.
       return {};

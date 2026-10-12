@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstdint>
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -14,13 +15,19 @@ namespace deskflow {
 
 struct FileOffer
 {
-  std::string name;      //!< basename only (safe for receive)
+  std::string name;      //!< validated relative path; trailing slash denotes a directory
   uint64_t size = 0;     //!< file size in bytes
   std::string localPath; //!< absolute local path (sender side)
 };
 
-//! Parse NUL-separated absolute paths into file offers (skips missing/dirs).
+//! Expand NUL-separated source paths into a safe manifest, including empty directories.
 std::vector<FileOffer> fileOffersFromClipboardData(const std::string &filesData);
+//! Worker variant: no settings access; cancellation is checked between entries.
+std::vector<FileOffer> fileOffersFromClipboardData(
+    const std::string &filesData, uint64_t limit, const std::atomic_bool *cancelled
+);
+std::vector<std::string> pathsFromClipboardData(const std::string &data);
+bool isSafeTransferPath(const std::string &path);
 
 //! Encode absolute local paths as NUL-separated clipboard Files payload.
 std::string clipboardDataFromPaths(const std::vector<std::string> &paths);
@@ -28,16 +35,16 @@ std::string clipboardDataFromPaths(const std::vector<std::string> &paths);
 //! Convert NUL-separated Files payload to text/uri-list (file:// lines).
 std::string uriListFromClipboardData(const std::string &filesData);
 
-//! Convert text/uri-list to NUL-separated absolute paths (skips dirs/non-files).
+//! Convert text/uri-list to NUL-separated local file and folder paths.
 std::string clipboardDataFromUriList(const std::string &uriList);
 
 //! Keep only the file name component; reject empty / "." / ".." / path separators.
 std::string sanitizeFileName(const std::string &name);
 
-//! Encode basename list for DDRG (NUL-separated basenames).
+//! Encode ordered relative file/directory paths for DDRG (NUL-separated).
 std::string encodeDragInfo(const std::vector<FileOffer> &offers);
 
-//! Decode DDRG payload into basename list.
+//! Decode DDRG payload, rejecting unsafe relative paths.
 std::vector<std::string> decodeDragInfo(const std::string &info);
 
 //! Unique path under receiveDir for basename (auto-rename on conflict).

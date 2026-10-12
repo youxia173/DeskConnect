@@ -63,6 +63,7 @@ XWindowsClipboard::XWindowsClipboard(Display *display, Window window, ClipboardI
   }
 
   // add converters, most desired first
+  m_converters.push_back(new XWindowsClipboardURIListConverter(m_display, "x-special/gnome-copied-files"));
   m_converters.push_back(new XWindowsClipboardURIListConverter(m_display));
   // Prefer common image MIME types before HTML (QQ often mislabels JPEG as PNG).
   m_converters.push_back(new XWindowsClipboardPNGConverter(m_display, "image/png"));

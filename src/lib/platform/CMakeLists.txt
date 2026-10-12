@@ -36,6 +36,8 @@ if(WIN32)
     MSWindowsClipboardFacade.h
     MSWindowsClipboardFileConverter.cpp
     MSWindowsClipboardFileConverter.h
+    MSWindowsFileDataObject.cpp
+    MSWindowsFileDataObject.h
     MSWindowsClipboardHTMLConverter.cpp
     MSWindowsClipboardHTMLConverter.h
     MSWindowsClipboardPNGConverter.cpp
@@ -201,7 +203,7 @@ add_library(platform STATIC ${PLATFORM_SOURCES})
 target_link_libraries(platform PUBLIC client ${libs})
 
 if(WIN32)
-  target_link_libraries(platform PRIVATE Qt6::Gui)
+  target_link_libraries(platform PRIVATE Qt6::Gui ole32 shell32 uuid)
 endif()
 
 if(UNIX)

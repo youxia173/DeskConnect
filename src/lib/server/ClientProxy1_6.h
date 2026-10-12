@@ -24,6 +24,7 @@ public:
 
   void setClipboard(ClipboardID id, const IClipboard *clipboard) override;
   bool recvClipboard() override;
+  void cancelClipboardTransfer() override { m_clipboardSender.cancel(); }
 
 private:
   IEventQueue *m_events;

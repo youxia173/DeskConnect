@@ -7,6 +7,8 @@
  */
 
 #include "platform/EiScreen.h"
+#include "deskflow/ipc/CoreIpc.h"
+#include <QString>
 
 #include "base/IEventQueue.h"
 #include "base/Log.h"
@@ -474,31 +476,11 @@ bool EiScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
 
 void EiScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
 {
-  // Wayland portals have no CF_HDROP-style delayed render; pull on offer so paste still works.
-  if (!pullFiles) {
-    return;
-  }
-
-  LOG_INFO("Wayland clipboard file paste — transferring on offer (no delayed render)");
-  const auto paths = pullFiles();
-  if (paths.empty()) {
-    LOG_ERR("clipboard file paste failed: no files received");
-    return;
-  }
-
-  Clipboard clipboard;
-  if (!clipboard.open(0)) {
-    LOG_ERR("clipboard file paste failed: could not open clipboard");
-    return;
-  }
-  clipboard.empty();
-  clipboard.add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
-  clipboard.close();
-  if (!setClipboard(kClipboardClipboard, &clipboard)) {
-    LOG_ERR("clipboard file paste failed: could not set clipboard");
-    return;
-  }
-  LOG_INFO("clipboard file paste ready with %zu file(s)", paths.size());
+  // Never eagerly fetch on offer. Ubuntu's InputCapture portal v1 cannot
+  // export a delayed clipboard; the Xorg backend supports this operation.
+  (void)pullFiles;
+  LOG_WARN("clipboard file paste requires an Xorg session with this Wayland portal backend");
+  ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|clipboard file paste requires Xorg"));
 }
 
 void EiScreen::checkClipboards()

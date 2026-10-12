@@ -46,6 +46,12 @@ bool ClientProxy1_5::parseMessage(const uint8_t *code)
     dragInfoReceived();
   } else if (memcmp(code, kMsgCFileRequest, 4) == 0) {
     m_server->onClipboardFileRequest(this);
+  } else if (memcmp(code, kMsgDFileOffer, 4) == 0) {
+    uint16_t count = 0;
+    std::string message;
+    if (ProtocolUtil::readf(getStream(), kMsgDFileOffer + 4, &count, &message)) {
+      m_server->onClipboardFileOffer(this, message);
+    }
   } else {
     return ClientProxy1_4::parseMessage(code);
   }

@@ -13,6 +13,7 @@
 #include <QFile>
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -46,6 +47,11 @@ public:
       IStream *stream, IEventQueue *events, const std::vector<FileOffer> &offers, std::string fingerprint,
       DoneCallback onDone = {}, ProgressCallback onProgress = {}
   );
+  //! Prepare the manifest on a worker, then send on the event thread.
+  bool startPaths(
+      IStream *stream, IEventQueue *events, const std::string &paths, bool allowFolders,
+      DoneCallback onDone = {}, ProgressCallback onProgress = {}
+  );
 
   void cancel(bool notifyDone = true);
   //! Drop the speed limit for the remainder of this send (does not change settings).
@@ -64,6 +70,8 @@ public:
   }
 
 private:
+  struct PendingOffers;
+  void cancelPreparation();
   void clearTimer();
   void schedulePump();
   void pump();
@@ -79,6 +87,7 @@ private:
   IStream *m_stream = nullptr;
   IEventQueue *m_events = nullptr;
   EventQueueTimer *m_timer = nullptr;
+  std::shared_ptr<PendingOffers> m_pending;
   std::vector<FileOffer> m_offers;
   size_t m_index = 0;
   QFile m_file;

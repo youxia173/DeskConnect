@@ -77,7 +77,7 @@ public:
   void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles) override;
   void clearDelayedFilePaste() override;
   void checkClipboards() override;
-  void pollExternalClipboard();
+  void pollExternalClipboard(bool forceFileCopy = false);
   void startClipboardMonitor();
   void stopClipboardMonitor();
   void onClipboardOwnershipChanged(ClipboardID id);
@@ -239,6 +239,9 @@ private:
   XWindowsClipboard *m_clipboard[kClipboardEnd];
   uint32_t m_sequenceNumber = 0;
   bool m_hasDelayedFilePaste = false;
+  uint64_t m_delayedFileGeneration = 0;
+  std::string m_lastClipboardFiles;
+  std::string m_receivedFileClipboardFiles;
   bool m_renderingDelayedFilePaste = false;
   std::function<std::vector<std::string>()> m_delayedFilePull;
 

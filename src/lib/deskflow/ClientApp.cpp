@@ -332,6 +332,13 @@ int ClientApp::mainLoop()
     }
   });
 
+  getEvents()->addHandler(EventTypes::AppCancelFileTransfer, getEvents()->getSystemTarget(), [this](const auto &) {
+    cancelFileTransfer();
+  });
+  getEvents()->addHandler(EventTypes::AppFileTransferFullSpeed, getEvents()->getSystemTarget(), [this](const auto &) {
+    setFileTransferFullSpeed();
+  });
+
   // run event loop.  if startClient() failed we're supposed to retry
   // later.  the timer installed by startClient() will take care of
   // that.
@@ -340,6 +347,8 @@ int ClientApp::mainLoop()
   // close down
   LOG_DEBUG("stopping client");
   getEvents()->removeHandler(EventTypes::AppSendFiles, getEvents()->getSystemTarget());
+  getEvents()->removeHandler(EventTypes::AppCancelFileTransfer, getEvents()->getSystemTarget());
+  getEvents()->removeHandler(EventTypes::AppFileTransferFullSpeed, getEvents()->getSystemTarget());
   stopClient();
   LOG_INFO("stopped client");
 
@@ -421,4 +430,14 @@ void ClientApp::sendFiles(const std::string &, const std::vector<std::string> &p
     return;
   }
   m_client->sendFiles(paths);
+}
+
+void ClientApp::cancelFileTransfer()
+{
+  if (m_client) m_client->cancelFileTransfer();
+}
+
+void ClientApp::setFileTransferFullSpeed()
+{
+  if (m_client) m_client->setFileTransferFullSpeed();
 }

@@ -106,8 +106,7 @@ std::string MSWindowsClipboardFileConverter::toIClipboard(HANDLE data) const
     path.resize(length);
 
     const DWORD attrs = GetFileAttributesW(path.c_str());
-    if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY)) {
-      LOG_INFO("skipping directory in clipboard file list: %s", QString::fromStdWString(path).toUtf8().constData());
+    if (attrs == INVALID_FILE_ATTRIBUTES || (attrs & FILE_ATTRIBUTE_REPARSE_POINT)) {
       continue;
     }
 

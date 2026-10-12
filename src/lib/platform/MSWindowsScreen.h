@@ -27,6 +27,7 @@ class MSWindowsKeyState;
 class MSWindowsScreenSaver;
 class Thread;
 class MSWindowsDropTarget;
+class MSWindowsFileDataObject;
 class MSWindowsMouseLocator;
 
 //! Implementation of IPlatformScreen for Microsoft Windows
@@ -141,7 +142,6 @@ private:
   //! True when the foreground window covers its monitor (exclusive/borderless fullscreen).
   static bool isForegroundFullscreen();
 
-  bool renderDelayedFilePaste();
 
   // initialization and shutdown operations
   HCURSOR createBlankCursor() const;
@@ -323,7 +323,7 @@ private:
   DWORD m_clipboardSequenceNumber = 0;
   bool m_ownClipboard = false;
   bool m_hasDelayedFilePaste = false;
-  std::function<std::vector<std::string>()> m_delayedFilePull;
+  MSWindowsFileDataObject *m_fileDataObject = nullptr;
 
   // one desk per desktop and a cond var to communicate with it
   MSWindowsDesks *m_desks = nullptr;

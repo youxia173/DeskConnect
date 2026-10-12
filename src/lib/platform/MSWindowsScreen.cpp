@@ -25,6 +25,7 @@
 #include "filetransfer/FileTransfer.h"
 #include "platform/MSWindowsClipboard.h"
 #include "platform/MSWindowsClipboardFileConverter.h"
+#include "platform/MSWindowsFileDataObject.h"
 #include "platform/MSWindowsDesks.h"
 #include "platform/MSWindowsEventQueueBuffer.h"
 #include "platform/MSWindowsKeyState.h"
@@ -143,6 +144,7 @@ MSWindowsScreen::MSWindowsScreen(bool isPrimary, bool useHooks, IEventQueue *eve
 
 MSWindowsScreen::~MSWindowsScreen()
 {
+  clearDelayedFilePaste();
   assert(s_screen != nullptr);
 
   disable();
@@ -421,82 +423,32 @@ bool MSWindowsScreen::setClipboard(ClipboardID id, const IClipboard *src)
 
 void MSWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
 {
-  m_delayedFilePull = std::move(pullFiles);
-  m_hasDelayedFilePaste = (m_delayedFilePull != nullptr);
-  if (!m_hasDelayedFilePaste) {
+  clearDelayedFilePaste();
+  if (!pullFiles) {
     return;
   }
-
-  MSWindowsClipboard dst(m_window);
-  if (!dst.open(0)) {
-    LOG_WARN("failed to open clipboard for delayed file paste");
-    clearDelayedFilePaste();
+  auto *object = new MSWindowsFileDataObject(std::move(pullFiles));
+  if (FAILED(OleSetClipboard(object)) || OleIsCurrentClipboard(object) != S_OK) {
+    object->cancel();
+    object->Release();
+    LOG_ERR("failed to install OLE clipboard file offer");
     return;
   }
-  if (!dst.empty()) {
-    LOG_WARN("failed to take clipboard for delayed file paste");
-    dst.close();
-    clearDelayedFilePaste();
-    return;
-  }
-
-  // NULL handle = delayed rendering; Explorer paste (incl. context menu) will send WM_RENDERFORMAT.
-  SetClipboardData(CF_HDROP, nullptr);
-
-  const UINT dropEffectFmt = RegisterClipboardFormat(L"Preferred DropEffect");
-  if (dropEffectFmt != 0) {
-    HGLOBAL effectHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(DWORD));
-    if (effectHandle != nullptr) {
-      if (auto *effect = static_cast<DWORD *>(GlobalLock(effectHandle))) {
-        *effect = DROPEFFECT_COPY;
-        GlobalUnlock(effectHandle);
-        if (SetClipboardData(dropEffectFmt, effectHandle) == nullptr) {
-          GlobalFree(effectHandle);
-        }
-      } else {
-        GlobalFree(effectHandle);
-      }
-    }
-  }
-
-  dst.close();
+  m_fileDataObject = object;
+  object->ready();
+  m_hasDelayedFilePaste = true;
   m_ownClipboard = true;
-  LOG_INFO("delayed clipboard file paste armed (Ctrl+V or context-menu paste)");
+  LOG_INFO("clipboard file paste armed with asynchronous OLE extraction");
 }
 
 void MSWindowsScreen::clearDelayedFilePaste()
 {
   m_hasDelayedFilePaste = false;
-  m_delayedFilePull = {};
-}
-
-bool MSWindowsScreen::renderDelayedFilePaste()
-{
-  if (!m_hasDelayedFilePaste || !m_delayedFilePull) {
-    return false;
+  if (m_fileDataObject) {
+    m_fileDataObject->cancel();
+    m_fileDataObject->Release();
+    m_fileDataObject = nullptr;
   }
-
-  LOG_INFO("paste requested — fetching remote clipboard file(s)");
-  const auto paths = m_delayedFilePull();
-  if (paths.empty()) {
-    LOG_ERR("delayed file paste failed: no files received");
-    return false;
-  }
-
-  const std::string data = deskflow::clipboardDataFromPaths(paths);
-  MSWindowsClipboardFileConverter converter;
-  HANDLE handle = converter.fromIClipboard(data);
-  if (handle == nullptr) {
-    LOG_ERR("delayed file paste failed: could not build CF_HDROP");
-    return false;
-  }
-  if (SetClipboardData(CF_HDROP, handle) == nullptr) {
-    LOG_ERR("delayed file paste failed: SetClipboardData error %u", GetLastError());
-    GlobalFree(handle);
-    return false;
-  }
-  LOG_INFO("delayed file paste ready with %zu file(s)", paths.size());
-  return true;
 }
 
 void MSWindowsScreen::checkClipboards()
@@ -1113,26 +1065,6 @@ bool MSWindowsScreen::onEvent(HWND, UINT msg, WPARAM wParam, LPARAM lParam, LRES
     return 0; // message processed
   }
 
-  case WM_RENDERFORMAT:
-    if (wParam == CF_HDROP && m_hasDelayedFilePaste) {
-      renderDelayedFilePaste();
-      *result = 0;
-      return true;
-    }
-    break;
-
-  case WM_RENDERALLFORMATS:
-    if (m_hasDelayedFilePaste) {
-      if (OpenClipboard(m_window)) {
-        EmptyClipboard();
-        renderDelayedFilePaste();
-        CloseClipboard();
-      }
-      *result = 0;
-      return true;
-    }
-    break;
-
   case WM_DISPLAYCHANGE:
     return onDisplayChange();
 
@@ -1533,6 +1465,7 @@ void MSWindowsScreen::onClipboardChange()
   // now notify client that somebody changed the clipboard (unless
   // we're the owner).
   if (!MSWindowsClipboard::isOwnedByDeskflow()) {
+    clearDelayedFilePaste();
     // Always notify on external clipboard updates. Previously we only fired
     // when m_ownClipboard was true (lost ownership). That skipped the common
     // case where DeskConnect never owned the clipboard, so companion clients

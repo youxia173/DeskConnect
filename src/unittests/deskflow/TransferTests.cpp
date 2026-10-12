@@ -9,6 +9,7 @@
 #include "common/Settings.h"
 #include "deskflow/PacketStreamFilter.h"
 #include "filetransfer/FileReceiveSession.h"
+#include "filetransfer/ClipboardFiles.h"
 #include "io/IStream.h"
 #include "io/StreamBuffer.h"
 #include "net/ISocketMultiplexerJob.h"
@@ -23,6 +24,10 @@
 #include <QTcpSocket>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QFileInfo>
 #include <algorithm>
 #include <cstring>
 #include <functional>
@@ -280,6 +285,112 @@ private Q_SLOTS:
     for (const std::string name : {"../escape", "CON", "x:stream", "name.", "name "}) {
       QVERIFY(!session.begin({name}, 100));
     }
+  }
+
+  void clipboardCopyOnlyOffersAndRejectsStalePasteRequests()
+  {
+    Settings::setValue(Settings::FileTransfer::Enabled, true);
+    QTemporaryDir source;
+    QVERIFY(source.isValid());
+    QVERIFY(QDir().mkpath(source.filePath("folder/empty")));
+    std::vector<std::string> controls;
+    int sends = 0;
+    deskflow::ClipboardFiles files(nullptr, nullptr,
+        [&](const std::string &message) { controls.push_back(message); },
+        [&](const std::vector<std::string> &paths) {
+          ++sends;
+          return paths.size() == 1;
+        });
+    files.announce(deskflow::clipboardDataFromPaths({source.filePath("folder").toStdString()}));
+    QCOMPARE(sends, 0);
+    QCOMPARE(controls.size(), size_t(1));
+    const auto offer = QJsonDocument::fromJson(QByteArray::fromStdString(controls.back())).object();
+    QCOMPARE(offer.value("names").toArray().size(), qsizetype(1));
+    const auto token = offer.value("id").toString();
+    auto request = [&](const QString &id) {
+      return QJsonDocument(QJsonObject{{"v", 1}, {"op", "request"}, {"id", id}})
+          .toJson(QJsonDocument::Compact).toStdString();
+    };
+    files.handle(request("stale-token"));
+    QCOMPARE(sends, 0);
+    files.handle(request(token));
+    QCOMPARE(sends, 1);
+    files.sendFinished(true);
+    // Re-copying the same source path issues a fresh token, so modified files
+    // do not reuse an earlier successful destination cache.
+    files.announce(deskflow::clipboardDataFromPaths({source.filePath("folder").toStdString()}), true);
+    files.handle(request(token));
+    QCOMPARE(sends, 1);
+    // A new text copy invalidates the old file offer.
+    files.announce("");
+    files.handle(request(token));
+    QCOMPARE(sends, 1);
+  }
+
+  void transfersFolderTreesEmptyDirectoriesAndMultipleRoots()
+  {
+    QTemporaryDir source;
+    QVERIFY(source.isValid());
+    const auto folder = source.filePath(QString::fromUtf8(u8"资料"));
+    QVERIFY(QDir().mkpath(folder + "/nested/empty"));
+    QFile input(folder + "/nested/file.txt");
+    QVERIFY(input.open(QIODevice::WriteOnly));
+    QCOMPARE(input.write("payload"), qint64(7));
+    input.close();
+    QFile empty(source.filePath("zero.bin"));
+    QVERIFY(empty.open(QIODevice::WriteOnly));
+    empty.close();
+    const auto clipboard = deskflow::clipboardDataFromPaths({folder.toStdString(), empty.fileName().toStdString()});
+    QCOMPARE(deskflow::clipboardDataFromUriList(deskflow::uriListFromClipboardData(clipboard)), clipboard);
+    const auto offers = deskflow::fileOffersFromClipboardData(clipboard);
+    QCOMPARE(offers.size(), size_t(5));
+    const auto names = deskflow::decodeDragInfo(deskflow::encodeDragInfo(offers));
+    QCOMPARE(names.size(), offers.size());
+    deskflow::FileReceiveSession session;
+    QVERIFY(session.begin(names, 100));
+    for (size_t index = 0; index < offers.size(); ++index) {
+      const auto &offer = offers[index];
+      QCOMPARE(session.onChunk(ChunkType::DataStart, std::to_string(offer.size), 100), TransferState::Started);
+      if (offer.size) {
+        QFile file(QString::fromStdString(offer.localPath));
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        QCOMPARE(session.onChunk(ChunkType::DataChunk, file.readAll().toStdString(), 100), TransferState::InProgress);
+      }
+      QCOMPARE(session.onChunk(ChunkType::DataEnd, "", 100),
+               index + 1 == offers.size() ? TransferState::Finished : TransferState::InProgress);
+    }
+    QCOMPARE(session.receivedPaths().size(), size_t(2));
+    const auto receivedFolder = QString::fromStdString(session.receivedPaths()[0]);
+    QVERIFY(QDir(receivedFolder + "/nested/empty").exists());
+    QFile received(receivedFolder + "/nested/file.txt");
+    QVERIFY(received.open(QIODevice::ReadOnly));
+    QCOMPARE(received.readAll(), QByteArray("payload"));
+    const auto roots = session.receivedPaths();
+    session.reset();
+    // Successful roots survive for repeated native paste.
+    QVERIFY(QFileInfo::exists(QString::fromStdString(roots[0])));
+    QVERIFY(QFileInfo::exists(QString::fromStdString(roots[1])));
+  }
+
+  void rejectsUnsafeFolderManifestsAndRemovesIncompleteTrees()
+  {
+    deskflow::FileReceiveSession session;
+    const std::vector<std::vector<std::string>> invalid = {
+             {"../escape"}, {"root/", "root/../escape"},
+             {"root/", "root//bad"}, {"root/", "root/C:stream"},
+             {"root/", "ROOT/"}, {"file", "file/child"}, {"missing/child"}};
+    for (const auto &names : invalid) {
+      QVERIFY(!session.begin(names, 100));
+    }
+    QVERIFY(session.begin({"root/", "root/partial.bin"}, 100));
+    QCOMPARE(session.onChunk(ChunkType::DataStart, "0", 100), TransferState::Started);
+    QCOMPARE(session.onChunk(ChunkType::DataEnd, "", 100), TransferState::InProgress);
+    const auto root = QString::fromStdString(session.receivedPaths().front());
+    const auto staging = QFileInfo(root).absolutePath();
+    QCOMPARE(session.onChunk(ChunkType::DataStart, "10", 100), TransferState::Started);
+    QCOMPARE(session.onChunk(ChunkType::DataChunk, "partial", 100), TransferState::InProgress);
+    session.reset();
+    QTRY_VERIFY_WITH_TIMEOUT(!QFileInfo::exists(staging), 3000);
   }
 
 private:

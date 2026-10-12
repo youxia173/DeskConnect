@@ -31,6 +31,7 @@ public:
   Save the position of the cursor when jumping from client.
   */
   void setJumpCursorPos(int32_t x, int32_t y);
+  virtual void cancelClipboardTransfer() {}
 
   //@}
   //! @name accessors
