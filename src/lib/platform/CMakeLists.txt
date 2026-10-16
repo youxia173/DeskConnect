@@ -131,6 +131,8 @@ elseif(UNIX)
       ClipboardImage.h
       XWindowsClipboard.cpp
       XWindowsClipboard.h
+      XWindowsClipboardFiles.cpp
+      XWindowsClipboardFiles.h
       XWindowsClipboardAnyBitmapConverter.cpp
       XWindowsClipboardAnyBitmapConverter.h
       XWindowsClipboardBMPConverter.cpp
@@ -204,6 +206,16 @@ target_link_libraries(platform PUBLIC client ${libs})
 
 if(WIN32)
   target_link_libraries(platform PRIVATE Qt6::Gui ole32 shell32 shlwapi uuid)
+endif()
+
+if(BUILD_X11_SUPPORT AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  option(ENABLE_X11_FILE_PASTE "Enable paste-time file transfer via FUSE 3" ON)
+  if(ENABLE_X11_FILE_PASTE)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(FUSE3 REQUIRED IMPORTED_TARGET fuse3>=3.10)
+    target_link_libraries(platform PRIVATE PkgConfig::FUSE3)
+    target_compile_definitions(platform PRIVATE DESKCONNECT_X11_FILE_PASTE=1 _FILE_OFFSET_BITS=64)
+  endif()
 endif()
 
 if(UNIX)

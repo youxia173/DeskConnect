@@ -52,3 +52,14 @@ elseif(UNIX)
     )
   endif()
 endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND BUILD_X11_SUPPORT AND ENABLE_X11_FILE_PASTE)
+  create_test(
+    NAME XWindowsClipboardFilesTests
+    DEPENDS platform
+    LIBS base arch filetransfer
+    SOURCE XWindowsClipboardFilesTests.cpp
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  )
+  set_tests_properties(XWindowsClipboardFilesTests PROPERTIES TIMEOUT 30)
+endif()

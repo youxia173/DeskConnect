@@ -38,22 +38,22 @@ runs:
               apt install -qqq cmake build-essential ninja-build \
                 xorg-dev libx11-dev libxtst-dev libssl-dev libxkbfile-dev \
                 qt6-base-dev qt6-tools-dev libxkbregistry-dev libxkbcommon-dev \
-                libei-dev libportal-dev help2man -y >/dev/null
+                libei-dev libportal-dev libfuse3-dev fuse3 help2man -y >/dev/null
             elif [ ${{inputs.like}} == "fedora" ]; then
               dnf config-manager setopt fedora-cisco-openh264.enabled=0
               dnf install -y cmake make ninja-build gcc-c++ rpm-build openssl-devel \
                 libXtst-devel libxkbfile-devel qt6-qtbase-devel qt6-qttools-devel libxkbcommon-x11-devel \
-                libei-devel libxkbcommon-devel libportal-devel help2man libXinerama-devel libXrandr-devel
+                libei-devel libxkbcommon-devel libportal-devel fuse3-devel fuse3 help2man libXinerama-devel libXrandr-devel
             elif [ ${{inputs.like}} == "suse" ]; then
               zypper refresh
               zypper install -y --force-resolution \
                 cmake make ninja gcc-c++ rpm-build libopenssl-devel \
                 libXtst-devel libxkbfile-devel qt6-base-devel qt6-tools-devel \
                 qt6-linguist-devel libxkbcommon-devel libxkbcommon-x11-devel libxkbregistry-devel \
-                libei-devel libportal-devel help2man libXinerama-devel libXrandr-devel
+                libei-devel libportal-devel fuse3-devel fuse3 help2man libXinerama-devel libXrandr-devel
             elif [ ${{ inputs.like }} == "arch" ]; then
               pacman -Syu --noconfirm base-devel cmake ninja \
-                gcc openssl libxtst libxkbfile libei libportal libxkbcommon-x11 \
+                gcc openssl libxtst libxkbfile libei libportal libxkbcommon-x11 fuse3 \
                 qt6-base qt6-tools qt6-svg qt6-translations qt6-declarative help2man doxygen graphviz rsync libxkbcommon libxinerama libxrandr
             else
               echo "Unknown like"

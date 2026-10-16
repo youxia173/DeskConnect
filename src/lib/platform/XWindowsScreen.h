@@ -15,6 +15,7 @@
 #include "platform/XWindowsMouseLocator.h"
 
 #include <functional>
+#include <memory>
 #include <cstdint>
 #include <set>
 #include <string>
@@ -26,6 +27,7 @@
 #include <X11/Xlib.h>
 
 class XWindowsClipboard;
+class XWindowsClipboardFiles;
 class XWindowsKeyState;
 class XWindowsScreenSaver;
 class EventQueueTimer;
@@ -113,7 +115,6 @@ private:
   void processClipboardRequest(Window window, Time time, Atom property) const;
 
   // materialize remote file paths into the local clipboard (X11 delayed paste)
-  bool renderDelayedFilePaste();
 
   // terminate a selection request
   void destroyClipboardRequest(Window window) const;
@@ -240,11 +241,9 @@ private:
   XWindowsClipboard *m_clipboard[kClipboardEnd];
   uint32_t m_sequenceNumber = 0;
   bool m_hasDelayedFilePaste = false;
-  uint64_t m_delayedFileGeneration = 0;
   std::string m_lastClipboardFiles;
   std::string m_receivedFileClipboardFiles;
-  bool m_renderingDelayedFilePaste = false;
-  std::function<std::vector<std::string>()> m_delayedFilePull;
+  std::unique_ptr<XWindowsClipboardFiles> m_virtualClipboardFiles;
 
   // screen saver stuff
   XWindowsScreenSaver *m_screensaver = nullptr;

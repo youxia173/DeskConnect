@@ -23,6 +23,8 @@
 #include "platform/MouseLocatorTrigger.h"
 #include "platform/XDGKeyUtil.h"
 #include "platform/XWindowsClipboard.h"
+#include "platform/XWindowsClipboardFiles.h"
+#include "deskflow/ipc/CoreIpc.h"
 #include "platform/XWindowsConfig.h"
 #include "platform/XWindowsEventQueueBuffer.h"
 #include "platform/XWindowsKeyState.h"
@@ -168,6 +170,7 @@ XWindowsScreen::~XWindowsScreen()
   assert(s_screen != nullptr);
   assert(m_display != nullptr);
 
+  clearDelayedFilePaste();
   m_events->adoptBuffer(nullptr);
   m_events->removeHandler(EventTypes::System, m_events->getSystemTarget());
   stopClipboardMonitor();
@@ -454,78 +457,42 @@ bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
 void XWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles,
       std::function<std::vector<deskflow::FileOffer>()> listFiles)
 {
-  (void)listFiles;
-  ++m_delayedFileGeneration;
-  m_renderingDelayedFilePaste = false;
-  m_delayedFilePull = std::move(pullFiles);
-  m_hasDelayedFilePaste = (m_delayedFilePull != nullptr);
-  if (!m_hasDelayedFilePaste || m_clipboard[kClipboardClipboard] == nullptr) {
+  clearDelayedFilePaste();
+  if (!pullFiles || !listFiles || m_clipboard[kClipboardClipboard] == nullptr) return;
+  if (!XWindowsClipboardFiles::available()) {
+    LOG_ERR("X11 file paste requires a build with FUSE 3; refusing eager download");
+    ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|Linux file paste requires FUSE 3 support"));
     return;
   }
-
-  Time timestamp = XWindowsUtil::getCurrentTime(m_display, m_clipboard[kClipboardClipboard]->getWindow());
-  if (!m_clipboard[kClipboardClipboard]->open(timestamp)) {
-    LOG_WARN("failed to open clipboard for delayed file paste");
-    clearDelayedFilePaste();
-    return;
-  }
-  if (!m_clipboard[kClipboardClipboard]->empty()) {
-    LOG_WARN("failed to take clipboard for delayed file paste");
-    m_clipboard[kClipboardClipboard]->close();
-    clearDelayedFilePaste();
-    return;
-  }
-
-  // Advertise text/uri-list via TARGETS; real paths are filled on SelectionRequest (paste).
-  m_clipboard[kClipboardClipboard]->add(IClipboard::Format::Files, std::string());
-  m_clipboard[kClipboardClipboard]->close();
-  LOG_INFO("delayed clipboard file paste armed (Ctrl+V or context-menu paste)");
+  m_hasDelayedFilePaste = true;
+  // Replace the previous clipboard now, but never render file contents from a
+  // SelectionRequest. The real virtual paths are installed once metadata mounts.
+  auto *clipboard = m_clipboard[kClipboardClipboard];
+  const Time time = XWindowsUtil::getCurrentTime(m_display, clipboard->getWindow());
+  if (!clipboard->open(time)) { clearDelayedFilePaste(); return; }
+  if (!clipboard->empty()) { clipboard->close(); clearDelayedFilePaste(); return; }
+  clipboard->add(IClipboard::Format::Files, {});
+  clipboard->close();
+  m_virtualClipboardFiles = std::make_unique<XWindowsClipboardFiles>(
+      m_events, std::move(pullFiles), std::move(listFiles), [this](const std::vector<std::string> &paths) {
+        if (!m_hasDelayedFilePaste) return;
+        auto *clipboard = m_clipboard[kClipboardClipboard];
+        const Time time = XWindowsUtil::getCurrentTime(m_display, clipboard->getWindow());
+        if (!clipboard->open(time)) return;
+        if (!clipboard->empty()) { clipboard->close(); return; }
+        const auto data = deskflow::clipboardDataFromPaths(paths);
+        clipboard->add(IClipboard::Format::Files, data);
+        clipboard->close();
+        m_lastClipboardFiles = data;
+        m_receivedFileClipboardFiles = data;
+      });
 }
 
 void XWindowsScreen::clearDelayedFilePaste()
 {
-  ++m_delayedFileGeneration;
   m_hasDelayedFilePaste = false;
-  m_renderingDelayedFilePaste = false;
-  m_delayedFilePull = {};
-}
-
-bool XWindowsScreen::renderDelayedFilePaste()
-{
-  if (!m_hasDelayedFilePaste || !m_delayedFilePull || m_clipboard[kClipboardClipboard] == nullptr) {
-    return false;
-  }
-  if (m_renderingDelayedFilePaste) {
-    return false;
-  }
-
-  m_renderingDelayedFilePaste = true;
-  const auto generation = m_delayedFileGeneration;
-  const auto pull = m_delayedFilePull;
-  LOG_INFO("paste requested — fetching remote clipboard file(s)");
-  const auto paths = pull();
-  if (generation != m_delayedFileGeneration) {
-    return false;
-  }
-  m_renderingDelayedFilePaste = false;
-
-  if (paths.empty()) {
-    LOG_ERR("delayed file paste failed: no files received");
-    return false;
-  }
-
-  Time timestamp = XWindowsUtil::getCurrentTime(m_display, m_clipboard[kClipboardClipboard]->getWindow());
-  if (!m_clipboard[kClipboardClipboard]->open(timestamp)) {
-    LOG_ERR("delayed file paste failed: could not open clipboard");
-    return false;
-  }
-  // Keep ownership from prepareDelayedFilePaste; only replace Files payload.
-  m_clipboard[kClipboardClipboard]->add(IClipboard::Format::Files, deskflow::clipboardDataFromPaths(paths));
-  m_clipboard[kClipboardClipboard]->close();
-  m_lastClipboardFiles = deskflow::clipboardDataFromPaths(paths);
-  m_receivedFileClipboardFiles = m_lastClipboardFiles;
-  LOG_INFO("delayed file paste ready with %zu file(s)", paths.size());
-  return true;
+  m_virtualClipboardFiles.reset();
+  m_receivedFileClipboardFiles.clear();
 }
 
 void XWindowsScreen::checkClipboards()
@@ -587,9 +554,6 @@ void XWindowsScreen::onClipboardOwnershipChanged(ClipboardID id)
   const Window owner = XGetSelectionOwner(m_display, m_clipboard[id]->getSelection());
   if (owner == m_window) {
     return;
-  }
-  if (id == kClipboardClipboard && m_hasDelayedFilePaste) {
-    clearDelayedFilePaste();
   }
   LOG_DEBUG("clipboard %u ownership changed (owner=0x%08lx)", static_cast<unsigned>(id), static_cast<unsigned long>(owner));
   // Ownership changes are not necessarily content changes. Clipboard managers
@@ -663,6 +627,14 @@ void XWindowsScreen::pollExternalClipboard(bool forceFileCopy)
     m_clipboardPollBusy = false;
     return;
   }
+
+  // Clipboard managers may take ownership of our virtual URI list. Keep the
+  // mount alive and do not advertise its paths back to the source machine.
+  if (m_hasDelayedFilePaste && !filesData.empty() && filesData == m_receivedFileClipboardFiles) {
+    m_clipboardPollBusy = false;
+    return;
+  }
+  if (m_hasDelayedFilePaste) clearDelayedFilePaste();
 
   const std::string data = probe.marshall();
   const bool freshFileCopy = forceFileCopy && !filesData.empty() && filesData != m_receivedFileClipboardFiles;
@@ -749,6 +721,9 @@ void *XWindowsScreen::getEventTarget() const
 bool XWindowsScreen::getClipboard(ClipboardID id, IClipboard *clipboard) const
 {
   assert(clipboard != nullptr);
+  // Do not turn a remote virtual file offer back into a local file copy.
+  if (id == kClipboardClipboard && m_hasDelayedFilePaste && m_clipboard[id] &&
+      XGetSelectionOwner(m_display, m_clipboard[id]->getSelection()) == m_window) return false;
 
   // fail if we don't have the requested clipboard
   if (m_clipboard[id] == nullptr) {
@@ -1620,15 +1595,8 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
       // reclaimed the selection. Do not invalidate that new local cache.
       if (XGetSelectionOwner(m_display, m_clipboard[id]->getSelection()) == m_window)
         return;
-      if (id == kClipboardClipboard) {
-        clearDelayedFilePaste();
-      }
       m_clipboard[id]->lost(xevent->xselectionclear.time);
-      if (m_isPrimary) {
-        onClipboardOwnershipChanged(id);
-      } else {
-        sendClipboardEvent(EventTypes::ClipboardGrabbed, id);
-      }
+      onClipboardOwnershipChanged(id);
       return;
     }
   } break;
@@ -1648,11 +1616,8 @@ void XWindowsScreen::handleSystemEvent(const Event &event)
     // somebody is asking for clipboard data
     ClipboardID id = getClipboardID(xevent->xselectionrequest.selection);
     if (id != kClipboardEnd) {
-      // Match Windows WM_RENDERFORMAT: transfer remote files only when uri-list is requested.
-      if (m_hasDelayedFilePaste && id == kClipboardClipboard && m_clipboard[id] != nullptr &&
-          m_clipboard[id]->isFormatTarget(xevent->xselectionrequest.target, IClipboard::Format::Files)) {
-        renderDelayedFilePaste();
-      }
+      // URI requests are metadata probes as well as pastes. The FUSE read
+      // callback alone may request remote content; never do that here.
       m_clipboard[id]->addRequest(
           request.owner, request.requestor, request.target, request.time, request.property
       );
