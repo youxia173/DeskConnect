@@ -1103,7 +1103,7 @@ void ServerProxy::dragInfoReceived()
     m_recvProgress.reset();
     const bool started = m_fileReceive.begin(names, deskflow::maxTransferBytes(), [this](const deskflow::TransferProgressInfo &info) {
       m_recvProgress.report(info);
-    });
+    }, m_clipboardFiles && m_clipboardFiles->waiting());
     if (!started && m_clipboardFiles) {
       m_clipboardFiles->failed();
     }
@@ -1139,10 +1139,11 @@ void ServerProxy::fileChunkReceived()
 
   const auto state = m_fileReceive.onChunk(mark, data, deskflow::maxTransferBytes());
   if (state == TransferState::Finished) {
-    if (m_clipboardFiles) {
+    if (m_clipboardFiles && m_clipboardFiles->waiting()) {
       m_clipboardFiles->received(m_fileReceive.receivedPaths());
+    } else {
+      applyReceivedFiles(m_fileReceive.receivedPaths());
     }
-    applyReceivedFiles(m_fileReceive.receivedPaths());
     m_fileReceive.reset();
   } else if (state == TransferState::Error) {
     if (m_clipboardFiles) {

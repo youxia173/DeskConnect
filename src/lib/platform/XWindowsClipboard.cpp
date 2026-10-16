@@ -275,6 +275,7 @@ bool XWindowsClipboard::empty()
   // save time
   m_timeOwned = m_time;
   m_cacheTime = m_timeOwned;
+  m_cacheOwner = m_window;
   m_timeLost = 0;
 
   // we're the owner now
@@ -389,9 +390,9 @@ void XWindowsClipboard::clearConverters()
 IXWindowsClipboardConverter *XWindowsClipboard::getConverter(Atom target, bool onlyIfNotAdded) const
 {
   IXWindowsClipboardConverter *converter = nullptr;
-  for (auto index = m_converters.begin(); index != m_converters.end(); ++index) {
-    converter = *index;
-    if (converter->getAtom() == target) {
+  for (auto *candidate : m_converters) {
+    if (candidate->getAtom() == target) {
+      converter = candidate;
       break;
     }
   }
@@ -422,8 +423,9 @@ void XWindowsClipboard::checkCache() const
   // CICCCMGetClipboard does not answer SelectionRequest, so every target runs
   // into the 250ms timeout and the stale-time check below would then wipe the
   // data we just published.
+  const Window owner = XGetSelectionOwner(m_display, m_selection);
   if (m_owner) {
-    if (XGetSelectionOwner(m_display, m_selection) == m_window) {
+    if (owner == m_window) {
       return;
     }
     // Ownership went away without a SelectionClear reaching us; drop the stale
@@ -448,7 +450,11 @@ void XWindowsClipboard::checkCache() const
   }
 
   // if the cache is dirty then flush it
-  if (m_timeOwned != m_cacheTime) {
+  // A failed/empty first read must be retried on the next open even if the
+  // owner keeps the same timestamp. Cache it only within this open so has()/get()
+  // do not repeat a blocking conversion for every format in the same copy.
+  if (m_timeOwned != m_cacheTime || owner != m_cacheOwner ||
+      std::ranges::none_of(m_added, [](bool added) { return added; })) {
     clearCache();
   }
 }
@@ -479,6 +485,7 @@ void XWindowsClipboard::fillCache() const
 
 void XWindowsClipboard::doFillCache()
 {
+  m_cacheOwner = XGetSelectionOwner(m_display, m_selection);
   if (m_motif) {
     motifFillCache();
   } else {
@@ -500,7 +507,9 @@ void XWindowsClipboard::icccmFillCache()
   const Atom atomTargets = m_atomTargets;
   Atom target;
   std::string data;
-  if (!icccmGetSelection(atomTargets, &target, &data) || (target != m_atomAtom && target != m_atomTargets)) {
+  const bool haveTargets = icccmGetSelection(atomTargets, &target, &data) &&
+                           (target == m_atomAtom || target == m_atomTargets);
+  if (!haveTargets) {
     LOG_VERBOSE("selection doesn't support TARGETS");
     data = "";
     XWindowsUtil::appendAtomData(data, XA_STRING);
@@ -523,19 +532,13 @@ void XWindowsClipboard::icccmFillCache()
     }
 
     // see if atom is in target list
-    Atom target = None;
-    // XXX -- just ask for the converter's target to see if it's
-    // available rather than checking TARGETS.  i've seen clipboard
-    // owners that don't report all the targets they support.
-    target = converter->getAtom();
-    /*
-    for (uint32_t i = 0; i < numTargets; ++i) {
-        if (converter->getAtom() == targets[i]) {
-            target = targets[i];
-            break;
-        }
+    // Request only advertised targets when TARGETS succeeded. Blindly probing
+    // every image/file format can delay a plain text copy by seconds and leave
+    // late replies that interfere with the next conversion.
+    Atom target = converter->getAtom();
+    if (haveTargets && std::find(targets, targets + numTargets, target) == targets + numTargets) {
+      continue;
     }
-    */
     if (target == None) {
       continue;
     }
@@ -603,7 +606,12 @@ IClipboard::Time XWindowsClipboard::icccmGetTime() const
   Atom actualTarget;
   std::string data;
   if (icccmGetSelection(m_atomTimestamp, &actualTarget, &data) && actualTarget == m_atomInteger) {
-    Time time = *static_cast<const Time *>(static_cast<const void *>(data.data()));
+    if (data.size() < sizeof(Time)) {
+      LOG_WARN("X11 clipboard TIMESTAMP reply is truncated (%zu bytes)", data.size());
+      return 0;
+    }
+    Time time;
+    std::memcpy(&time, data.data(), sizeof(time));
     LOG_VERBOSE("got ICCCM time %d", time);
     return time;
   } else {
@@ -1264,6 +1272,10 @@ bool XWindowsClipboard::CICCCMGetClipboard::readClipboard(
   m_atomNone = XInternAtom(display, "NONE", False);
   m_atomIncr = XInternAtom(display, "INCR", False);
 
+  // SelectionNotify can arrive after a previous request timed out. Match the
+  // selection, target and timestamp rather than just the shared window/property.
+  m_selection = selection;
+  m_target = target;
   // save output pointers
   m_actualTarget = actualTarget;
   m_data = data;
@@ -1347,6 +1359,12 @@ bool XWindowsClipboard::CICCCMGetClipboard::readClipboard(
 
   // return success or failure
   LOG_VERBOSE("request %s after %fs", m_failed ? "failed" : "succeeded", timeout.getTime());
+  if (m_failed) {
+    LOG_WARN("X11 clipboard read failed: selection=%s target=%s bytes=%zu elapsed=%.3fs incr=%d",
+             XWindowsUtil::atomToString(display, selection).c_str(),
+             XWindowsUtil::atomToString(display, target).c_str(), data->size(), totalTime.getTime(), m_incr);
+    data->clear();
+  }
   return !m_failed;
 }
 
@@ -1364,7 +1382,7 @@ bool XWindowsClipboard::CICCCMGetClipboard::processEvent(Display *display, const
     return false;
 
   case SelectionNotify:
-    if (xevent->xselection.requestor == m_requestor) {
+    if (matchesReply(xevent->xselection, m_requestor, m_selection, m_target, m_time)) {
       // done if we can't convert
       if (xevent->xselection.property == None || xevent->xselection.property == m_atomNone) {
         m_done = true;

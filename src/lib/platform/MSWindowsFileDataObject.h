@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 #pragma once
+#include "filetransfer/FileTransfer.h"
 #include <Windows.h>
 #include <objidl.h>
 #include <shldisp.h>
@@ -16,7 +17,9 @@
 class MSWindowsFileDataObject final : public IDataObject, public IDataObjectAsyncCapability
 {
 public:
-  explicit MSWindowsFileDataObject(std::function<std::vector<std::string>()> pull);
+  MSWindowsFileDataObject(std::function<std::vector<std::string>()> pull,
+                          std::function<std::vector<deskflow::FileOffer>()> list);
+  HRESULT openContent(size_t index, IStream **stream);
   void ready() { m_ready = true; }
   void cancel();
   HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void **object) override;
@@ -41,6 +44,11 @@ private:
   std::atomic<ULONG> m_references{1};
   std::function<std::vector<std::string>()> m_pull;
   std::vector<std::string> m_paths;
+  std::function<std::vector<deskflow::FileOffer>()> m_list;
+  std::vector<deskflow::FileOffer> m_entries;
+  bool loadEntries();
+  CLIPFORMAT m_descriptor;
+  CLIPFORMAT m_contents;
   BOOL m_async = TRUE;
   BOOL m_operation = FALSE;
   bool m_valid = true;

@@ -474,11 +474,13 @@ bool EiScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
   return ok;
 }
 
-void EiScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
+void EiScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles,
+      std::function<std::vector<deskflow::FileOffer>()> listFiles)
 {
   // Never eagerly fetch on offer. Ubuntu's InputCapture portal v1 cannot
   // export a delayed clipboard; the Xorg backend supports this operation.
   (void)pullFiles;
+  (void)listFiles;
   LOG_WARN("clipboard file paste requires an Xorg session with this Wayland portal backend");
   ipcSendToClient(QStringLiteral("fileTransfer"), QStringLiteral("error|clipboard file paste requires Xorg"));
 }

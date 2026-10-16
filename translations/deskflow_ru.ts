@@ -1871,6 +1871,38 @@ You may need to restart the connection if it was blocked before.</source>
         <source>Add inbound firewall rules for deskconnect-core and the TCP port (requires administrator approval).</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Linux login session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use Xorg by default for clipboard sharing on Ubuntu. Changes the system login configuration after administrator authorization; takes effect after restarting the computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use Xorg by default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not set the default Xorg login: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Administrator authorization requires pkexec. Please install polkit and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Xorg is now the default login session. Save your work and restart the computer to apply it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Administrator authorization was canceled or denied. The login setting was not applied.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Helper exited with code %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SettingsDialogButtonBox</name>

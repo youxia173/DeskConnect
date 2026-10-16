@@ -203,7 +203,7 @@ add_library(platform STATIC ${PLATFORM_SOURCES})
 target_link_libraries(platform PUBLIC client ${libs})
 
 if(WIN32)
-  target_link_libraries(platform PRIVATE Qt6::Gui ole32 shell32 uuid)
+  target_link_libraries(platform PRIVATE Qt6::Gui ole32 shell32 shlwapi uuid)
 endif()
 
 if(UNIX)

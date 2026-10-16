@@ -74,7 +74,8 @@ public:
   bool canLeave() override;
   void leave() override;
   bool setClipboard(ClipboardID, const IClipboard *) override;
-  void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles) override;
+  void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles,
+      std::function<std::vector<deskflow::FileOffer>()> listFiles) override;
   void clearDelayedFilePaste() override;
   void checkClipboards() override;
   void pollExternalClipboard(bool forceFileCopy = false);
@@ -287,6 +288,7 @@ private:
   EventQueueTimer *m_clipboardPollTimer = nullptr;
   std::string m_lastClipboardMarshall[kClipboardEnd];
   bool m_clipboardPollBusy = false;
+  QElapsedTimer m_clipboardDiagnosticTimer;
 
   IEventQueue *m_events = nullptr;
   deskflow::KeyMap m_keyMap;

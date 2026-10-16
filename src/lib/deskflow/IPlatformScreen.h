@@ -15,6 +15,8 @@
 #include "deskflow/ISecondaryScreen.h"
 #include "deskflow/OptionTypes.h"
 
+#include "filetransfer/FileTransfer.h"
+
 #include <functional>
 #include <string>
 #include <vector>
@@ -81,15 +83,17 @@ public:
   */
   virtual bool setClipboard(ClipboardID id, const IClipboard *) = 0;
 
-  //! Prepare delayed file paste (Windows CF_HDROP lazy render)
+  //! Prepare delayed file paste with separate metadata and content callbacks
   /*!
   When the user pastes (Ctrl+V or context menu), \p pullFiles is invoked to
-  fetch remote files and return absolute local paths for CF_HDROP.
+  fetch remote files and return absolute local paths. listFiles reads metadata only.
   Default: no-op on platforms without delayed file clipboard support.
   */
-  virtual void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
+  virtual void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles,
+      std::function<std::vector<deskflow::FileOffer>()> listFiles)
   {
     (void)pullFiles;
+    (void)listFiles;
   }
 
   //! Clear any pending delayed file paste state

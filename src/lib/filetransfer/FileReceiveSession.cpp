@@ -13,6 +13,7 @@
 #include <QFileInfo>
 #include <QSet>
 #include <QTemporaryDir>
+#include <QStandardPaths>
 
 #include <algorithm>
 #include <limits>
@@ -49,7 +50,7 @@ void FileReceiveSession::reset()
 }
 
 bool FileReceiveSession::begin(
-    const std::vector<std::string> &names, uint64_t maxTotalBytes, ProgressCallback onProgress
+    const std::vector<std::string> &names, uint64_t maxTotalBytes, ProgressCallback onProgress, bool clipboardPaste
 )
 {
   reset();
@@ -78,7 +79,18 @@ bool FileReceiveSession::begin(
     }
     entries.insert(relative.toCaseFolded());
   }
-  const auto base = ensureReceiveDirectory();
+  // Clipboard downloads are private implementation details, not delivered items
+  // in Downloads. Explorer/Nautilus copies the roots into the user's destination.
+  std::string base;
+  if (clipboardPaste) {
+    const auto cache = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    if (cache.isEmpty()) return false;
+    const auto path = QDir(cache).filePath("clipboard-files");
+    if (!QDir().mkpath(path)) return false;
+    base = path.toUtf8().toStdString();
+  } else {
+    base = ensureReceiveDirectory();
+  }
   if (base.empty()) {
     return false;
   }

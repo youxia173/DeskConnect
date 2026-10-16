@@ -30,7 +30,8 @@ public:
   void reset();
 
   //! Handle DDRG basenames (expected order of following DFTR transfers).
-  bool begin(const std::vector<std::string> &names, uint64_t maxTotalBytes, ProgressCallback onProgress = {});
+  bool begin(const std::vector<std::string> &names, uint64_t maxTotalBytes, ProgressCallback onProgress = {},
+             bool clipboardPaste = false);
 
   //! Handle one DFTR message (mark + payload). Returns Finished when all files done.
   TransferState onChunk(uint8_t mark, const std::string &data, uint64_t maxFileBytes);

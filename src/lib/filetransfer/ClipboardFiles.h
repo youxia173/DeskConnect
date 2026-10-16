@@ -11,11 +11,13 @@
 
 class IEventQueue;
 class IPlatformScreen;
+class EventQueueTimer;
 
 namespace deskflow {
 
 // DFOF is a versioned control channel. No file contents or recursive directory
-// scan is needed until the destination asks for the current offer's token.
+// scan is needed until the destination asks for metadata. Only a separate
+// content request starts a transfer for the current offer token.
 class ClipboardFiles
 {
 public:
@@ -35,6 +37,11 @@ public:
 
 private:
   struct Pull;
+  struct Listing;
+  void pollListing();
+  void clearListing();
+  std::shared_ptr<Listing> m_listing;
+  EventQueueTimer *m_listingTimer = nullptr;
   static std::vector<std::string> wait(IEventQueue *events, const std::shared_ptr<Pull> &pull);
   void control(const char *operation, const std::string &id);
   IEventQueue *m_events;

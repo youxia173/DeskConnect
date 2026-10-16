@@ -31,6 +31,11 @@
 #include <algorithm>
 #include <cstring>
 #include <functional>
+#include <memory>
+#ifdef _WIN32
+#include "platform/MSWindowsFileDataObject.h"
+#include <shlobj.h>
+#endif
 
 namespace {
 class ContinuousStream : public deskflow::IStream
@@ -286,6 +291,79 @@ private Q_SLOTS:
       QVERIFY(!session.begin({name}, 100));
     }
   }
+
+#ifdef _WIN32
+  void windowsClipboardMetadataDoesNotDownloadFiles()
+  {
+    QTemporaryDir cache;
+    QVERIFY(cache.isValid());
+    QVERIFY(QDir().mkpath(cache.filePath("original/empty")));
+    QFile file(cache.filePath("original/report.txt"));
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    QCOMPARE(file.write("payload"), qint64(7));
+    file.close();
+    int downloads = 0;
+    int listings = 0;
+    auto *object = new MSWindowsFileDataObject([&]() {
+      ++downloads;
+      return std::vector<std::string>{cache.filePath("original").toStdString()};
+    }, [&]() {
+      ++listings;
+      return std::vector<deskflow::FileOffer>{{"original/", 0, {}},
+          {"original/empty/", 0, {}}, {"original/report.txt", 7, {}}};
+    });
+    const auto release = [](MSWindowsFileDataObject *value) { value->Release(); };
+    std::unique_ptr<MSWindowsFileDataObject, decltype(release)> owner(object, release);
+    object->ready();
+    FORMATETC paths{CF_HDROP, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL};
+    QCOMPARE(object->QueryGetData(&paths), HRESULT(DV_E_FORMATETC));
+    IEnumFORMATETC *formats = nullptr;
+    QCOMPARE(object->EnumFormatEtc(DATADIR_GET, &formats), HRESULT(S_OK));
+    formats->Release();
+    QCOMPARE(listings, 0);
+    QCOMPARE(downloads, 0);
+    FORMATETC descriptor{static_cast<CLIPFORMAT>(RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW)),
+                         nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL};
+    STGMEDIUM metadata{};
+    QCOMPARE(object->GetData(&descriptor, &metadata), HRESULT(S_OK));
+    auto *group = static_cast<FILEGROUPDESCRIPTORW *>(GlobalLock(metadata.hGlobal));
+    QVERIFY(group);
+    QCOMPARE(group->cItems, UINT(3));
+    QCOMPARE(QString::fromWCharArray(group->fgd[0].cFileName), QStringLiteral("original"));
+    QCOMPARE(QString::fromWCharArray(group->fgd[2].cFileName), QStringLiteral("original\\report.txt"));
+    GlobalUnlock(metadata.hGlobal);
+    ReleaseStgMedium(&metadata);
+    QCOMPARE(listings, 1);
+    QCOMPARE(downloads, 0);
+    FORMATETC content{static_cast<CLIPFORMAT>(RegisterClipboardFormatW(L"FileContents")),
+                      nullptr, DVASPECT_CONTENT, 2, TYMED_ISTREAM};
+    auto contentProbe = content;
+    contentProbe.lindex = -1;
+    QCOMPARE(object->QueryGetData(&contentProbe), HRESULT(S_OK));
+    QCOMPARE(downloads, 0);
+    STGMEDIUM medium{};
+    QCOMPARE(object->GetData(&content, &medium), HRESULT(S_OK));
+    STATSTG stat{};
+    QCOMPARE(medium.pstm->Stat(&stat, STATFLAG_NONAME), HRESULT(S_OK));
+    QCOMPARE(stat.cbSize.QuadPart, ULONGLONG(7));
+    LARGE_INTEGER offset{};
+    QCOMPARE(medium.pstm->Seek(offset, STREAM_SEEK_SET, nullptr), HRESULT(S_OK));
+    QCOMPARE(downloads, 0);
+    char data[8]{};
+    ULONG count = 0;
+    QCOMPARE(medium.pstm->Read(data, 7, &count), HRESULT(S_OK));
+    QCOMPARE(count, ULONG(7));
+    QCOMPARE(QByteArray(data, 7), QByteArray("payload"));
+    QCOMPARE(downloads, 1);
+    ReleaseStgMedium(&medium);
+    QCOMPARE(object->GetData(&content, &medium), HRESULT(S_OK));
+    QCOMPARE(medium.pstm->Read(data, 7, &count), HRESULT(S_OK));
+    QCOMPARE(downloads, 1);
+    ReleaseStgMedium(&medium);
+    object->cancel();
+    QCOMPARE(object->GetData(&content, &medium), HRESULT(E_ABORT));
+  }
+#endif
 
   void clipboardCopyOnlyOffersAndRejectsStalePasteRequests()
   {

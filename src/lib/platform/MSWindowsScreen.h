@@ -117,7 +117,8 @@ public:
   bool canLeave() override;
   void leave() override;
   bool setClipboard(ClipboardID, const IClipboard *) override;
-  void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles) override;
+  void prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles,
+      std::function<std::vector<deskflow::FileOffer>()> listFiles) override;
   void clearDelayedFilePaste() override;
   void checkClipboards() override;
   void openScreensaver(bool notify) override;

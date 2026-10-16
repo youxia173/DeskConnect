@@ -421,13 +421,14 @@ bool MSWindowsScreen::setClipboard(ClipboardID id, const IClipboard *src)
   }
 }
 
-void MSWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
+void MSWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles,
+      std::function<std::vector<deskflow::FileOffer>()> listFiles)
 {
   clearDelayedFilePaste();
   if (!pullFiles) {
     return;
   }
-  auto *object = new MSWindowsFileDataObject(std::move(pullFiles));
+  auto *object = new MSWindowsFileDataObject(std::move(pullFiles), std::move(listFiles));
   if (FAILED(OleSetClipboard(object)) || OleIsCurrentClipboard(object) != S_OK) {
     object->cancel();
     object->Release();
@@ -536,9 +537,16 @@ void *MSWindowsScreen::getEventTarget() const
 
 bool MSWindowsScreen::getClipboard(ClipboardID, IClipboard *dst) const
 {
+  // Do not render our own remote offer during clipboard polling/screen switches.
+  if (m_fileDataObject && OleIsCurrentClipboard(m_fileDataObject) == S_OK) {
+    return false;
+  }
   MSWindowsClipboard src(m_window);
-  Clipboard::copy(dst, &src);
-  return true;
+  const bool copied = Clipboard::copy(dst, &src);
+  if (!copied) {
+    LOG_WARN("Windows clipboard read failed; copy will remain pending");
+  }
+  return copied;
 }
 
 void MSWindowsScreen::getShape(int32_t &x, int32_t &y, int32_t &w, int32_t &h) const

@@ -451,8 +451,10 @@ bool XWindowsScreen::setClipboard(ClipboardID id, const IClipboard *clipboard)
   }
 }
 
-void XWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles)
+void XWindowsScreen::prepareDelayedFilePaste(std::function<std::vector<std::string>()> pullFiles,
+      std::function<std::vector<deskflow::FileOffer>()> listFiles)
 {
+  (void)listFiles;
   ++m_delayedFileGeneration;
   m_renderingDelayedFilePaste = false;
   m_delayedFilePull = std::move(pullFiles);
@@ -601,6 +603,12 @@ void XWindowsScreen::onClipboardOwnershipChanged(ClipboardID id)
 
 void XWindowsScreen::pollExternalClipboard(bool forceFileCopy)
 {
+  if (!m_clipboardDiagnosticTimer.isValid() || m_clipboardDiagnosticTimer.elapsed() >= 30000) {
+    LOG_INFO("X11 clipboard monitor: onScreen=%d grabbed=%d busy=%d fileOffer=%d cachedBytes=%zu",
+             m_isOnScreen, m_inputGrabbed, m_clipboardPollBusy, m_hasDelayedFilePaste,
+             m_lastClipboardMarshall[kClipboardClipboard].size());
+    m_clipboardDiagnosticTimer.restart();
+  }
   if (m_isPrimary && !m_isOnScreen && m_captureLogTimer.isValid() && m_captureLogTimer.elapsed() >= 10000) {
     LOG_INFO("X11 input capture alive: grabbed=%d park=%d,%d motion=%u buttons=%u keys=%u", m_inputGrabbed,
              m_parkX, m_parkY, m_captureMotionCount, m_captureButtonCount, m_captureKeyCount);
@@ -648,6 +656,10 @@ void XWindowsScreen::pollExternalClipboard(bool forceFileCopy)
     probe.close();
   }
   if (!hasContent) {
+    if (forceFileCopy) {
+      LOG_WARN("X11 clipboard owner changed but no supported content was read (owner=0x%lx); polling will retry",
+               static_cast<unsigned long>(owner));
+    }
     m_clipboardPollBusy = false;
     return;
   }
@@ -1150,6 +1162,10 @@ Display *XWindowsScreen::openDisplay(const char *displayName)
   if (display == nullptr) {
     throw ScreenUnavailableException();
   }
+
+  const auto *session = std::getenv("XDG_SESSION_TYPE");
+  LOG_INFO("X11 clipboard backend: display=%s session=%s role=%s", DisplayString(display),
+           session ? session : "unset", m_isPrimary ? "server" : "client");
 
   // verify the availability of the XTest extension
   if (!m_isPrimary) {

@@ -668,6 +668,7 @@ void Client::handleShapeChanged()
 void Client::handleClipboardGrabbed(const Event &event)
 {
   if (!m_enableClipboard || (m_maximumClipboardSize == 0)) {
+    LOG_INFO("local clipboard copy ignored: sharing enabled=%d limit=%zu KB", m_enableClipboard, m_maximumClipboardSize);
     return;
   }
 

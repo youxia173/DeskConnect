@@ -219,6 +219,8 @@ void Screen::setClipboard(ClipboardID id, const IClipboard *clipboard)
 {
   if (!m_screen->setClipboard(id, clipboard)) {
     LOG_WARN("failed to apply clipboard %u to the local system clipboard", static_cast<unsigned>(id));
+  } else if (clipboard != nullptr) {
+    LOG_INFO("applied clipboard %u to the local system clipboard", static_cast<unsigned>(id));
   }
 }
 

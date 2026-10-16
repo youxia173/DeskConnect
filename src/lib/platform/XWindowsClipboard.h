@@ -143,7 +143,16 @@ protected:
   private:
     bool processEvent(Display *display, const XEvent *event);
 
+  protected:
+    static bool matchesReply(const XSelectionEvent &reply, Window requestor, Atom selection, Atom target, Time time)
+    {
+      return reply.requestor == requestor && reply.selection == selection && reply.target == target &&
+             (time == CurrentTime || reply.time == time);
+    }
+
   private:
+    Atom m_selection = None;
+    Atom m_target = None;
     Window m_requestor;
     Time m_time;
     Atom m_property;
@@ -303,7 +312,8 @@ private:
   // the added/cached clipboard data
   mutable bool m_checkCache;
   bool m_cached;
-  Time m_cacheTime;
+  Time m_cacheTime = 0;
+  Window m_cacheOwner = None;
   bool m_added[static_cast<int>(IClipboard::Format::TotalFormats)];
   std::string m_data[static_cast<int>(IClipboard::Format::TotalFormats)];
 

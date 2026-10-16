@@ -18,6 +18,7 @@ class XWindowsClipboardTests : public QObject
 private Q_SLOTS:
   // Test are run in order top to bottom
   void defaultCtor();
+  void rejectsStaleSelectionReplies();
   // Tests only work on X Windows
 #if !WINAPI_LIBEI && !WINAPI_PORTAL
   void initTestCase();

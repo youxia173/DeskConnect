@@ -492,21 +492,10 @@ void Server::switchScreen(BaseClientProxy *dst, int32_t x, int32_t y, bool forSc
         if (clipboard.m_clipboardOwner != getName(m_primaryClient)) {
           continue;
         }
-        if (!m_primaryClient->getClipboard(id, &clipboard.m_clipboard)) {
-          continue;
-        }
-        std::string data = clipboard.m_clipboard.marshall();
-        if (data.size() > m_maximumClipboardSize * 1024) {
-          LOG_WARN(
-              "not caching clipboard %u before switch; size %zu exceeds limit %zu KB", static_cast<unsigned>(id),
-              data.size(), m_maximumClipboardSize
-          );
-          continue;
-        }
-        if (data != clipboard.m_clipboardData) {
-          clipboard.m_clipboardData = std::move(data);
-          LOG_DEBUG("refreshed clipboard %u before leaving primary", static_cast<unsigned>(id));
-        }
+        // A refreshed snapshot must be published, not merely cached. Otherwise
+        // the later XFixes/poll notification sees identical cached bytes and
+        // skips the only push, while the peer remains marked clean.
+        onClipboardChanged(m_primaryClient, id, clipboard.m_clipboardSeqNum);
       }
     }
 
@@ -1221,6 +1210,7 @@ void Server::handleShapeChanged(BaseClientProxy *client)
 void Server::handleClipboardGrabbed(const Event &event, BaseClientProxy *grabber)
 {
   if (!m_enableClipboard || (m_maximumClipboardSize == 0)) {
+    LOG_INFO("clipboard copy ignored: sharing enabled=%d limit=%zu KB", m_enableClipboard, m_maximumClipboardSize);
     return;
   }
 
@@ -1645,6 +1635,14 @@ void Server::onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, u
         "ignored clipboard %u from \"%s\": empty after unmarshall", static_cast<unsigned>(id), getName(sender).c_str()
     );
     return;
+  }
+
+  if (id == kClipboardClipboard && sender != m_primaryClient) {
+    // Normal remote content replaces a previous file offer even if its clear
+    // control message was unavailable (older peer or disabled file transfer).
+    m_fileClipboardActive = false;
+    m_localClipboardFiles.clear();
+    m_forceLocalFileOffer = false;
   }
 
   auto ackClipboardToSender = [this, sender, id]() {
@@ -2567,9 +2565,11 @@ void Server::onDragInfo(BaseClientProxy *sender, uint16_t fileCount, const std::
     );
   });
   m_recvProgress.reset();
+  const auto pastePeer = m_clipboardFiles.find(getName(sender));
+  const bool clipboardPaste = pastePeer != m_clipboardFiles.end() && pastePeer->second->waiting();
   const bool started = m_fileReceive.begin(names, deskflow::maxTransferBytes(), [this](const deskflow::TransferProgressInfo &info) {
     m_recvProgress.report(info);
-  });
+  }, clipboardPaste);
   if (!started) {
     if (const auto peer = m_clipboardFiles.find(getName(sender)); peer != m_clipboardFiles.end()) {
       peer->second->failed();
@@ -2605,10 +2605,11 @@ void Server::onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::strin
   }
   const auto state = m_fileReceive.onChunk(mark, data, deskflow::maxTransferBytes());
   if (state == TransferState::Finished) {
-    if (peer != m_clipboardFiles.end()) {
+    if (peer != m_clipboardFiles.end() && peer->second->waiting()) {
       peer->second->received(m_fileReceive.receivedPaths());
+    } else {
+      notifyReceivedFiles(m_fileReceive.receivedPaths());
     }
-    notifyReceivedFiles(m_fileReceive.receivedPaths());
     m_fileReceive.reset();
   } else if (state == TransferState::Error) {
     if (peer != m_clipboardFiles.end()) {

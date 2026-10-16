@@ -16,11 +16,16 @@
 #include <QJsonObject>
 #include <QUuid>
 #include <chrono>
+#include <thread>
+#include <atomic>
 
 namespace deskflow {
 struct ClipboardFiles::Pull
 {
   std::string id;
+  bool listed = false;
+  bool listing = false;
+  std::vector<FileOffer> entries;
   bool valid = true;
   bool waiting = false;
   bool started = false;
@@ -29,6 +34,55 @@ struct ClipboardFiles::Pull
   std::vector<std::string> paths;
   std::chrono::steady_clock::time_point activity = std::chrono::steady_clock::now();
 };
+
+struct ClipboardFiles::Listing
+{
+  std::string id;
+  std::atomic_bool cancelled{false};
+  std::atomic_bool ready{false};
+  std::vector<FileOffer> entries;
+};
+
+void ClipboardFiles::clearListing()
+{
+  if (m_listingTimer) {
+    m_events->removeHandler(EventTypes::Timer, m_listingTimer);
+    m_events->deleteTimer(m_listingTimer);
+    m_listingTimer = nullptr;
+  }
+  if (m_listing) m_listing->cancelled = true;
+  m_listing.reset();
+}
+
+void ClipboardFiles::pollListing()
+{
+  if (m_listingTimer) {
+    m_events->removeHandler(EventTypes::Timer, m_listingTimer);
+    m_events->deleteTimer(m_listingTimer);
+    m_listingTimer = nullptr;
+  }
+  if (!m_listing) return;
+  if (!m_listing->ready.load(std::memory_order_acquire)) {
+    m_listingTimer = m_events->newOneShotTimer(0.05, nullptr);
+    m_events->addHandler(EventTypes::Timer, m_listingTimer, [this](const auto &) { pollListing(); });
+    return;
+  }
+  const auto listing = std::move(m_listing);
+  if (listing->id != m_localId) return;
+  QJsonArray entries;
+  for (const auto &entry : listing->entries) {
+    entries.append(QJsonObject{{"name", QString::fromStdString(entry.name)},
+                               {"size", QString::number(entry.size)}});
+  }
+  const auto message = QJsonDocument(QJsonObject{{"v", 1}, {"op", "listing"},
+      {"id", QString::fromStdString(listing->id)}, {"entries", entries}}).toJson(QJsonDocument::Compact);
+  if (message.size() > 1024 * 1024 || entries.isEmpty()) {
+    control("error", listing->id);
+  } else {
+    m_control(message.toStdString());
+    LOG_INFO("clipboard files: metadata listed (%lld entries), no file contents sent", static_cast<long long>(entries.size()));
+  }
+}
 
 ClipboardFiles::ClipboardFiles(IEventQueue *events, IPlatformScreen *screen, SendControl control, SendFiles files,
                                std::function<void()> cancelSend, std::function<void()> cancelReceive)
@@ -46,6 +100,7 @@ ClipboardFiles::ClipboardFiles(IEventQueue *events, IPlatformScreen *screen, Sen
 
 ClipboardFiles::~ClipboardFiles()
 {
+  clearListing();
   if (m_pull) {
     m_pull->valid = false;
   }
@@ -62,6 +117,7 @@ void ClipboardFiles::announce(const std::string &paths, bool force)
   if (!force && paths == m_localPaths && !m_pull) {
     return;
   }
+  clearListing();
   m_localPaths = paths;
   m_localId = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
   if (m_pull) {
@@ -118,6 +174,48 @@ void ClipboardFiles::handle(const std::string &message)
     sendFinished(false);
     return;
   }
+  if (operation == "list") {
+    if (id != m_localId || m_localPaths.empty() || !m_events) {
+      control("error", id);
+      return;
+    }
+    if (m_listing && m_listing->id == id) return;
+    clearListing();
+    auto listing = std::make_shared<Listing>();
+    listing->id = id;
+    m_listing = listing;
+    const auto paths = m_localPaths;
+    const auto limit = maxTransferBytes();
+    try {
+      std::thread([listing, paths, limit]() {
+        try { listing->entries = fileOffersFromClipboardData(paths, limit, &listing->cancelled); }
+        catch (...) { listing->entries.clear(); }
+        listing->ready.store(true, std::memory_order_release);
+      }).detach();
+      pollListing();
+    } catch (...) {
+      clearListing();
+      control("error", id);
+    }
+    return;
+  }
+  if (m_pull && id == m_pull->id && m_pull->listing &&
+      (operation == "listing" || operation == "error")) {
+    std::vector<FileOffer> entries;
+    const auto values = object.value("entries").toArray();
+    bool valid = operation == "listing" && !values.isEmpty() && values.size() <= 65535;
+    for (const auto &value : values) {
+      const auto entry = value.toObject();
+      const auto name = entry.value("name").toString().toStdString();
+      bool ok = false;
+      const auto size = entry.value("size").toString().toULongLong(&ok);
+      if (!ok || !isSafeTransferPath(name) || (name.back() == '/' && size != 0)) { valid = false; break; }
+      entries.push_back({name, size, {}});
+    }
+    m_pull->entries = valid ? std::move(entries) : std::vector<FileOffer>{};
+    m_pull->listed = true;
+    return;
+  }
   if (operation == "request") {
     if (id != m_localId || m_localPaths.empty() || !m_sendingId.empty()) {
       control("error", id);
@@ -139,6 +237,7 @@ void ClipboardFiles::handle(const std::string &message)
     if (m_pull) {
       m_pull->valid = false;
     }
+    clearListing();
     m_localPaths.clear();
     m_localId.clear();
     const auto names = object.value("names").toArray();
@@ -189,6 +288,27 @@ void ClipboardFiles::handle(const std::string &message)
         send(QJsonDocument(cancel).toJson(QJsonDocument::Compact).toStdString());
       }
       return paths;
+    }, [pull, send, events]() {
+      if (!pull->valid || !isFileTransferEnabled() || pull->listing) return std::vector<FileOffer>{};
+      if (pull->listed) return pull->entries;
+      pull->listing = true;
+      const auto started = std::chrono::steady_clock::now();
+      send(QJsonDocument(QJsonObject{{"v", 1}, {"op", "list"},
+          {"id", QString::fromStdString(pull->id)}}).toJson(QJsonDocument::Compact).toStdString());
+      while (pull->valid && !pull->listed && std::chrono::steady_clock::now() - started < std::chrono::seconds(60)) {
+        Event event;
+        if (!events->getEvent(event, 0.05)) continue;
+        if (event.getType() == EventTypes::Quit) {
+          events->addEvent(std::move(event));
+          pull->valid = false;
+          break;
+        }
+        events->dispatchEvent(event);
+        Event::deleteData(event);
+      }
+      pull->listing = false;
+      if (!pull->listed && pull->valid) LOG_WARN("clipboard files: metadata request timed out; update both peers");
+      return pull->valid && pull->listed ? pull->entries : std::vector<FileOffer>{};
     });
   } else if (m_pull && id == m_pull->id && m_pull->waiting) {
     if (operation == "begin") {

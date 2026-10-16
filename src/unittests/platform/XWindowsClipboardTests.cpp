@@ -16,6 +16,7 @@ public:
   class TestCICCCMGetClipboard : public CICCCMGetClipboard
   {
   public:
+    using CICCCMGetClipboard::matchesReply;
     TestCICCCMGetClipboard() : CICCCMGetClipboard(None, None, None)
     {
     }
@@ -26,6 +27,24 @@ void XWindowsClipboardTests::defaultCtor()
 {
   TestXWindowsClipboard::TestCICCCMGetClipboard clipboard;
   QCOMPARE(None, clipboard.error());
+}
+
+void XWindowsClipboardTests::rejectsStaleSelectionReplies()
+{
+  using Reader = TestXWindowsClipboard::TestCICCCMGetClipboard;
+  XSelectionEvent reply{};
+  reply.requestor = 10;
+  reply.selection = 20;
+  reply.target = 30;
+  reply.time = 40;
+  // A refusal has property=None too, so it must still match the full request.
+  reply.property = None;
+  QVERIFY(Reader::matchesReply(reply, 10, 20, 30, 40));
+  QVERIFY(!Reader::matchesReply(reply, 11, 20, 30, 40));
+  QVERIFY(!Reader::matchesReply(reply, 10, 21, 30, 40));
+  QVERIFY(!Reader::matchesReply(reply, 10, 20, 31, 40));
+  QVERIFY(!Reader::matchesReply(reply, 10, 20, 30, 41));
+  QVERIFY(Reader::matchesReply(reply, 10, 20, 30, CurrentTime));
 }
 
 // Only work on XWindows
