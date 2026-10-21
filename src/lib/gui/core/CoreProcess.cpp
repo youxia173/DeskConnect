@@ -128,14 +128,14 @@ CoreProcess::CoreProcess(const ServerConfig &serverConfig)
 void CoreProcess::onProcessReadyReadStandardOutput()
 {
   if (m_process) {
-    handleLogLines(m_process->readAllStandardOutput());
+    handleLogLines(QString::fromUtf8(m_process->readAllStandardOutput()));
   }
 }
 
 void CoreProcess::onProcessReadyReadStandardError()
 {
   if (m_process) {
-    handleLogLines(m_process->readAllStandardError());
+    handleLogLines(QString::fromUtf8(m_process->readAllStandardError()));
   }
 }
 

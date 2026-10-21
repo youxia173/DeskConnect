@@ -55,11 +55,13 @@ void ConsoleLogOutputter::close()
 bool ConsoleLogOutputter::write(LogLevel::Level level, const QString &msg)
 {
   using enum LogLevel::Level;
-  if ((level >= Fatal) && (level <= Warning))
-    std::cerr << qPrintable(msg) << std::endl;
-  else
-    std::cout << qPrintable(msg) << std::endl;
-  std::cout.flush();
+  // The GUI reads this pipe as UTF-8. qPrintable() emits the system code page
+  // (GBK on Chinese Windows); those bytes decoded as UTF-8 produce unassigned
+  // characters that crash Qt's text layout in the log panel.
+  const QByteArray bytes = msg.toUtf8();
+  auto &out = ((level >= Fatal) && (level <= Warning)) ? std::cerr : std::cout;
+  out.write(bytes.constData(), static_cast<std::streamsize>(bytes.size()));
+  out << std::endl;
   return true;
 }
 
