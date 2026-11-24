@@ -112,6 +112,10 @@ private Q_SLOTS:
       QVERIFY(!runtime.value(Settings::FileTransfer::Enabled).toBool());
       QCOMPARE(runtime.value("internalConfig/screens/1/name").toString(), QStringLiteral("unchanged-screen"));
       QCOMPARE(runtime.value(Settings::Server::Heartbeat).toInt(), 1000);
+      // The core can save this INI while the GUI still owns the session.
+      runtime.setValue("test/coreWrite", true);
+      runtime.sync();
+      QCOMPARE(runtime.status(), QSettings::NoError);
     }
     session.clear();
     QVERIFY(!QFile::exists(path));

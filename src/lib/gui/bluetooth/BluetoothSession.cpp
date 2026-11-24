@@ -5,8 +5,41 @@
 
 #include <QFileInfo>
 #include <QSettings>
+#include <QTemporaryFile>
 
 namespace deskflow::gui::bluetooth {
+namespace {
+bool createSessionFile(const QString &fileTemplate, QString &path, QString &error, const QByteArray &data = {})
+{
+  QTemporaryFile file(fileTemplate);
+  if (!file.open() || file.write(data) != data.size() || !file.flush()) {
+    error = file.errorString();
+    return false;
+  }
+  path = file.fileName();
+  file.setAutoRemove(false);
+  // close() keeps QTemporaryFile's native handle open. Destroy it before
+  // QSettings atomically replaces the file; Windows otherwise denies the save.
+  // Session now owns the path and removes it on failure, stop or destruction.
+  return true;
+}
+} // namespace
+
+Session::~Session()
+{
+  clear();
+}
+
+void Session::clear()
+{
+  if (!m_settingsPath.isEmpty())
+    QFile::remove(m_settingsPath);
+  if (!m_serverConfigPath.isEmpty())
+    QFile::remove(m_serverConfigPath);
+  m_settingsPath.clear();
+  m_serverConfigPath.clear();
+}
+
 bool Session::prepare(bool server, quint16 port, QString &error)
 {
   Settings::save();
@@ -31,18 +64,12 @@ bool Session::prepare(const Snapshot &source, bool server, quint16 port, QString
   }
   // Linux/portable trust stores are relative to the settings directory.
   const auto dir = QFileInfo(source.settingsFile).absolutePath();
-  m_settings = std::make_unique<QTemporaryFile>(dir + QStringLiteral("/.bluetooth-XXXXXX.ini"));
-  if (!m_settings->open()) {
-    error = m_settings->errorString();
-    clear();
+  if (!createSessionFile(dir + QStringLiteral("/.bluetooth-XXXXXX.ini"), m_settingsPath, error)) {
     return false;
   }
-  m_settings->close();
-  QString serverPath;
   if (server) {
     QFile original(source.serverConfigFile);
-    m_serverConfig = std::make_unique<QTemporaryFile>(dir + QStringLiteral("/.bluetooth-XXXXXX.conf"));
-    if (!original.open(QIODevice::ReadOnly) || original.size() > 4 * 1024 * 1024 || !m_serverConfig->open()) {
+    if (!original.open(QIODevice::ReadOnly) || original.size() > 4 * 1024 * 1024) {
       error = QObject::tr("无法为蓝牙会话读取或创建服务端配置。");
       clear();
       return false;
@@ -50,17 +77,14 @@ bool Session::prepare(const Snapshot &source, bool server, quint16 port, QString
     // Config::readSectionOptions reads sharing/heartbeat from settings. Ensure
     // even a custom config with no options section loads these safety overrides.
     const auto config = original.readAll() + QByteArray("\nsection: options\nend\n");
-    if (m_serverConfig->write(config) != config.size() || !m_serverConfig->flush()) {
-      error = m_serverConfig->errorString();
+    if (!createSessionFile(dir + QStringLiteral("/.bluetooth-XXXXXX.conf"), m_serverConfigPath, error, config)) {
       clear();
       return false;
     }
-    serverPath = m_serverConfig->fileName();
-    m_serverConfig->close();
   }
   bool saved;
   {
-    QSettings runtime(m_settings->fileName(), QSettings::IniFormat);
+    QSettings runtime(m_settingsPath, QSettings::IniFormat);
     for (auto it = source.values.cbegin(); it != source.values.cend(); ++it)
       runtime.setValue(it.key(), it.value());
     runtime.setValue(Settings::Core::CoreMode, server ? Settings::CoreMode::Server : Settings::CoreMode::Client);
@@ -77,7 +101,7 @@ bool Session::prepare(const Snapshot &source, bool server, quint16 port, QString
     runtime.setValue(Settings::Server::Heartbeat, 1000);
     if (server) {
       runtime.setValue(Settings::Server::ExternalConfig, true);
-      runtime.setValue(Settings::Server::ExternalConfigFile, serverPath);
+      runtime.setValue(Settings::Server::ExternalConfigFile, m_serverConfigPath);
     }
     runtime.sync();
     saved = runtime.status() == QSettings::NoError;

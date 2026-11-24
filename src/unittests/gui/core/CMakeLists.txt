@@ -7,6 +7,7 @@ create_test(
   SOURCE BluetoothTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
 )
+set_tests_properties(BluetoothTests PROPERTIES TIMEOUT 60)
 
 create_test(
   NAME LinuxLoginSessionTests

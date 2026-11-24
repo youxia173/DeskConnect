@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
 #pragma once
 
-#include <QTemporaryFile>
 #include <QVariantMap>
-#include <memory>
 
 namespace deskflow::gui::bluetooth {
 
@@ -13,6 +11,11 @@ namespace deskflow::gui::bluetooth {
 class Session
 {
 public:
+  Session() = default;
+  ~Session();
+  Session(const Session &) = delete;
+  Session &operator=(const Session &) = delete;
+
   struct Snapshot
   {
     QString settingsFile;
@@ -23,15 +26,11 @@ public:
   bool prepare(const Snapshot &source, bool server, quint16 port, QString &error);
   QString settingsFile() const
   {
-    return m_settings ? m_settings->fileName() : QString();
+    return m_settingsPath;
   }
-  void clear()
-  {
-    m_settings.reset();
-    m_serverConfig.reset();
-  }
+  void clear();
 
 private:
-  std::unique_ptr<QTemporaryFile> m_settings, m_serverConfig;
+  QString m_settingsPath, m_serverConfigPath;
 };
 } // namespace deskflow::gui::bluetooth

@@ -53,6 +53,7 @@ jobs:
             build-bluetooth/src/unittests/gui/core/*.exe
             build-bluetooth/src/unittests/gui/core/*.dll
             build-bluetooth/src/unittests/Testing/Temporary/*.log
+            build-bluetooth/BluetoothTests.txt
           if-no-files-found: ignore
   linux:
     runs-on: ubuntu-24.04
