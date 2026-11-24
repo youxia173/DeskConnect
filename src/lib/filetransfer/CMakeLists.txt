@@ -15,7 +15,7 @@ add_library(filetransfer STATIC
 )
 
 # ProtocolUtil lives in app; consumers (server/client/core) already link app.
-target_link_libraries(filetransfer PUBLIC common)
+target_link_libraries(filetransfer PUBLIC common base)
 
 target_include_directories(filetransfer
   PUBLIC
