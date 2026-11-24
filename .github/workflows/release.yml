@@ -19,7 +19,9 @@ jobs:
       - name: Build in Docker
         run: |
           docker build -f deploy/docker/Dockerfile.linux -t deskconnect-builder .
-          docker run --rm -v "$PWD:/source" deskconnect-builder
+          version=()
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then version=(-e "VERSION_OVERRIDE=${GITHUB_REF_NAME#v}"); fi
+          docker run --rm "${version[@]}" -v "$PWD:/source" deskconnect-builder
       - uses: actions/upload-artifact@v4
         with:
           name: linux
@@ -43,9 +45,13 @@ jobs:
       - name: Build and package
         shell: pwsh
         run: |
+          cmake -P cmake/tests/GitVersionTests.cmake
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_TESTS=ON ${{ steps.deps.outputs.vcpkg-cmake-config }}
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           cmake --build build-release --parallel 4
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ctest --test-dir build-release/src/unittests --output-on-failure -R '^BluetoothTests$'
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           cpack --config build-release/CPackConfig.cmake -C Release -G 'WIX;7Z;ZIP' -B dist
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
@@ -94,9 +100,15 @@ jobs:
       - name: Build and test Android
         working-directory: android
         run: |
-          bash gradlew --no-daemon :app:assembleDebug :app:testDebugUnitTest
+          suffix=()
+          if [[ "$GITHUB_REF_TYPE" == tag && "$GITHUB_REF_NAME" == *-* ]]; then
+            suffix=("-PversionNameSuffix=-${GITHUB_REF_NAME#*-}")
+          fi
+          bash gradlew --no-daemon "${suffix[@]}" :app:assembleDebug :app:testDebugUnitTest
           mkdir -p ../dist
-          cp app/build/outputs/apk/debug/app-debug.apk ../dist/DeskConnect-Android-debug.apk
+          label=branch
+          if [[ "$GITHUB_REF_TYPE" == tag ]]; then label="${GITHUB_REF_NAME#v}"; fi
+          cp app/build/outputs/apk/debug/app-debug.apk "../dist/DeskConnect-${label}-Android-debug.apk"
       - uses: actions/upload-artifact@v4
         with:
           name: android
@@ -132,9 +144,11 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             test "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = true || { echo 'Published release already exists; use a new tag'; exit 1; }
           else
-            gh release create "$TAG" --verify-tag --draft --title "DeskConnect $TAG" --generate-notes
+            notes=(--generate-notes)
+            if [[ "$TAG" == *-bluetooth.* ]]; then notes=(--notes-file docs/releases/bluetooth-preview.md); fi
+            gh release create "$TAG" --verify-tag --draft --title "DeskConnect $TAG" "${notes[@]}"
           fi
           gh release upload "$TAG" dist/* --clobber
           args=()
-          [[ "$TAG" != *-* ]] || args+=(--prerelease)
+          [[ "$TAG" != *-* ]] || args+=(--prerelease --latest=false)
           gh release edit "$TAG" --draft=false "${args[@]}"

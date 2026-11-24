@@ -7,14 +7,14 @@ QTDIR="${QTDIR:-/home/hans/Qt/6.8.3/gcc_64}"
 BUILD_BIN="${BUILD_BIN:-$ROOT/build/bin}"
 OUT_DIR="${OUT_DIR:-$ROOT/dist/DeskConnect}"
 ARCH="$(uname -m)"
-VERSION="$(grep -E 'set\(CMAKE_PROJECT_VERSION|project\(deskflow' "$ROOT/CMakeLists.txt" 2>/dev/null | head -1 || true)"
-VERSION="${VERSION:-1.26.0.9999}"
+VERSION="${VERSION_OVERRIDE:-}"
 # Prefer git describe-ish from binary if available
-if [[ -x "$BUILD_BIN/deskconnect-core" ]]; then
+if [[ -z "$VERSION" && -x "$BUILD_BIN/deskconnect-core" ]]; then
   VERSION="$("$BUILD_BIN/deskconnect-core" --version 2>/dev/null | head -1 | awk '{print $2}' || echo 1.26.0.9999)"
-  VERSION="${VERSION%,}"
-  VERSION="${VERSION%%[^0-9.vV]*}"
 fi
+VERSION="${VERSION#v}"
+VERSION="${VERSION%,}"
+[[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2,3}(-[A-Za-z0-9.-]+)?$ ]] || { echo "Invalid package version: $VERSION" >&2; exit 1; }
 
 if [[ ! -x "$BUILD_BIN/deskflow" || ! -x "$BUILD_BIN/deskconnect-core" ]]; then
   echo "Missing binaries in $BUILD_BIN 鈥?build Release first." >&2

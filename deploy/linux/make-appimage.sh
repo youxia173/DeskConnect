@@ -11,7 +11,7 @@ test -x "$PORTABLE/bin/deskconnect-core"
 VERSION="${VERSION_OVERRIDE:-$(QT_QPA_PLATFORM=offscreen "$PORTABLE/deskconnect-core" --version | awk 'NR == 1 {print $2}')}"
 VERSION="${VERSION#v}"
 VERSION="${VERSION%,}"
-[[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2,3}$ ]] || { echo "Invalid package version: $VERSION" >&2; exit 1; }
+[[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2,3}(-[A-Za-z0-9.-]+)?$ ]] || { echo "Invalid package version: $VERSION" >&2; exit 1; }
 
 WORK="$(mktemp -d "$ROOT/dist/appimage-build.XXXXXX")"
 trap 'rm -rf -- "$WORK"' EXIT

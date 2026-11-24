@@ -21,8 +21,9 @@ fi
 # Debian version: drop leading 'v' and trailing comma from "v1.26.2, protocol 鈥?
 VERSION="${VERSION#v}"
 VERSION="${VERSION%,}"
-VERSION="${VERSION%%[^0-9.]*}"
-[[ -n "$VERSION" ]] || VERSION="1.26.0.9999"
+[[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2,3}(-[A-Za-z0-9.-]+)?$ ]] || { echo "Invalid package version: $VERSION" >&2; exit 1; }
+# Debian sorts '~prerelease' before the corresponding stable version.
+VERSION="${VERSION/-/~}"
 PKG_NAME="deskconnect"
 PKG_ROOT="$DIST_ROOT/${PKG_NAME}_${VERSION}_${ARCH_DEB}"
 DEB_PATH="$DIST_ROOT/${PKG_NAME}_${VERSION}_${ARCH_DEB}.deb"
