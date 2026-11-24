@@ -13,6 +13,12 @@
 
 当前蓝牙会话只传键鼠，不共享文本、图片或文件。仅支持一对电脑和默认蓝牙适配器；不支持 Windows 系统服务、登录界面或 UAC 安全桌面的控制。Flatpak、macOS 默认不编入蓝牙后端。
 
+### Linux 与 Windows 同步
+
+Linux 和 Windows 使用同一套蓝牙界面、协议及连接管理代码，两个平台均接入服务端和客户端角色。Ubuntu X11 → Windows、Windows → Ubuntu X11、Linux → Linux 都属于待实测范围，不需要另外维护一套 Linux 分支。Ubuntu 的输入权限仍取决于已有 X11/Wayland 输入后端，蓝牙只替换传输通道。
+
+Linux 发布流程明确开启蓝牙构建，DEB、便携包和 AppImage 都从同一份带蓝牙的 GUI 构建产物打包。宿主系统须启用 BlueZ 蓝牙服务并完成系统配对；DEB 推荐依赖和 Arch 可选依赖也包含 BlueZ。没有把系统蓝牙服务装进 AppImage。
+
 ## 实现边界
 
 - `src/lib/gui/bluetooth/` 包含设置窗口、RFCOMM 桥接、帧解析和临时会话配置。
@@ -39,13 +45,13 @@ Windows 使用 windeployqt 带入 Qt6Bluetooth；Linux portable / DEB / AppImage
 ctest --test-dir build/src/unittests --output-on-failure -R '^BluetoothTests$'
 ```
 
-新增 `Bluetooth branch checks` 工作流，在推送本分支、相关 PR 或手动触发时分别验证 Windows/Linux 的 ON/OFF 构建和上述测试。它不发布 Release，也不创建 tag。
+新增 `Bluetooth branch checks` 工作流，在推送本分支、相关 PR 或手动触发时分别验证 Windows/Linux 的 ON/OFF 构建和上述测试。Linux 还会生成便携包，检查启用构建实际链接并打包了 Qt6Bluetooth。便携包与 AppImage 的启动检查同时运行核心和 GUI 的 `--version`，以覆盖仅 GUI 依赖蓝牙库的情况；这类检查不启动键鼠控制，也不能替代双机实测。工作流不发布 Release，也不创建 tag。
 
-本次完成了新增 C++ 文件的 clang-format 20.1.0 检查、修改文件的 `git diff --check`、四份 YAML 的解析检查、两个 Linux 打包脚本的 Bash 语法检查。按要求未在开发电脑编译，也未进行双机蓝牙实测；新增的 C++ 单元测试和 CI 尚未执行，不能视为已经通过。合并前必须补齐：
+本次完成了新增 C++ 文件的 clang-format 20.1.0 检查、修改文件的 `git diff --check`、YAML 的解析检查、Linux 构建和打包脚本的 Bash 语法检查。按要求未在开发电脑编译，也未进行双机蓝牙实测；新增的 C++ 单元测试和 CI 尚未执行，不能视为已经通过。合并前必须补齐：
 
 | 场景 | 验收结果 |
 | --- | --- |
-| Windows ↔ Windows、Ubuntu X11 ↔ Windows，双方轮流做服务端 | 可认证、按屏幕布局切换，键鼠正常 |
+| Windows ↔ Windows、Ubuntu X11 ↔ Windows、Linux ↔ Linux，双方轮流做服务端 | 可认证、按屏幕布局切换，键鼠正常 |
 | 不连接 Wi-Fi / 网线，仅开启蓝牙 | 正常连接与切换，证明未走局域网 |
 | 拒绝证书、未知设备、错误名称 | 不获得键鼠控制；接受正确证书后可恢复 |
 | 按住按键或鼠标键时关闭对端蓝牙、退出对端、拔适配器 | 控制返回本机，无残留按键；记录恢复耗时 |

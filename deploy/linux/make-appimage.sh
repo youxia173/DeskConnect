@@ -44,5 +44,6 @@ mkdir "$WORK/verify"
   test -f squashfs-root/plugins/platforms/libqxcb.so
   sh -n squashfs-root/AppRun
   QT_QPA_PLATFORM=offscreen timeout 30 squashfs-root/deskconnect-core --version
+  QT_QPA_PLATFORM=offscreen timeout 30 squashfs-root/AppRun --version
 )
 echo "AppImage: $OUTPUT"

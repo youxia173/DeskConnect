@@ -61,4 +61,9 @@ jobs:
             cmake -S . -B build-bluetooth -G Ninja -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_TESTS=ON -DENABLE_BLUETOOTH=${{ matrix.bluetooth }}
             cmake --build build-bluetooth --parallel 4
             ctest --test-dir build-bluetooth/src/unittests --output-on-failure -R "^BluetoothTests$"
+            QTDIR=/opt/qt BUILD_BIN="$PWD/build-bluetooth/bin" bash deploy/linux/make-portable.sh
+            if [ "${{ matrix.bluetooth }}" = ON ]; then
+              test -f dist/DeskConnect/lib/libQt6Bluetooth.so.6
+              readelf -d build-bluetooth/bin/deskflow | grep "libQt6Bluetooth.so.6"
+            fi
           '

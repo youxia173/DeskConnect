@@ -352,3 +352,6 @@ du -sh "$OUT_DIR" "$ARCHIVE"
 # Smoke test
 export LD_LIBRARY_PATH="$OUT_DIR/lib"
 "$OUT_DIR/bin/deskconnect-core" --version
+# Exercise the GUI loader as well: only it links Qt Bluetooth. Offscreen and
+# --version exit before opening the main window or starting a control session.
+QT_QPA_PLATFORM=offscreen timeout 30 "$OUT_DIR/DeskConnect" --version

@@ -39,6 +39,7 @@ depends=(
 )
 
 options=('!debug')
+optdepends=('bluez: Bluetooth direct keyboard and mouse connection')
 
 package() {
   # By default, `makepkg` will run from the `src` directory, which would
