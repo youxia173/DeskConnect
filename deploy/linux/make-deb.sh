@@ -72,7 +72,7 @@ Installed-Size: ${INSTALLED_SIZE}
 Maintainer: DeskConnect <youxia173@users.noreply.github.com>
 Homepage: https://github.com/youxia173/DeskConnect
 Depends: libc6, libgl1, libegl1, libx11-6, libxcb1, libxkbcommon0, libwayland-client0, libssl3, libdbus-1-3, libfontconfig1, libfreetype6, libglib2.0-0
-Recommends: libxcb-cursor0
+Recommends: libxcb-cursor0, bluez
 Conflicts: deskflow
 Replaces: deskflow
 Provides: deskflow

@@ -10,6 +10,8 @@
 #include "common/Enums.h"
 #include "common/Settings.h"
 #include "gui/FileTail.h"
+#include "gui/bluetooth/BluetoothSession.h"
+#include "gui/bluetooth/BluetoothTransport.h"
 #include "gui/config/ServerConfig.h"
 
 #include <QMutex>
@@ -86,6 +88,8 @@ public:
 
 Q_SIGNALS:
   void error(deskflow::gui::CoreProcess::Error error);
+  void bluetoothError(const QString &message);
+  void bluetoothStatus(const QString &message);
   void logLine(const QString &line);
   void connectionStateChanged(deskflow::core::ConnectionState state);
   void processStateChanged(deskflow::core::ProcessState state);
@@ -144,6 +148,8 @@ private:
   FileTail *m_daemonFileTail = nullptr;
   QProcess *m_process = nullptr;
   QString m_appPath;
+  bluetooth::Transport m_bluetoothTransport{this};
+  bluetooth::Session m_bluetoothSession;
 };
 
 } // namespace deskflow::gui

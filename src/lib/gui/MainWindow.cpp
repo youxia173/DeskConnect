@@ -14,13 +14,14 @@
 #include "StyleUtils.h"
 #include "WindowsShellContextMenu.h"
 
+#include "bluetooth/BluetoothDialog.h"
 #include "dialogs/AboutDialog.h"
 #include "dialogs/ClientConfigDialog.h"
 #include "dialogs/FingerprintDialog.h"
-#include "widgets/FileTransferProgressPanel.h"
 #include "dialogs/HelpDialog.h"
 #include "dialogs/ServerConfigDialog.h"
 #include "dialogs/SettingsDialog.h"
+#include "widgets/FileTransferProgressPanel.h"
 
 #include "common/PlatformInfo.h"
 #include "common/Settings.h"
@@ -92,6 +93,7 @@ MainWindow::MainWindow()
       m_actionTrayQuit{new QAction(this)},
       m_actionRestore{new QAction(this)},
       m_actionSettings{new QAction(this)},
+      m_actionBluetooth{new QAction(this)},
       m_actionStartCore{new QAction(this)},
       m_actionRestartCore{new QAction(this)},
       m_actionStopCore{new QAction(this)},
@@ -307,6 +309,14 @@ void MainWindow::connectSlots()
   connect(m_actionTrayQuit, &QAction::triggered, this, &MainWindow::close);
   connect(m_actionRestore, &QAction::triggered, this, &MainWindow::showAndActivate);
   connect(m_actionSettings, &QAction::triggered, this, &MainWindow::openSettings);
+  connect(m_actionBluetooth, &QAction::triggered, this, &MainWindow::openBluetoothSettings);
+  connect(&m_coreProcess, &CoreProcess::bluetoothError, this, [this](const QString &message) {
+    QMessageBox::warning(this, tr("蓝牙直连"), message);
+    toggleCanRunCore(canRunCore());
+  });
+  connect(&m_coreProcess, &CoreProcess::bluetoothStatus, this, [this](const QString &message) {
+    statusBar()->showMessage(message, 10000);
+  });
   connect(m_actionStartCore, &QAction::triggered, this, &MainWindow::startCore);
   connect(m_actionRestartCore, &QAction::triggered, this, &MainWindow::resetCore);
   connect(m_actionStopCore, &QAction::triggered, this, &MainWindow::stopCore);
@@ -548,6 +558,11 @@ void MainWindow::coreProcessError(CoreProcess::Error error)
 
 void MainWindow::startCore()
 {
+  if (Settings::value(Settings::Bluetooth::Enabled).toBool()) {
+    m_ssidWhenStarted.clear();
+    m_coreProcess.start();
+    return;
+  }
   m_directUserHold = false;
   if (directEthernetEnabled()) {
     const auto nic = NetworkMonitor::ethernetNic(
@@ -675,6 +690,21 @@ void MainWindow::openSettings()
   }
 }
 
+void MainWindow::openBluetoothSettings()
+{
+  // Changing transport while a key is held must first release the old session.
+  // Restrict edits to stopped state so config applies as one operation.
+  if (m_coreProcess.processState() != ProcessState::Stopped) {
+    QMessageBox::information(this, tr("蓝牙直连"), tr("请先停止当前连接，再修改蓝牙设置。"));
+    return;
+  }
+  bluetooth::Dialog dialog(this);
+  if (dialog.exec() == QDialog::Accepted) {
+    updateModeControls();
+    updateSendFilesAction();
+  }
+}
+
 void MainWindow::resetCore()
 {
   m_coreProcess.restart();
@@ -726,10 +756,13 @@ void MainWindow::updateModeControls()
   ui->serverOptions->setVisible(isServer);
   ui->clientOptions->setVisible(isClient);
   ui->lblNoMode->setVisible(!isServer && !isClient);
+  const bool bluetoothEnabled = Settings::value(Settings::Bluetooth::Enabled).toBool();
+  ui->comboHostname->setEnabled(!bluetoothEnabled);
+  ui->cbDirectEthernet->setEnabled(!bluetoothEnabled);
   toggleCanRunCore(canRunCore());
 
   ui->lblIpAddresses->setVisible(
-      (isClient && !Settings::value(Settings::Core::Interface).toString().isEmpty()) || isServer
+      (isClient && (bluetoothEnabled || !Settings::value(Settings::Core::Interface).toString().isEmpty())) || isServer
   );
 
   if (ui->lblIpAddresses->isVisible())
@@ -865,6 +898,7 @@ void MainWindow::createMenuBar()
   m_menuFile->addAction(m_actionQuit);
 
   m_menuEdit->addAction(m_actionSettings);
+  m_menuEdit->addAction(m_actionBluetooth);
 
   m_menuView->addAction(m_logDock->toggleViewAction());
 
@@ -907,7 +941,8 @@ void MainWindow::applyConfig()
   loadHostnameHistory();
 
   const bool requestedDirectEthernet = Settings::value(Settings::Core::DirectEthernet).toBool();
-  const bool directEthernet = requestedDirectEthernet && !NetworkMonitor::ethernetInterfaceName().isEmpty();
+  const bool directEthernet = requestedDirectEthernet && !Settings::value(Settings::Bluetooth::Enabled).toBool() &&
+                              !NetworkMonitor::ethernetInterfaceName().isEmpty();
   Settings::setValue(Settings::Core::DirectEthernet, directEthernet);
   {
     const QSignalBlocker blocker(ui->cbDirectEthernet);
@@ -1312,6 +1347,7 @@ void MainWindow::updateText()
   //: %1 will be the replaced with the appname
   m_actionRestore->setText(tr("&Open %1").arg(kAppName));
   m_actionSettings->setText(tr("&Preferences"));
+  m_actionBluetooth->setText(tr("蓝牙直连…"));
   m_actionStartCore->setText(tr("&Start"));
   m_actionRestartCore->setText(tr("Rest&art"));
   m_actionStopCore->setText(tr("S&top"));
@@ -1515,7 +1551,8 @@ void MainWindow::onDuplicateInstanceConnected()
 
 void MainWindow::updateSendFilesAction()
 {
-  const bool enabledSetting = Settings::value(Settings::FileTransfer::Enabled).toBool();
+  const bool enabledSetting = Settings::value(Settings::FileTransfer::Enabled).toBool() &&
+                              !Settings::value(Settings::Bluetooth::Enabled).toBool();
   const bool started = m_coreProcess.isStarted();
   const auto connection = m_coreProcess.connectionState();
   bool canSend = false;
@@ -1544,6 +1581,10 @@ void MainWindow::sendFiles()
 
 void MainWindow::sendFilesFromPaths(const QStringList &paths)
 {
+  if (Settings::value(Settings::Bluetooth::Enabled).toBool()) {
+    QMessageBox::information(this, kAppName, tr("蓝牙直连目前仅支持键鼠，请关闭蓝牙直连后使用网络传输文件。"));
+    return;
+  }
   QStringList files;
   for (const auto &path : paths) {
     QFileInfo info(path);
@@ -1614,6 +1655,11 @@ void MainWindow::remoteHostChanged(const QString &newRemoteHost)
 
 void MainWindow::updateIpLabel(const QStringList &addresses)
 {
+  if (Settings::value(Settings::Bluetooth::Enabled).toBool()) {
+    ui->lblIpAddresses->setText(tr("蓝牙直连：%1").arg(Settings::value(Settings::Bluetooth::Peer).toString()));
+    ui->lblIpAddresses->setToolTip(tr("通过蓝牙传输键鼠，无需 IP 地址。配置入口：编辑 → 蓝牙直连。"));
+    return;
+  }
   const auto mode = m_coreProcess.mode();
   if (mode == CoreMode::None) {
     return;
@@ -1718,6 +1764,9 @@ void MainWindow::showHelpViewer() const
 
 bool MainWindow::canRunCore() const
 {
+  if (Settings::value(Settings::Bluetooth::Enabled).toBool())
+    return m_coreProcess.mode() != Settings::CoreMode::None &&
+           !Settings::value(Settings::Bluetooth::Peer).toString().isEmpty();
   const auto mode = m_coreProcess.mode();
   const bool isServer = mode == Settings::CoreMode::Server;
   const bool isClient = mode == Settings::CoreMode::Client;
@@ -1807,6 +1856,8 @@ QString MainWindow::hostForCurrentWifi()
 
 void MainWindow::refreshHostnameForCurrentWifi()
 {
+  if (Settings::value(Settings::Bluetooth::Enabled).toBool())
+    return;
   if (directEthernetEnabled()) {
     return;
   }
@@ -1842,6 +1893,12 @@ void MainWindow::maybeAutoStartCore()
     return;
   }
   if (!Settings::value(Settings::Gui::AutoStartCore).toBool()) {
+    return;
+  }
+
+  if (Settings::value(Settings::Bluetooth::Enabled).toBool()) {
+    if (canRunCore())
+      startCore();
     return;
   }
 
@@ -1956,6 +2013,8 @@ void MainWindow::loadHostnameHistory()
 
 void MainWindow::rememberSuccessfulHost()
 {
+  if (Settings::value(Settings::Bluetooth::Enabled).toBool())
+    return;
   if (m_coreProcess.mode() != CoreMode::Client) {
     return;
   }
@@ -2066,6 +2125,12 @@ void MainWindow::restoreInterfaceAfterDirectEthernet()
 
 void MainWindow::directEthernetToggled(bool checked)
 {
+  if (checked && Settings::value(Settings::Bluetooth::Enabled).toBool()) {
+    const QSignalBlocker blocker(ui->cbDirectEthernet);
+    ui->cbDirectEthernet->setChecked(false);
+    QMessageBox::information(this, kAppName, tr("请先在“编辑 → 蓝牙直连”中关闭蓝牙直连。"));
+    return;
+  }
   if (checked && NetworkMonitor::ethernetInterfaceName().isEmpty()) {
     const QSignalBlocker blocker(ui->cbDirectEthernet);
     ui->cbDirectEthernet->setChecked(false);

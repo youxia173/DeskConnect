@@ -6,6 +6,15 @@ set(target gui)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+set(bluetooth_default OFF)
+if(WIN32 OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(bluetooth_default ON)
+endif()
+option(ENABLE_BLUETOOTH "Build experimental PC Bluetooth direct transport" ${bluetooth_default})
+if(ENABLE_BLUETOOTH)
+  find_package(Qt6 ${REQUIRED_QT_VERSION} REQUIRED COMPONENTS Bluetooth)
+endif()
+
 if(APPLE)
   set (platform_sources
     OSXHelpers.h
@@ -15,6 +24,13 @@ endif()
 
 add_library(${target} STATIC
   ${platform_sources}
+  bluetooth/BluetoothFrame.h
+  bluetooth/BluetoothTransport.cpp
+  bluetooth/BluetoothTransport.h
+  bluetooth/BluetoothSession.cpp
+  bluetooth/BluetoothSession.h
+  bluetooth/BluetoothDialog.cpp
+  bluetooth/BluetoothDialog.h
   Autostart.cpp
   Autostart.h
   WindowsFirewall.cpp
@@ -139,6 +155,11 @@ target_link_libraries(${target}
     net
     Qt6::Widgets
 )
+
+if(ENABLE_BLUETOOTH)
+  target_link_libraries(${target} PUBLIC Qt6::Bluetooth)
+  target_compile_definitions(${target} PRIVATE DESKCONNECT_BLUETOOTH)
+endif()
 
 if(WIN32)
   target_sources(${target} PRIVATE core/DirectEthernetAddress.cpp core/DirectEthernetAddress.h)

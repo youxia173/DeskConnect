@@ -58,7 +58,7 @@ jobs:
             $archive = [System.IO.Compression.ZipFile]::OpenRead($package.FullName)
             try {
               $entries = @($archive.Entries | ForEach-Object { $_.FullName.Replace('\', '/') })
-              foreach ($required in @('DeskConnect.exe', 'deskconnect-core.exe', 'Qt6Core.dll', 'platforms/qwindows.dll', 'settings/DeskConnect.conf')) {
+              foreach ($required in @('DeskConnect.exe', 'deskconnect-core.exe', 'Qt6Core.dll', 'Qt6Bluetooth.dll', 'platforms/qwindows.dll', 'settings/DeskConnect.conf')) {
                 $pattern = '(^|/)' + [regex]::Escape($required) + '$'
                 if (-not ($entries -match $pattern)) { throw "Portable ZIP missing $required" }
               }

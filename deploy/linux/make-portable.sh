@@ -100,6 +100,8 @@ for extra in \
   /usr/local/lib/x86_64-linux-gnu/libportal.so.1 \
   /usr/lib/x86_64-linux-gnu/libxcb-cursor.so.0 \
   /lib/x86_64-linux-gnu/libxcb-cursor.so.0 \
+  /usr/lib/x86_64-linux-gnu/libbluetooth.so.3 \
+  /lib/x86_64-linux-gnu/libbluetooth.so.3 \
   "$QTDIR/lib/libicuuc.so.73" \
   "$QTDIR/lib/libicui18n.so.73" \
   "$QTDIR/lib/libicudata.so.73" \
@@ -128,7 +130,7 @@ while (( idx < ${#queue[@]} )); do
       # Only keep selected runtime libs resolved from system paths
       base="$(basename "$lib")"
       case "$base" in
-        libei.so*|libportal.so*|libxcb-cursor.so*) ;;
+        libei.so*|libportal.so*|libxcb-cursor.so*|libbluetooth.so*) ;;
         *) continue ;;
       esac
       ;;
@@ -150,7 +152,7 @@ done
 
 # Ensure key Qt libs exist (copy full needed set from QTDIR)
 for need in \
-  libQt6Core.so.6 libQt6Gui.so.6 libQt6Widgets.so.6 libQt6Network.so.6 libQt6DBus.so.6 \
+  libQt6Core.so.6 libQt6Gui.so.6 libQt6Widgets.so.6 libQt6Network.so.6 libQt6DBus.so.6 libQt6Bluetooth.so.6 \
   libQt6XcbQpa.so.6 libQt6WaylandClient.so.6 libQt6WaylandEglClientHwIntegration.so.6 \
   libQt6Svg.so.6 libicuuc.so.73 libicui18n.so.73 libicudata.so.73
 do
@@ -160,7 +162,7 @@ do
 done
 
 # Prefer /usr/local libei/portal over older system; always ship xcb-cursor for X11/Qt6.5+
-for need in libei.so.1 libportal.so.1 libxcb-cursor.so.0; do
+for need in libei.so.1 libportal.so.1 libxcb-cursor.so.0 libbluetooth.so.3; do
   for dir in /usr/local/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu; do
     if [[ -e "$dir/$need" ]]; then
       cp -a "$dir/$need"* "$OUT_DIR/lib/" 2>/dev/null || cp -a "$dir/$need" "$OUT_DIR/lib/"

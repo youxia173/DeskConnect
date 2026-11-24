@@ -70,6 +70,9 @@ modules:
     buildsystem: cmake-ninja
     config-opts:
       - "-DCMAKE_BUILD_TYPE=Release"
+      # Bluetooth direct currently targets native Windows/Linux packages;
+      # retain the sandbox's existing permissions until BlueZ access is tested.
+      - "-DENABLE_BLUETOOTH=OFF"
     sources:
       - type: dir
         path: ../../../

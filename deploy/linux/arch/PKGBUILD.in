@@ -33,6 +33,7 @@ depends=(
   libxtst
   openssl
   qt6-base
+  qt6-connectivity
   qt6-svg
   qt6-translations
 )

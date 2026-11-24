@@ -105,6 +105,10 @@ CoreProcess::CoreProcess(const ServerConfig &serverConfig)
     : m_serverConfig(serverConfig),
       m_daemonIpcClient{new ipc::DaemonIpcClient(this)}
 {
+  connect(&m_bluetoothTransport, &bluetooth::Transport::status, this, [this](const QString &message) {
+    qInfo().noquote() << "[Bluetooth]" << message;
+    Q_EMIT bluetoothStatus(message);
+  });
   m_appPath = QStringLiteral("%1/%2").arg(QCoreApplication::applicationDirPath(), kCoreBinName);
   if (!QFile::exists(m_appPath)) {
     qCritical("core server binary does not exist");
@@ -179,6 +183,8 @@ void CoreProcess::checkExistingProcess()
 
 void CoreProcess::onProcessFinished(int exitCode, QProcess::ExitStatus)
 {
+  m_bluetoothTransport.stop();
+  m_bluetoothSession.clear();
   using enum ProcessState;
   setConnectionState(ConnectionState::Disconnected);
 
@@ -244,6 +250,8 @@ void CoreProcess::startForegroundProcess(const QStringList &args)
   if (m_process->waitForStarted()) {
     setProcessState(Started);
   } else {
+    m_bluetoothTransport.stop();
+    m_bluetoothSession.clear();
     setProcessState(Stopped);
     Q_EMIT error(Error::StartFailed);
   }
@@ -383,7 +391,8 @@ void CoreProcess::handleLogLines(const QString &text)
 
 void CoreProcess::start(std::optional<ProcessMode> processModeOption)
 {
-  if (m_processState == ProcessState::Started) {
+  if (m_processState == ProcessState::Started || m_processState == ProcessState::Starting ||
+      m_processState == ProcessState::Stopping) {
     qCritical("not starting core process, already started");
     return;
   }
@@ -398,6 +407,26 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
   const auto currentMode = Settings::value(Settings::Core::ProcessMode).value<ProcessMode>();
   const auto processMode = processModeOption.value_or(currentMode);
   const auto coreMode = QVariant::fromValue(m_mode).toString().toLower();
+
+  m_bluetoothTransport.stop();
+  m_bluetoothSession.clear();
+  const bool bluetoothEnabled = Settings::value(Settings::Bluetooth::Enabled).toBool();
+  if (bluetoothEnabled) {
+    QString reason;
+    if (processMode != ProcessMode::Desktop)
+      reason = tr("蓝牙直连需要桌面进程模式，请在偏好设置中更改。");
+    else if (Settings::value(Settings::Core::DirectEthernet).toBool())
+      reason = tr("蓝牙直连与网线直连不能同时启用。");
+    else if (!Settings::value(Settings::Security::TlsEnabled).toBool() ||
+             !Settings::value(Settings::Security::CheckPeers).toBool())
+      reason = tr("蓝牙直连需要启用 TLS 加密和证书指纹验证。");
+    if (!reason.isEmpty()) {
+      setProcessState(ProcessState::Stopped);
+      setConnectionState(ConnectionState::Disconnected);
+      Q_EMIT bluetoothError(reason);
+      return;
+    }
+  }
 
   qInfo().noquote() << QString("starting %1 process (%2 mode)").arg(coreMode, processModeToString(processMode));
 
@@ -424,12 +453,6 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
 
   QStringList args = {coreMode};
 
-  // Keep GUI and core on the same settings file (important after rebrand / portable installs).
-  const auto settingsFile = Settings::settingsFile();
-  if (!settingsFile.isEmpty()) {
-    args << QStringLiteral("--settings") << settingsFile;
-  }
-
   if (m_mode == Settings::CoreMode::Server) {
     const auto [hasNeededPermissions, configFilename] = persistServerConfig();
     if (configFilename.isEmpty()) {
@@ -447,6 +470,25 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
     }
     qInfo("core config file: %s", qPrintable(configFilename));
   }
+
+  auto settingsFile = Settings::settingsFile();
+  if (bluetoothEnabled) {
+    QString reason;
+    const bool server = m_mode == Settings::CoreMode::Server;
+    if (!m_bluetoothTransport.start(server, Settings::value(Settings::Bluetooth::Peer).toString(), reason) ||
+        !m_bluetoothSession.prepare(server, m_bluetoothTransport.port(), reason)) {
+      m_bluetoothTransport.stop();
+      m_bluetoothSession.clear();
+      setProcessState(ProcessState::Stopped);
+      setConnectionState(ConnectionState::Disconnected);
+      qWarning().noquote() << "[Bluetooth]" << reason;
+      Q_EMIT bluetoothError(reason);
+      return;
+    }
+    settingsFile = m_bluetoothSession.settingsFile();
+  }
+  if (!settingsFile.isEmpty())
+    args << QStringLiteral("--settings") << settingsFile;
 
   qDebug().noquote() << "log level:" << Settings::logLevelText();
 
@@ -521,6 +563,8 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
 void CoreProcess::stop(std::optional<ProcessMode> processModeOption)
 {
   QMutexLocker locker(&m_processMutex);
+  m_bluetoothTransport.stop();
+  m_retryTimer.stop();
 
   const auto currentMode = Settings::value(Settings::Core::ProcessMode).value<ProcessMode>();
   const auto processMode = processModeOption.value_or(currentMode);
@@ -593,6 +637,7 @@ void CoreProcess::restart()
 
 void CoreProcess::cleanup()
 {
+  m_bluetoothTransport.stop();
   qInfo("cleaning up core process");
 
   const auto isDesktop = Settings::value(Settings::Core::ProcessMode).value<ProcessMode>() == ProcessMode::Desktop;
@@ -646,6 +691,8 @@ void CoreProcess::setProcessState(ProcessState state)
 
 bool CoreProcess::sendFiles(const QString &peer, const QStringList &paths)
 {
+  if (!m_bluetoothSession.settingsFile().isEmpty())
+    return false;
   if (!m_coreIpcClient || !m_coreIpcClient->isConnected()) {
     qWarning("cannot send files, core ipc is not connected");
     return false;

@@ -3,7 +3,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates git cmake ninja-build build-essential pkg-config curl desktop-file-utils squashfs-tools \
     xorg-dev libx11-dev libxtst-dev libssl-dev libxkbfile-dev \
-    qt6-base-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools \
+    qt6-base-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools qt6-connectivity-dev libbluetooth3 \
     libxkbregistry-dev libxkbcommon-dev libei-dev libportal-dev \
     libfuse3-dev help2man python3 adb meson libglib2.0-dev rsync patchelf file libxcb-cursor0 qt6-wayland && rm -rf /var/lib/apt/lists/*
 RUN git clone https://github.com/flatpak/libportal.git /tmp/libportal && \

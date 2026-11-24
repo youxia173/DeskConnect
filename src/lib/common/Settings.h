@@ -78,6 +78,11 @@ public:
     // TODO: REMOVE In 2.0
     inline static const auto ScreenName = QStringLiteral("core/screenName"); // Replaced By ComputerName
   };
+  struct Bluetooth
+  {
+    inline static const auto Enabled = QStringLiteral("bluetooth/enabled");
+    inline static const auto Peer = QStringLiteral("bluetooth/peer");
+  };
   struct Daemon
   {
     inline static const auto ConfigFile = QStringLiteral("daemon/configFile");
@@ -276,7 +281,8 @@ private:
 
   // clang-format off
   inline static const QStringList m_validGroup = {
-      QStringLiteral("client")
+      QStringLiteral("bluetooth")
+    , QStringLiteral("client")
     , QStringLiteral("core")
     , QStringLiteral("daemon")
     , QStringLiteral("gui")
@@ -287,7 +293,9 @@ private:
   };
 
   inline static const QStringList m_validKeys = {
-      Client::DynamicConnectionRetry
+      Bluetooth::Enabled
+    , Bluetooth::Peer
+    , Client::DynamicConnectionRetry
     , Client::InvertYScroll
     , Client::InvertXScroll
     , Client::LanguageSync
@@ -371,7 +379,8 @@ private:
 
   // When checking the default values this list contains the ones that default to false.
   inline static const QStringList m_defaultFalseValues = {
-      Gui::Autohide
+      Bluetooth::Enabled
+    , Gui::Autohide
     , Gui::AutoStartCore
     , Gui::AutoUpdateCheck
     , Gui::LaunchAtLogin
