@@ -51,7 +51,9 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           cmake --build build-release --parallel 4
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          ctest --test-dir build-release/src/unittests --output-on-failure -R '^BluetoothTests$'
+          # Tests run outside bin, where windeployqt puts application DLLs.
+          $env:PATH = "$env:QT_ROOT_DIR\bin;$PWD\build-release\bin;$env:PATH"
+          ctest --test-dir build-release/src/unittests --output-on-failure --verbose --no-tests=error -R '^BluetoothTests$'
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           cpack --config build-release/CPackConfig.cmake -C Release -G 'WIX;7Z;ZIP' -B dist
           if ($LASTEXITCODE) { exit $LASTEXITCODE }

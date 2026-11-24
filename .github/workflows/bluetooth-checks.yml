@@ -42,7 +42,9 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           cmake --build build-bluetooth --parallel 4
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          ctest --test-dir build-bluetooth/src/unittests --output-on-failure -R '^BluetoothTests$'
+          # Tests run outside bin, where windeployqt puts application DLLs.
+          $env:PATH = "$env:QT_ROOT_DIR\bin;$PWD\build-bluetooth\bin;$env:PATH"
+          ctest --test-dir build-bluetooth/src/unittests --output-on-failure --verbose --no-tests=error -R '^BluetoothTests$'
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
   linux:
     runs-on: ubuntu-24.04
