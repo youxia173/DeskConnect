@@ -47,7 +47,7 @@ ctest --test-dir build/src/unittests --output-on-failure -R '^BluetoothTests$'
 
 新增 `Bluetooth branch checks` 工作流，在推送本分支、相关 PR 或手动触发时分别验证 Windows/Linux 的 ON/OFF 构建和上述测试。Linux 还会生成便携包，检查启用构建实际链接并打包了 Qt6Bluetooth。便携包与 AppImage 的启动检查同时运行核心和 GUI 的 `--version`，以覆盖仅 GUI 依赖蓝牙库的情况；这类检查不启动键鼠控制，也不能替代双机实测。工作流不发布 Release，也不创建 tag。
 
-本次完成了新增 C++ 文件的 clang-format 20.1.0 检查、修改文件的 `git diff --check`、YAML 的解析检查、Linux 构建和打包脚本的 Bash 语法检查。按要求未在开发电脑编译，也未进行双机蓝牙实测；新增的 C++ 单元测试和 CI 尚未执行，不能视为已经通过。合并前必须补齐：
+已完成新增 C++ 文件的 clang-format 20.1.0 检查、修改文件的 `git diff --check`、YAML 解析和 Bash 语法检查。按要求未在开发电脑编译；编译及 `BluetoothTests` 在 GitHub Actions 执行，具体结果见[分支检查](https://github.com/youxia173/DeskConnect/actions/workflows/bluetooth-checks.yml)和[三端发布构建](https://github.com/youxia173/DeskConnect/actions/workflows/release.yml)。发布使用 `v1.28.0-bluetooth.N` 实验标签并标为 prerelease，不替换正式最新版。尚未进行双机蓝牙实测，合并前必须补齐：
 
 | 场景 | 验收结果 |
 | --- | --- |

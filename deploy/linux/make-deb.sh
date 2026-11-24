@@ -23,7 +23,8 @@ VERSION="${VERSION#v}"
 VERSION="${VERSION%,}"
 [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2,3}(-[A-Za-z0-9.-]+)?$ ]] || { echo "Invalid package version: $VERSION" >&2; exit 1; }
 # Debian sorts '~prerelease' before the corresponding stable version.
-VERSION="${VERSION/-/~}"
+# Escape '~' so Bash does not expand the replacement to the home directory.
+VERSION="${VERSION/-/\~}"
 PKG_NAME="deskconnect"
 PKG_ROOT="$DIST_ROOT/${PKG_NAME}_${VERSION}_${ARCH_DEB}"
 DEB_PATH="$DIST_ROOT/${PKG_NAME}_${VERSION}_${ARCH_DEB}.deb"
