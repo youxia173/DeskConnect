@@ -40,7 +40,16 @@ void ClientProxy1_5::fileChunkSending(uint8_t mark, char *data, size_t dataSize)
 
 bool ClientProxy1_5::parseMessage(const uint8_t *code)
 {
-  if (memcmp(code, kMsgDFileTransfer, 4) == 0) {
+  if (memcmp(code, "DCAR", 4) == 0) {
+    // Fixed body: enabled byte + UUID, no unbounded strings or ADB work here.
+    uint8_t body[33];
+    if (getStream()->getSize() != sizeof(body) || getStream()->read(body, sizeof(body)) != sizeof(body) || body[0] > 1)
+      return false;
+    const std::string id(reinterpret_cast<char *>(body + 1), 32);
+    if (id.find_first_not_of("0123456789abcdef") != std::string::npos)
+      return false;
+    m_server->onAndroidRecovery(this, id, body[0] == 1);
+  } else if (memcmp(code, kMsgDFileTransfer, 4) == 0) {
     fileChunkReceived();
   } else if (memcmp(code, kMsgDDragInfo, 4) == 0) {
     dragInfoReceived();

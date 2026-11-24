@@ -19,6 +19,7 @@
 #include "filetransfer/ClipboardFiles.h"
 #include "filetransfer/FileSend.h"
 #include "filetransfer/TransferProgress.h"
+#include "server/AndroidRecovery.h"
 #include "server/Config.h"
 
 #include <climits>
@@ -210,6 +211,7 @@ public:
   void onFileChunk(BaseClientProxy *sender, uint8_t mark, const std::string &data);
   //! Handle CFTR (paste requested remote file contents)
   void onClipboardFileRequest(BaseClientProxy *sender);
+  void onAndroidRecovery(BaseClientProxy *sender, const std::string &id, bool enabled);
   void onClipboardFileOffer(BaseClientProxy *sender, const std::string &message);
   //! Push local files to a named client (empty name = the only connected client).
   bool sendFilesTo(const std::string &clientName, const std::vector<std::string> &paths);
@@ -509,4 +511,6 @@ private:
   std::string m_sentFilesTarget;
   //! True only for clipboard-paste transfers; menu Send files must not be cancelled by clipboard churn.
   bool m_fileSendFromClipboard = false;
+  std::unique_ptr<AndroidRecovery> m_androidRecovery = std::make_unique<AndroidRecovery>();
+  std::set<std::string> m_androidScreens;
 };

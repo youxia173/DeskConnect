@@ -31,6 +31,7 @@ import com.deskconnect.app.SessionLog
 import com.deskconnect.app.WifiNetworkHelper
 import com.deskconnect.app.databinding.ActivityMainBinding
 import com.deskconnect.app.databinding.ItemSavedHostBinding
+import com.deskconnect.app.input.InputController
 import com.deskconnect.app.protocol.FingerprintUtil
 
 class MainActivity : AppCompatActivity() {
@@ -40,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private var connected = false
     private var sessionActive = false
     private var applyingRemoteClipboard = false
+    private var refreshingInputControl = false
     private var currentWifiKey = SavedHostStore.WIFI_UNKNOWN
     private var lastWifiKeyForHosts: String? = null
     private var connectedPeerName: String = ""
@@ -78,6 +80,7 @@ class MainActivity : AppCompatActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val payload = intent?.getStringExtra(ConnectionService.EXTRA_PAYLOAD).orEmpty()
             when (intent?.action) {
+                InputController.ACTION_STATUS -> refreshInputControl()
                 ConnectionService.ACTION_EVENT_STATUS -> onStatus(payload)
                 ConnectionService.ACTION_EVENT_LOG -> {
                     // Persisted via SessionLog in ConnectionService; no main-page panel.
@@ -114,6 +117,44 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         clipboard = getSystemService(ClipboardManager::class.java)
         hostStore = SavedHostStore(this)
+        InputController.ensureConfig(this)
+        applyInputIntent(intent)
+        refreshInputControl()
+        binding.inputControlSwitch.setOnCheckedChangeListener { _, enabled ->
+            if (!refreshingInputControl) {
+                InputController.setEnabled(this, enabled)
+                refreshInputControl()
+            }
+        }
+        binding.inputOverlayButton.setOnClickListener {
+            try {
+                startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:$packageName")
+                    )
+                )
+            } catch (_: Exception) {
+                Toast.makeText(this, R.string.input_cursor_permission_failed, Toast.LENGTH_LONG).show()
+            }
+        }
+
+        binding.wirelessRecoverySwitch.setOnCheckedChangeListener { _, enabled ->
+            if (!refreshingInputControl) {
+                InputController.setWirelessRecoveryEnabled(this, enabled)
+                if (enabled) InputController.setEnabled(this, true)
+                refreshInputControl()
+            }
+        }
+        binding.wirelessSettingsButton.setOnClickListener {
+            try {
+                val wireless = Intent("android.settings.WIRELESS_DEBUGGING_SETTINGS")
+                startActivity(if (wireless.resolveActivity(packageManager) != null) wireless
+                    else Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
+            } catch (_: Exception) {
+                Toast.makeText(this, R.string.wireless_settings_unavailable, Toast.LENGTH_LONG).show()
+            }
+        }
 
         binding.toolbar.inflateMenu(R.menu.menu_main)
         binding.toolbar.setOnMenuItemClickListener { item ->
@@ -181,6 +222,13 @@ class MainActivity : AppCompatActivity() {
         refreshPermissionHint()
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        applyInputIntent(intent)
+        refreshInputControl()
+    }
+
     override fun onResume() {
         super.onResume()
         if (ConnectionService.isSessionActive()) {
@@ -190,6 +238,7 @@ class MainActivity : AppCompatActivity() {
         // that is connected right now, unless a session is still up.
         refreshWifiAndHosts(applyForCurrentWifi = !sessionActive)
         refreshPermissionHint()
+        refreshInputControl()
     }
 
     override fun onStart() {
@@ -202,6 +251,7 @@ class MainActivity : AppCompatActivity() {
             addAction(ConnectionService.ACTION_EVENT_FILE)
             addAction(ConnectionService.ACTION_EVENT_FINGERPRINT)
             addAction(ConnectionService.ACTION_EVENT_PEER_NAME)
+            addAction(InputController.ACTION_STATUS)
         }
         ContextCompat.registerReceiver(this, events, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         if (ConnectionService.isSessionActive()) {
@@ -213,6 +263,47 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         unregisterReceiver(events)
         super.onStop()
+    }
+
+    private fun applyInputIntent(source: Intent?) {
+        if (source?.getBooleanExtra("restart_input_bridge", false) == true) {
+            source.removeExtra("restart_input_bridge")
+            if (InputController.isWirelessRecoveryEnabled(this) && InputController.isEnabled(this)) {
+                InputController.restartBridge(this)
+            }
+        }
+        if (source?.hasExtra("wireless_recovery") == true) {
+            InputController.setWirelessRecoveryEnabled(this, source.getBooleanExtra("wireless_recovery", false))
+            source.removeExtra("wireless_recovery")
+        }
+        if (source?.hasExtra("enable_input") == true) {
+            InputController.setEnabled(this, source.getBooleanExtra("enable_input", false))
+            source.removeExtra("enable_input")
+        }
+        if (source?.getBooleanExtra("restore_connection", false) == true) {
+            source.removeExtra("restore_connection")
+            // Wait until saved host fields and Wi-Fi profiles have been loaded.
+            binding.root.post {
+                if (InputController.isWirelessRecoveryEnabled(this) && InputController.isEnabled(this) &&
+                    InputController.shouldResumeConnection(this) && !ConnectionService.isSessionActive() &&
+                    !binding.hostInput.text.isNullOrBlank()) {
+                    SessionLog.append("无线恢复：重新连接已保存的服务端")
+                    connect()
+                }
+            }
+        }
+    }
+
+    private fun refreshInputControl() {
+        refreshingInputControl = true
+        binding.inputControlSwitch.isChecked = InputController.isEnabled(this)
+        binding.wirelessRecoverySwitch.isChecked = InputController.isWirelessRecoveryEnabled(this)
+        refreshingInputControl = false
+        binding.inputStatusText.text = InputController.status(this)
+        // Keep settings reachable: OEM permission-query results may disagree
+        // with WindowManager even after ADB grants the overlay AppOp.
+        binding.inputOverlayButton.setText(R.string.input_cursor_permission)
+        binding.inputOverlayButton.isEnabled = true
     }
 
     private fun maybeRequestWifiPermission() {

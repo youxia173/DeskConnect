@@ -20,6 +20,9 @@ import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.deskconnect.app.protocol.BarrierClient
+import com.deskconnect.app.protocol.RemoteInputEvent
+import com.deskconnect.app.protocol.RemoteScreenInfo
+import com.deskconnect.app.input.InputController
 import com.deskconnect.app.protocol.BarrierClientListener
 import com.deskconnect.app.protocol.ReceivedFileStore
 import com.deskconnect.app.ui.ApplyRemoteClipboardActivity
@@ -46,10 +49,33 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     private val awaitingClipboardAck = AtomicBoolean(false)
     private val userStop = AtomicBoolean(false)
     private val loopRunning = AtomicBoolean(false)
+    private val reconnectRequested = AtomicBoolean(false)
     private val reconnectWait = Object()
     private var clipboard: ClipboardManager? = null
-    private var session: SessionConfig? = null
+    @Volatile private var session: SessionConfig? = null
     private val hostStore by lazy { SavedHostStore(this) }
+    private val inputController by lazy { InputController.get(this) }
+    private val inputFailure: (String) -> Unit = { reason ->
+        broadcast(ACTION_EVENT_LOG, "键鼠控制已停止: $reason")
+        // Never reverse the protocol/controller lock order in a helper callback.
+        val failedClient = clientRef.get()
+        mainHandler.post { failedClient?.disconnect() }
+    }
+    private val geometryChanged: () -> Unit = { clientRef.get()?.refreshScreenInfo() }
+    private val recoveryPreferences by lazy { getSharedPreferences("input-control", Context.MODE_PRIVATE) }
+    private val recoveryChanged = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key in setOf("enabled", "wirelessRecovery", "resumeConnection"))
+            clientRef.get()?.refreshRecoveryRegistration()
+    }
+    override fun getScreenInfo(): RemoteScreenInfo = inputController.screenInfo()
+    override fun beginRecoveryRegistration(): String? = session?.let { cfg ->
+        val key = "${cfg.host.lowercase(java.util.Locale.ROOT)}:${cfg.port}/${cfg.useTls}/${cfg.trusted.sorted().joinToString(",")}"
+        InputController.beginRecoveryRegistration(this, key)
+    }
+    override fun isRecoveryRequested(): Boolean = InputController.isEnabled(this) &&
+        InputController.isWirelessRecoveryEnabled(this) && InputController.shouldResumeConnection(this)
+    override fun onInputEvent(event: RemoteInputEvent) = inputController.accept(event)
+
 
     @Volatile
     private var lastRemoteClipboard: String? = null
@@ -98,6 +124,9 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
 
     override fun onCreate() {
         super.onCreate()
+        recoveryPreferences.registerOnSharedPreferenceChangeListener(recoveryChanged)
+        inputController.addFailureListener(inputFailure)
+        inputController.addGeometryListener(geometryChanged)
         clipboard = getSystemService(ClipboardManager::class.java)
         clipboard?.addPrimaryClipChangedListener(clipboardListener)
     }
@@ -105,6 +134,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_CONNECT -> {
+                InputController.setResumeConnection(this, true)
                 sessionActiveFlag.set(true)
                 val host = intent.getStringExtra(EXTRA_HOST).orEmpty()
                 val port = intent.getIntExtra(EXTRA_PORT, 24800)
@@ -121,11 +151,15 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
                     ?.peerName
                     .orEmpty()
                 session = SessionConfig(host, port, screen, useTls, trusted, wifiKey)
+                // Revoke the previous server even if the new one is too old to
+                // advertise recovery support. Ordinary reconnects retain the ID.
+                beginRecoveryRegistration()
                 notificationState = NotifState.Connecting
                 startForegroundCompat()
                 startConnectLoop()
             }
             ACTION_DISCONNECT -> {
+                InputController.setResumeConnection(this, false)
                 userStop.set(true)
                 wakeReconnectWait()
                 clientRef.get()?.disconnect()
@@ -156,6 +190,10 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     }
 
     override fun onDestroy() {
+        recoveryPreferences.unregisterOnSharedPreferenceChangeListener(recoveryChanged)
+        inputController.release()
+        inputController.removeFailureListener(inputFailure)
+        inputController.removeGeometryListener(geometryChanged)
         userStop.set(true)
         sessionActiveFlag.set(false)
         wakeReconnectWait()
@@ -168,6 +206,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
 
     private fun startConnectLoop() {
         if (!loopRunning.compareAndSet(false, true)) {
+            reconnectRequested.set(true)
             // Already looping — bounce current client so the loop picks up new session.
             clientRef.get()?.disconnect()
             wakeReconnectWait()
@@ -177,6 +216,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
             try {
                 var attempt = 0
                 while (!userStop.get()) {
+                    reconnectRequested.set(false)
                     val cfg = session ?: break
                     notificationState = if (attempt == 0) NotifState.Connecting else NotifState.Reconnecting(attempt)
                     updateNotification()
@@ -185,6 +225,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
                     clientRef.get()?.disconnect()
                     val client = BarrierClient(this, this)
                     clientRef.set(client)
+                    if (userStop.get() || session !== cfg) client.disconnect()
                     client.connect(
                         host = cfg.host,
                         port = cfg.port,
@@ -226,10 +267,10 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     }
 
     private fun waitForReconnect(delayMs: Long) {
-        val deadline = System.currentTimeMillis() + delayMs
+        val deadline = SystemClock.elapsedRealtime() + delayMs
         synchronized(reconnectWait) {
-            while (!userStop.get()) {
-                val left = deadline - System.currentTimeMillis()
+            while (!userStop.get() && !reconnectRequested.get()) {
+                val left = deadline - SystemClock.elapsedRealtime()
                 if (left <= 0) break
                 try {
                     reconnectWait.wait(left)
@@ -324,6 +365,7 @@ class ConnectionService : Service(), BarrierClientListener, ReceivedFileStore {
     }
 
     override fun onDisconnected(reason: String?) {
+        inputController.release()
         if (!userStop.get()) {
             notificationState = NotifState.Reconnecting(0)
             updateNotification()

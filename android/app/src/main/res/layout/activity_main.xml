@@ -179,6 +179,64 @@
                     android:textAllCaps="false" />
             </LinearLayout>
 
+            <!-- Remote keyboard and mouse -->
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/inputControlSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:minHeight="48dp"
+                android:text="@string/input_control_title"
+                android:textAppearance="?attr/textAppearanceSubtitle1"
+                android:textColor="@color/dc_on_surface" />
+
+            <TextView
+                android:id="@+id/inputStatusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:accessibilityLiveRegion="polite"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="@color/dc_on_surface" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/input_control_hint"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="@color/dc_muted" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/inputOverlayButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/input_cursor_permission"
+                android:textAllCaps="false" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/wirelessRecoverySwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/wireless_recovery_title"
+                android:textColor="@color/dc_on_surface" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/wireless_recovery_hint"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="@color/dc_muted" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/wirelessSettingsButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/wireless_settings"
+                android:textAllCaps="false" />
+
             <!-- Quick actions -->
             <TextView
                 android:layout_width="match_parent"

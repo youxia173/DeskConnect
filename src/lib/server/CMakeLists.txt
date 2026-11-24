@@ -4,6 +4,9 @@
 # SPDX-License-Identifier: MIT
 
 add_library(server STATIC
+  AndroidRecovery.cpp
+  AndroidRecovery.h
+  android_recovery.qrc
   BaseClientProxy.cpp
   BaseClientProxy.h
   ClientListener.cpp

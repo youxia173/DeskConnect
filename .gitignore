@@ -76,6 +76,7 @@ android/local.properties
 android/.idea/
 android/*.iml
 android/app/*.iml
+android/tools/__pycache__/
 *.apk
 *.aab
 *.ap_

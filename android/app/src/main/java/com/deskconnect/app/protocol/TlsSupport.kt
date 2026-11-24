@@ -130,7 +130,9 @@ object TlsSupport {
             socket.enabledProtocols = enabled
         }
         try {
+            socket.soTimeout = connectTimeoutMs
             socket.startHandshake()
+            socket.soTimeout = 0
         } catch (e: Exception) {
             try {
                 socket.close()

@@ -195,6 +195,7 @@ Server::~Server()
   // disable and disconnect primary client
   m_primaryClient->disable();
   removeClient(m_primaryClient);
+  m_androidRecovery.reset();
 }
 
 size_t Server::getMaximumClipboardSizeBytes() const
@@ -212,6 +213,15 @@ bool Server::setConfig(const ServerConfig &config)
   // close clients that are connected but being dropped from the
   // configuration.
   closeClients(config);
+
+  for (auto it = m_androidScreens.begin(); it != m_androidScreens.end();) {
+    if (!config.isScreen(*it)) {
+      m_androidRecovery->forget(*it);
+      it = m_androidScreens.erase(it);
+    } else {
+      ++it;
+    }
+  }
 
   // cut over
   processOptions();
@@ -351,6 +361,19 @@ void Server::sendConnectedClientsIpc() const
     }
   }
   ipcSendToClient("connectedClients", clientList.join(","));
+}
+
+void Server::onAndroidRecovery(BaseClientProxy *sender, const std::string &id, bool enabled)
+{
+  const auto name = getName(sender);
+  const auto it = m_clients.find(name);
+  if (sender == m_primaryClient || it == m_clients.end() || it->second != sender)
+    return;
+  if (enabled)
+    m_androidScreens.insert(name);
+  else
+    m_androidScreens.erase(name);
+  m_androidRecovery->update(name, id, enabled);
 }
 
 std::string Server::getName(const BaseClientProxy *client) const
@@ -1117,6 +1140,8 @@ void Server::sendOptions(BaseClientProxy *client) const
 
   // The extension stays disabled until a peer replies with DFOF hello.
   optionsList.push_back(kOptionClipboardFiles);
+  optionsList.push_back(1);
+  optionsList.push_back(kOptionAndroidRecovery);
   optionsList.push_back(1);
   // send the options
   client->resetOptions();

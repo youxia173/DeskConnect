@@ -4,6 +4,7 @@ import android.util.Log
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.io.InputStream
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.charset.StandardCharsets
@@ -19,6 +20,10 @@ interface BarrierClientListener {
     fun onClipboardText(text: String)
     fun onClipboardAck(clipboardId: Int) {}
     fun onPeerHostName(name: String) {}
+    fun onInputEvent(event: RemoteInputEvent) {}
+    fun getScreenInfo(): RemoteScreenInfo = RemoteScreenInfo(1080, 1920)
+    fun beginRecoveryRegistration(): String? = null
+    fun isRecoveryRequested(): Boolean = false
     fun onFileReceived(fileName: String, absolutePath: String)
     fun onFileProgress(message: String)
     fun onUntrustedServerFingerprint(fingerprintHex: String) {}
@@ -30,16 +35,28 @@ interface ReceivedFileStore {
 
 /**
  * Lightweight Barrier/Deskflow client: handshake, keepalive, text clipboard,
- * and bidirectional file transfer. Input events are ignored.
+ * bidirectional file transfer, and remote input through a platform listener.
  */
 class BarrierClient(
     private val listener: BarrierClientListener,
     private val fileStore: ReceivedFileStore,
 ) {
     private val running = AtomicBoolean(false)
+    /** Each service attempt owns a new client; cancellation also applies before connect starts. */
+    private val cancelled = AtomicBoolean(false)
+    @Volatile
     private var socket: Socket? = null
     private var packets: PacketStream? = null
     private var writerThread: Thread? = null
+    private var watchdogThread: Thread? = null
+    @Volatile
+    private var lastNetworkReadNanos = 0L
+    @Volatile
+    private var handshakeDeadlineNanos = 0L
+    @Volatile
+    private var networkTimeoutMs = MIN_NETWORK_TIMEOUT_MS
+    @Volatile
+    private var disconnectReason: String? = null
     /** Outbound packets written only from the dedicated writer thread. */
     private val outbound = LinkedBlockingQueue<ByteArray>()
     /** Last CINN enter sequence from the server (0 if never entered). */
@@ -47,6 +64,9 @@ class BarrierClient(
     /** Monotonic outbound clipboard sequence; must not lag behind server clipboardSeqNum. */
     private var clipboardSequence = 0
     private val clipboardSeqLock = Any()
+    private val inputLock = Any()
+    /** Guarded by inputLock so disconnect always releases after the last input. */
+    private var inputActive = false
     @Volatile
     var suppressClipboardEcho = false
 
@@ -67,6 +87,8 @@ class BarrierClient(
     private var lastProtocol = "Barrier"
     private var lastMajor = PROTOCOL_MAJOR
     private var lastMinor = PROTOCOL_MINOR
+    @Volatile private var recoveryId: String? = null
+    private var lastRecoveryEnabled: Boolean? = null
 
     fun connect(
         host: String,
@@ -79,6 +101,14 @@ class BarrierClient(
         if (!running.compareAndSet(false, true)) {
             return
         }
+        // The service publishes this client before starting connect(). A stop in
+        // that interval must not be undone by the false -> true transition above.
+        if (cancelled.get()) {
+            running.set(false)
+            return
+        }
+        disconnectReason = null
+        networkTimeoutMs = MIN_NETWORK_TIMEOUT_MS
         try {
             val mode = if (useTls) "TLS" else "plaintext"
             log("connecting to $host:$port as \"$screenName\" ($mode)")
@@ -104,11 +134,23 @@ class BarrierClient(
                 }
             }
             socket = sock
-            val stream = PacketStream(sock.getInputStream(), sock.getOutputStream())
+            if (!running.get()) {
+                sock.close()
+                throw ProtocolException("connection cancelled")
+            }
+            sock.keepAlive = true
+            lastNetworkReadNanos = System.nanoTime()
+            handshakeDeadlineNanos = lastNetworkReadNanos + TimeUnit.MILLISECONDS.toNanos(CONNECT_TIMEOUT_MS.toLong())
+            // Account for partial packets as well: a slow large file can keep the
+            // socket healthy without completing a whole packet for several seconds.
+            val stream = PacketStream(trackNetworkReads(sock.getInputStream()), sock.getOutputStream())
             packets = stream
             outbound.clear()
+            startWatchdog(sock)
 
             handshake(stream, screenName)
+            handshakeDeadlineNanos = 0L
+            if (!running.get()) throw ProtocolException(disconnectReason ?: "connection cancelled")
             startWriter(stream)
             connected = true
             listener.onConnected(lastProtocol, lastMajor, lastMinor)
@@ -123,29 +165,39 @@ class BarrierClient(
                 }
             }
             if (!running.get()) {
-                endReason = "disconnected"
+                endReason = disconnectReason ?: "disconnected"
             }
+            releaseInput()
             listener.onDisconnected(endReason)
         } catch (e: UntrustedFingerprintException) {
             log("untrusted server fingerprint: ${FingerprintUtil.formatColon(e.fingerprintHex)}")
             listener.onUntrustedServerFingerprint(e.fingerprintHex)
             listener.onDisconnected("untrusted fingerprint")
         } catch (e: Exception) {
+            releaseInput()
             if (running.get()) {
                 log("error: ${e.message}")
             }
-            listener.onDisconnected(e.message)
+            listener.onDisconnected(disconnectReason ?: e.message)
         } finally {
             cleanup()
         }
     }
 
     fun disconnect() {
+        cancelled.set(true)
         running.set(false)
+        connected = false
+        releaseInput()
         try {
             socket?.close()
         } catch (_: Exception) {
         }
+    }
+
+    /** Notify the server after rotation or a display-size change. */
+    fun refreshScreenInfo() {
+        if (connected && running.get() && packets != null) sendInfo()
     }
 
     fun sendClipboardText(text: String): Boolean {
@@ -194,6 +246,59 @@ class BarrierClient(
                 }
             }
         }, "barrier-writer").also {
+            it.isDaemon = true
+            it.start()
+        }
+    }
+
+    private fun trackNetworkReads(source: InputStream): InputStream = object : InputStream() {
+        override fun read(): Int = source.read().also { value ->
+            if (value >= 0) lastNetworkReadNanos = System.nanoTime()
+        }
+
+        override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
+            source.read(buffer, offset, length).also { count ->
+                if (count > 0) lastNetworkReadNanos = System.nanoTime()
+            }
+
+        override fun available(): Int = source.available()
+        override fun close() = source.close()
+    }
+
+    private fun startWatchdog(connection: Socket) {
+        watchdogThread = Thread({
+            try {
+                while (running.get() && socket === connection) {
+                    val now = System.nanoTime()
+                    val deadline = handshakeDeadlineNanos
+                    val timeoutMs = networkTimeoutMs
+                    val idleMs = TimeUnit.NANOSECONDS.toMillis(now - lastNetworkReadNanos)
+                    val reason = when {
+                        deadline != 0L && now - deadline >= 0L -> "Barrier handshake timed out after ${CONNECT_TIMEOUT_MS}ms"
+                        deadline == 0L && timeoutMs > 0L && idleMs >= timeoutMs ->
+                            "server network timeout: no received data for ${idleMs}ms (limit ${timeoutMs}ms)"
+                        else -> null
+                    }
+                    if (reason != null && running.get() && socket === connection) {
+                        disconnectReason = reason
+                        running.set(false)
+                        connected = false
+                        // Closing the socket interrupts both a blocked framed read
+                        // and a writer stalled behind a half-open network connection.
+                        try {
+                            connection.close()
+                        } catch (_: Exception) {
+                        }
+                        releaseInput()
+                        log(reason)
+                        break
+                    }
+                    Thread.sleep(WATCHDOG_POLL_MS)
+                }
+            } catch (_: InterruptedException) {
+                // Normal cleanup interrupts the sleeping watchdog.
+            }
+        }, "barrier-network-watchdog").also {
             it.isDaemon = true
             it.start()
         }
@@ -301,24 +406,24 @@ class BarrierClient(
         val body = packet.copyOfRange(4, packet.size)
         val input = body.asDataInput()
 
+        RemoteInputCodec.decode(code, body, lastMinor)?.let { event ->
+            dispatchInput(event)
+            // Input is already ordered by TCP; per-event CNOP floods the server.
+            return true
+        }
+
         when (code) {
-            Msg.CALV -> enqueuePacket { writeRaw(Msg.CALV) }
-            Msg.QINF -> sendInfo()
-            Msg.CIAK, Msg.CNOP, Msg.CROP, Msg.COUT -> Unit
-            Msg.CSEC -> if (body.isNotEmpty()) input.readUInt8()
-            Msg.CINN -> {
-                if (body.size >= 10) {
-                    input.readInt16Be()
-                    input.readInt16Be()
-                    enterSequence = input.readInt()
-                    input.readInt16Be()
-                    synchronized(clipboardSeqLock) {
-                        if (enterSequence > clipboardSequence) {
-                            clipboardSequence = enterSequence
-                        }
-                    }
-                }
+            Msg.CALV -> {
+                enqueuePacket { writeRaw(Msg.CALV) }
+                publishRecoveryRegistration()
             }
+            Msg.QINF -> sendInfo()
+            Msg.CIAK, Msg.CNOP -> Unit
+            Msg.CROP -> {
+                if (body.isNotEmpty()) throw ProtocolException("invalid CROP length")
+                networkTimeoutMs = MIN_NETWORK_TIMEOUT_MS
+            }
+            Msg.CSEC -> if (body.isNotEmpty()) input.readUInt8()
             Msg.CCLP -> {
                 if (body.size >= 5) {
                     val id = input.readUInt8()
@@ -345,9 +450,8 @@ class BarrierClient(
             Msg.DCLP -> handleClipboardChunk(input)
             Msg.DDRG -> handleDragInfo(input)
             Msg.DFTR -> handleFileChunk(input)
-            Msg.DSOP, Msg.DFOF, Msg.LSYN, Msg.SECN,
-            Msg.DKDN, Msg.DKDL, Msg.DKRP, Msg.DKUP,
-            Msg.DMDN, Msg.DMUP, Msg.DMMV, Msg.DMRM, Msg.DMWM -> Unit
+            Msg.DSOP -> handleOptions(input, body.size)
+            Msg.DFOF, Msg.LSYN, Msg.SECN -> Unit
             Msg.CBYE -> {
                 log("server closed connection")
                 return false
@@ -381,15 +485,89 @@ class BarrierClient(
     }
 
     private fun sendInfo() {
+        val info = listener.getScreenInfo()
+        val width = info.width.coerceIn(1, Short.MAX_VALUE.toInt())
+        val height = info.height.coerceIn(1, Short.MAX_VALUE.toInt())
+        val x = info.x.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt() - width)
+        val y = info.y.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt() - height)
         enqueuePacket {
             writeRaw(Msg.DINF)
+            writeInt16Be(x)
+            writeInt16Be(y)
+            writeInt16Be(width)
+            writeInt16Be(height)
             writeInt16Be(0)
-            writeInt16Be(0)
-            writeInt16Be(1080)
-            writeInt16Be(1920)
-            writeInt16Be(0)
-            writeInt16Be(540)
-            writeInt16Be(960)
+            writeInt16Be(x + width / 2)
+            writeInt16Be(y + height / 2)
+        }
+    }
+
+    private fun handleOptions(input: DataInputStream, bodySize: Int) {
+        if (bodySize < 4) throw ProtocolException("short DSOP options")
+        val count = input.readInt()
+        if (count < 0 || count % 2 != 0 || count != (bodySize - 4) / 4 || (bodySize - 4) % 4 != 0) {
+            throw ProtocolException("invalid DSOP option count: $count")
+        }
+        repeat(count / 2) {
+            val option = input.readInt()
+            val value = input.readInt()
+            if (option == 0x44435256 && value == 1) { // DCRV v1; old servers get no extension packets
+                if (recoveryId == null) recoveryId = listener.beginRecoveryRegistration()
+                publishRecoveryRegistration()
+            }
+            if (option == OPTION_HEARTBEAT) {
+                // HART is an interval in milliseconds. Match the server's three
+                // missed-heartbeat rule, allowing at least 15s for mobile jitter
+                // and busy file transfers. Non-positive explicitly disables it.
+                networkTimeoutMs = if (value > 0) maxOf(MIN_NETWORK_TIMEOUT_MS, value.toLong() * 3L) else 0L
+                log("server heartbeat interval=${value}ms, network timeout=${networkTimeoutMs}ms")
+            }
+        }
+    }
+
+    fun refreshRecoveryRegistration() = publishRecoveryRegistration()
+
+    @Synchronized private fun publishRecoveryRegistration() {
+        val id = recoveryId ?: return
+        if (!id.matches(Regex("[0-9a-f]{32}"))) return
+        val enabled = listener.isRecoveryRequested()
+        if (lastRecoveryEnabled == enabled) return
+        enqueuePacket {
+            writeRaw("DCAR")
+            writeByte(if (enabled) 1 else 0)
+            writeRaw(id)
+        }
+        lastRecoveryEnabled = enabled
+    }
+
+    private fun dispatchInput(event: RemoteInputEvent) {
+        synchronized(inputLock) {
+            if (!running.get()) return
+            when (event) {
+                is RemoteInputEvent.Enter -> {
+                    if (inputActive) listener.onInputEvent(RemoteInputEvent.Leave)
+                    synchronized(clipboardSeqLock) {
+                        enterSequence = event.sequence
+                        clipboardSequence = maxOf(clipboardSequence, enterSequence)
+                    }
+                    inputActive = true
+                    listener.onInputEvent(event)
+                }
+                RemoteInputEvent.Leave -> releaseInput()
+                else -> if (inputActive) listener.onInputEvent(event)
+            }
+        }
+    }
+
+    private fun releaseInput() {
+        synchronized(inputLock) {
+            if (!inputActive) return
+            inputActive = false
+            try {
+                listener.onInputEvent(RemoteInputEvent.Leave)
+            } catch (e: Exception) {
+                Log.w(TAG, "input release failed", e)
+            }
         }
     }
 
@@ -542,6 +720,8 @@ class BarrierClient(
     private fun cleanup() {
         connected = false
         running.set(false)
+        releaseInput()
+        watchdogThread?.interrupt()
         closeReceiveFile()
         try {
             socket?.close()
@@ -551,7 +731,13 @@ class BarrierClient(
             writerThread?.join(1_000)
         } catch (_: Exception) {
         }
+        try {
+            watchdogThread?.join(1_000)
+        } catch (_: Exception) {
+        }
         writerThread = null
+        watchdogThread = null
+        handshakeDeadlineNanos = 0L
         outbound.clear()
         socket = null
         packets = null
@@ -567,6 +753,9 @@ class BarrierClient(
         private const val PROTOCOL_MAJOR = 1
         private const val PROTOCOL_MINOR = 8
         private const val CONNECT_TIMEOUT_MS = 10_000
+        private const val MIN_NETWORK_TIMEOUT_MS = 15_000L
+        private const val WATCHDOG_POLL_MS = 500L
+        private const val OPTION_HEARTBEAT = 0x48415254 // HART
         private const val CLIPBOARD_ID = 0
         // Keep chunks modest so one TLS write cannot starve keepalive on the PC.
         private const val CHUNK_SIZE = 16 * 1024
