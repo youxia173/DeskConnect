@@ -7,8 +7,6 @@ name: Continuous Integration
 on:
   push:
     branches: [master]
-    tags:
-      - "v*"
   pull_request:
 
 concurrency:
