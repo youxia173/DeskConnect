@@ -45,14 +45,30 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           cmake --build build-release --parallel 4
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          cpack --config build-release/CPackConfig.cmake -C Release -G 'WIX;7Z' -B dist
+          cpack --config build-release/CPackConfig.cmake -C Release -G 'WIX;7Z;ZIP' -B dist
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Verify portable ZIP contents
+        shell: pwsh
+        run: |
+          $packages = @(Get-ChildItem dist -Filter '*-portable.zip')
+          if ($packages.Count -eq 0) { throw 'Portable ZIP was not generated' }
+          foreach ($package in $packages) {
+            $archive = [System.IO.Compression.ZipFile]::OpenRead($package.FullName)
+            try {
+              $entries = @($archive.Entries | ForEach-Object { $_.FullName.Replace('\', '/') })
+              foreach ($required in @('DeskConnect.exe', 'deskconnect-core.exe', 'Qt6Core.dll', 'platforms/qwindows.dll', 'settings/DeskConnect.conf')) {
+                $pattern = '(^|/)' + [regex]::Escape($required) + '$'
+                if (-not ($entries -match $pattern)) { throw "Portable ZIP missing $required" }
+              }
+            } finally { $archive.Dispose() }
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: |
             dist/*.msi
             dist/*.7z
+            dist/*.zip
           if-no-files-found: error
   android:
     runs-on: ubuntu-24.04
@@ -106,9 +122,10 @@ jobs:
         run: |
           [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]] || { echo 'Use vMAJOR.MINOR.PATCH or a prerelease tag'; exit 1; }
           test -n "$(find dist -name '*.msi' -print -quit)"
+          test -n "$(find dist -name '*-portable.zip' -print -quit)"
           test -n "$(find dist -name '*.deb' -print -quit)"
           test -n "$(find dist -name '*.apk' -print -quit)"
-          (cd dist && sha256sum *.msi *.7z *.deb *.apk > SHA256SUMS.txt)
+          (cd dist && sha256sum *.msi *.7z *.zip *.deb *.apk > SHA256SUMS.txt)
           if gh release view "$TAG" >/dev/null 2>&1; then
             test "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = true || { echo 'Published release already exists; use a new tag'; exit 1; }
           else
