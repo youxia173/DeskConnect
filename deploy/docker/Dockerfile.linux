@@ -5,6 +5,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xorg-dev libx11-dev libxtst-dev libssl-dev libxkbfile-dev \
     qt6-base-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools \
     libxkbregistry-dev libxkbcommon-dev libei-dev libportal-dev \
-    libfuse3-dev help2man python3 adb && rm -rf /var/lib/apt/lists/*
+    libfuse3-dev help2man python3 adb meson libglib2.0-dev rsync patchelf qt6-wayland && rm -rf /var/lib/apt/lists/*
+RUN git clone https://github.com/flatpak/libportal.git /tmp/libportal && \
+    cd /tmp/libportal && git checkout 771e500defee1e4e3f0441e3a4fcac9787500ea2 && \
+    meson setup build --prefix=/usr --libdir=lib/x86_64-linux-gnu \
+      -Ddocs=false -Dtests=false -Dintrospection=false -Dvapi=false \
+      -Dbackend-gtk3=disabled -Dbackend-gtk4=disabled -Dbackend-qt5=disabled -Dbackend-qt6=disabled && \
+    meson compile -C build && meson install -C build && ldconfig && rm -rf /tmp/libportal
+RUN mkdir -p /opt/qt && ln -s /usr/lib/x86_64-linux-gnu /opt/qt/lib && \
+    ln -s /usr/lib/x86_64-linux-gnu/qt6/plugins /opt/qt/plugins
 WORKDIR /source
 CMD ["bash", "deploy/docker/build-linux.sh"]
