@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # Build a self-contained .deb from the portable DeskConnect tree (bundled Qt).
 set -euo pipefail
 

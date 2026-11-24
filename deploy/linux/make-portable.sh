@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # Build a self-contained DeskConnect distribution (bundled Qt + runtime libs).
 set -euo pipefail
 
