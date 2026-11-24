@@ -1,7 +1,7 @@
 FROM ubuntu:26.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates git cmake ninja-build build-essential pkg-config \
+    ca-certificates git cmake ninja-build build-essential pkg-config curl desktop-file-utils squashfs-tools \
     xorg-dev libx11-dev libxtst-dev libssl-dev libxkbfile-dev \
     qt6-base-dev qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools \
     libxkbregistry-dev libxkbcommon-dev libei-dev libportal-dev \
@@ -14,5 +14,11 @@ RUN git clone https://github.com/flatpak/libportal.git /tmp/libportal && \
     meson compile -C build && meson install -C build && ldconfig && rm -rf /tmp/libportal
 RUN mkdir -p /opt/qt && ln -s /usr/lib/x86_64-linux-gnu /opt/qt/lib && \
     ln -s /usr/lib/x86_64-linux-gnu/qt6/plugins /opt/qt/plugins
+RUN mkdir -p /opt/appimage && \
+    curl --fail --location --retry 3 https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage -o /opt/appimage/appimagetool.AppImage && \
+    curl --fail --location --retry 3 https://github.com/AppImage/type2-runtime/releases/download/20251108/runtime-x86_64 -o /opt/appimage/runtime-x86_64 && \
+    echo 'ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  /opt/appimage/appimagetool.AppImage' | sha256sum -c - && \
+    echo '2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d  /opt/appimage/runtime-x86_64' | sha256sum -c - && \
+    chmod 755 /opt/appimage/appimagetool.AppImage
 WORKDIR /source
 CMD ["bash", "deploy/docker/build-linux.sh"]

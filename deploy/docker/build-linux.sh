@@ -12,3 +12,4 @@ export QTDIR=/opt/qt
 export BUILD_BIN="$PWD/build-release-linux/bin"
 bash deploy/linux/make-portable.sh
 SKIP_PORTABLE_REFRESH=1 bash deploy/linux/make-deb.sh
+bash deploy/linux/make-appimage.sh
