@@ -2,6 +2,13 @@
 # SPDX-License-Identifier: MIT
 
 create_test(
+  NAME BluetoothTests
+  DEPENDS gui
+  SOURCE BluetoothTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)
+
+create_test(
   NAME LinuxLoginSessionTests
   DEPENDS gui
   SOURCE LinuxLoginSessionTests.cpp

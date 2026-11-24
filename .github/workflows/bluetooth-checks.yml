@@ -1,0 +1,64 @@
+name: Bluetooth branch checks
+on:
+  push:
+    branches: ['codex/bluetooth-direct']
+  pull_request:
+    paths:
+      - 'src/lib/gui/**'
+      - 'src/lib/common/Settings.h'
+      - 'src/unittests/gui/**'
+      - 'CMakeLists.txt'
+      - 'deploy/**'
+      - '.github/actions/install-dependencies/**'
+      - '.github/workflows/bluetooth-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bluetooth-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        bluetooth: ['ON', 'OFF']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: ./.github/actions/install-dependencies
+        id: deps
+        with:
+          qt-version: 6.8.3
+          vcpkg-triplet: x64-windows-release
+      - name: Build and test transport configuration
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          cmake -S . -B build-bluetooth -G Ninja -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_TESTS=ON -DENABLE_BLUETOOTH=${{ matrix.bluetooth }} ${{ steps.deps.outputs.vcpkg-cmake-config }}
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cmake --build build-bluetooth --parallel 4
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ctest --test-dir build-bluetooth/src/unittests --output-on-failure -R '^BluetoothTests$'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        bluetooth: ['ON', 'OFF']
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build and test in release Docker environment
+        run: |
+          docker build -f deploy/docker/Dockerfile.linux -t deskconnect-bluetooth-builder .
+          docker run --rm -e QT_QPA_PLATFORM=offscreen -e LANG=C.UTF-8 -v "$PWD:/source" deskconnect-bluetooth-builder bash -euc '
+            git config --global --add safe.directory /source
+            cmake -S . -B build-bluetooth -G Ninja -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_TESTS=ON -DENABLE_BLUETOOTH=${{ matrix.bluetooth }}
+            cmake --build build-bluetooth --parallel 4
+            ctest --test-dir build-bluetooth/src/unittests --output-on-failure -R "^BluetoothTests$"
+          '
