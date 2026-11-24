@@ -27,7 +27,8 @@ VERSION="${VERSION%,}"
 VERSION="${VERSION/-/\~}"
 PKG_NAME="deskconnect"
 PKG_ROOT="$DIST_ROOT/${PKG_NAME}_${VERSION}_${ARCH_DEB}"
-DEB_PATH="$DIST_ROOT/${PKG_NAME}_${VERSION}_${ARCH_DEB}.deb"
+# Keep '~' in Debian metadata; GitHub rewrites it in uploaded asset names.
+DEB_PATH="$DIST_ROOT/${PKG_NAME}_${VERSION/\~/-}_${ARCH_DEB}.deb"
 
 rm -rf "$PKG_ROOT"
 mkdir -p "$PKG_ROOT/DEBIAN" \
