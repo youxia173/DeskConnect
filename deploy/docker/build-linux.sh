@@ -2,6 +2,8 @@
 set -euo pipefail
 export QT_QPA_PLATFORM=offscreen
 export LANG=C.UTF-8
+# The bind-mounted checkout belongs to the runner user, not container root.
+git config --global --add safe.directory "$PWD"
 cmake -S . -B build-release-linux -G Ninja -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX=/usr -DSKIP_BUILD_TESTS=ON
 cmake --build build-release-linux --parallel 4
